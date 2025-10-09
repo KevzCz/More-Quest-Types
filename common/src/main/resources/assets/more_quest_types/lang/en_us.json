@@ -51,6 +51,7 @@
   "ftbquests.reward.dialogue.dialogue_id": "Dialogue ID",
   "ftbquests.reward.dialogue.interlocutor_type": "Interlocutor",
   "ftbquests.reward.dialogue.sort": "Sort",
+  "ftbquests.reward.ftbquests.dialogue.custom_name": "Custom Name",
 
   "ftbquests.reward.morequesttypes.skills_level.title": "%s → %s (%s)",
   "ftbquests.reward.morequesttypes.skills_level.category": "Category ID",

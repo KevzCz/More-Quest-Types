@@ -1,3 +1,0 @@
-#80497A minecraft:dirt
-#3F84B7 minecraft:grass_block
-#BBA6D1 minecraft:oak_log
