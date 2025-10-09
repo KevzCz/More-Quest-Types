@@ -1,0 +1,40 @@
+# ---- OS / editor cruft ----
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+
+# ---- IntelliJ / Eclipse ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+
+# ---- Gradle ----
+.gradle/
+build/
+out/
+
+# Keep the wrapper
+!gradle/wrapper/**
+!gradlew
+!gradlew.bat
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# ---- Minecraft dev (Fabric/Forge/Loom) ----
+run/
+logs/
+crash-reports/
+config/
+mods/
+# If you keep custom dev configs in repo, comment the line above
+
+# ---- Other common ----
+*.log
+*.lock
+*.tmp
+*.bak

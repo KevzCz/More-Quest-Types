@@ -279,8 +279,7 @@ public final class DialogueReward extends Reward {
                 .setNameKey("ftbquests.reward.dialogue.interlocutor_type");
 
 
-        config.addString("custom_name", customName, v -> customName = v.trim(), "")
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.custom_name");
+        config.addString("custom_name", customName, v -> customName = v.trim(), "");
         config.addString("scoreboard_tags_csv", scoreboardTagsCsv, v -> scoreboardTagsCsv = v.trim(), "")
                 .setNameKey("ftbquests.task.morequesttypes.adv_kill.tags_csv");
         config.addInt("min_tags_required", minTagsRequired, v -> minTagsRequired = Math.max(0, v), 0, 0, 64)
