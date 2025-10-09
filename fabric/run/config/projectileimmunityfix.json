@@ -1,0 +1,15 @@
+{
+  "mobConfig": {
+    "entities": [],
+    "enabled": true,
+    "maxHitsBeforeCooldown": 10,
+    "cooldownTicks": 20,
+    "timeWithoutHitResetTicks": 20
+  },
+  "playerConfig": {
+    "enabled": false,
+    "maxHitsBeforeCooldown": 6,
+    "cooldownTicks": 40,
+    "timeWithoutHitResetTicks": 40
+  }
+}

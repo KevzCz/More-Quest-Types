@@ -1,0 +1,210 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: ""
+	filename: "adad"
+	group: ""
+	id: "3455E9D1E5E30AEC"
+	order_index: 0
+	quest_links: [ ]
+	quests: [
+		{
+			id: "1F4509BB2A737492"
+			tasks: [{
+				entity: "minecraft:zombie"
+				hand_mode: "ANY"
+				id: "3F1429D1EA2F8F49"
+				min_tags_required: 0
+				type: "interact_entity"
+				value: 200L
+			}]
+			x: 5.0d
+			y: -2.5d
+		}
+		{
+			id: "72F29445A0E28712"
+			tasks: [{
+				entity: "minecraft:zombie"
+				hand_mode: "ANY"
+				id: "017A7949F9F879B0"
+				min_tags_required: 0
+				type: "interact_entity"
+				value: 200L
+			}]
+			x: 8.0d
+			y: -2.5d
+		}
+		{
+			id: "55158B87A6646327"
+			tasks: [{
+				entity: "minecraft:zombie"
+				hand_mode: "MAIN_HAND"
+				held_item_tag: "minecraft:logs"
+				id: "23B6F0770DB9204B"
+				min_tags_required: 0
+				type: "interact_entity"
+				value: 200L
+			}]
+			x: 5.0d
+			y: 0.0d
+		}
+		{
+			id: "02BFE371E4364A11"
+			rewards: [
+				{
+					id: "706C68C7232CB8A9"
+					item: {
+						count: 1
+						id: "minecraft:oak_planks"
+					}
+					type: "item"
+				}
+				{
+					exclude_from_claim_all: true
+					id: "33441C956901DCD4"
+					sort: "RANDOM"
+					type: "dialogue"
+				}
+			]
+			tasks: [{
+				dialogue_id: "kevs:illustration_tests"
+				id: "2A37E2D2435E7387"
+				type: "dialogue"
+			}]
+			x: 9.5d
+			y: 0.0d
+		}
+		{
+			id: "7BFC1FEFEF9258CD"
+			rewards: [{
+				id: "278ACCBAFAC921AB"
+				item: {
+					count: 1
+					id: "minecraft:birch_planks"
+				}
+				type: "item"
+			}]
+			tasks: [{
+				id: "48FE6FA04AA17798"
+				type: "checkmark"
+			}]
+			x: 2.0d
+			y: 1.5d
+		}
+		{
+			id: "3C47B96FEB3F92BA"
+			tasks: [{
+				id: "290DC899B8C38F0A"
+				type: "checkmark"
+			}]
+			x: 4.0d
+			y: 1.5d
+		}
+		{
+			id: "2948725411CE2708"
+			tasks: [{
+				id: "28FA17A9262DCD80"
+				type: "checkmark"
+			}]
+			x: 7.0d
+			y: 1.5d
+		}
+		{
+			id: "2229EC03AFBB7BCC"
+			tasks: [{
+				id: "5E23D83E7173B6AF"
+				type: "checkmark"
+			}]
+			x: 9.0d
+			y: 1.5d
+		}
+		{
+			id: "1BC3D55980448DFD"
+			tasks: [{
+				id: "3BF2A228E3A4B3FD"
+				type: "checkmark"
+			}]
+			x: 11.5d
+			y: 1.5d
+		}
+		{
+			id: "1ED9BF6417B13A12"
+			rewards: [{
+				id: "3B0759CFCE79D80D"
+				item: {
+					count: 1
+					id: "minecraft:oak_planks"
+				}
+				type: "item"
+			}]
+			tasks: [{
+				dialogue_id: "kevs:illustration_tests"
+				id: "1A6C57434BFB4C96"
+				type: "dialogue"
+			}]
+			x: 8.5d
+			y: 4.0d
+		}
+		{
+			id: "337997D55982410B"
+			rewards: [
+				{
+					auto: "enabled"
+					dialogue_id: "kevs:illustration_tests"
+					exclude_from_claim_all: true
+					id: "1E51009438CD9F4E"
+					interlocutor_type: "minecraft:zombie"
+					sort: "FURTHEST"
+					type: "dialogue"
+				}
+				{
+					id: "25F7E2B0E30CF87C"
+					type: "custom"
+				}
+			]
+			tasks: [{
+				dialogue_id: "kevs:illustration_tests"
+				end_states_csv: "diamond"
+				id: "32CDDED1919E434F"
+				type: "dialogue"
+			}]
+			x: 14.5d
+			y: 2.0d
+		}
+		{
+			id: "7D47A86D63C13FC5"
+			tasks: [{
+				category: "puffish_skills:combat"
+				id: "23CE1E27B4B81A4B"
+				mode: "TOTAL_LEVEL"
+				required_level: 10
+				type: "skills_level"
+			}]
+			x: 14.0d
+			y: -1.5d
+		}
+		{
+			id: "157D6D53581BB13C"
+			tasks: [{
+				entity: "minecraft:zombie"
+				id: "13C9916CADC0F148"
+				min_tags_required: 0
+				nbt_filter_snbt: "{Tags:[\"Hello\"]}"
+				type: "kill_advanced"
+				value: 1L
+			}]
+			x: 17.0d
+			y: 1.5d
+		}
+		{
+			id: "18E85976C9F097A1"
+			tasks: [{
+				id: "7755B743DB4B4074"
+				mode: "TOTAL_LEVEL"
+				required_level: 10
+				type: "skills_level"
+			}]
+			x: 18.5d
+			y: -2.0d
+		}
+	]
+}

@@ -1,0 +1,16 @@
+{
+	version: 1
+	uuid: "74c27658bdbf373592e3d4cbb89f0350"
+	name: "Player837#74c27658"
+	lock: false
+	rewards_blocked: false
+	task_progress: { }
+	started: { }
+	completed: { }
+	claimed_rewards: { }
+	player_data: {
+		74c27658bdbf373592e3d4cbb89f0350: {
+			can_edit: 1b
+		}
+	}
+}

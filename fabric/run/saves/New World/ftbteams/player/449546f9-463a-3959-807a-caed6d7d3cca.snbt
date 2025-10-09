@@ -1,0 +1,28 @@
+{
+	id: "449546f9-463a-3959-807a-caed6d7d3cca"
+	type: "player"
+	player_name: "Player539"
+	ranks: {
+		449546f9-463a-3959-807a-caed6d7d3cca: "owner"
+	}
+	properties: {
+		"ftbchunks:allow_explosions": 0b
+		"ftbchunks:allow_mob_griefing": 0b
+		"ftbchunks:allow_fake_players": 0b
+		"ftbchunks:allow_named_fake_players": [ ]
+		"ftbchunks:allow_fake_players_by_id": 1b
+		"ftbchunks:allow_pvp": 1b
+		"ftbchunks:block_edit_and_interact_mode": "allies"
+		"ftbchunks:entity_interact_mode": "allies"
+		"ftbchunks:nonliving_entity_attack_mode": "allies"
+		"ftbchunks:claim_visibility": "public"
+		"ftbchunks:location_mode": "allies"
+		"ftbteams:display_name": "Player539"
+		"ftbteams:description": ""
+		"ftbteams:color": "#59A1FF"
+		"ftbteams:free_to_join": 0b
+		"ftbteams:max_msg_history_size": 1000
+	}
+	message_history: [ ]
+	extra: { }
+}

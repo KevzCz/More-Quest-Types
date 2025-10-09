@@ -1,0 +1,6 @@
+/puffish_skills experience add @p puffish_skills:combat 200
+/puffish_skills skills unlock @p puffish_skills:combat -1_4
+/puffish_skills experience add @p puffish_skills:combat 200
+/puffish_skills experience set @p puffish_skills:combat 200
+/puffish_skills experience set @p puffish_skills:combat 250
+/tag @e[type=zombie] add Hello

@@ -1,0 +1,118 @@
+# Don't change this! Version used to track needed updates.
+version = 0
+stamina_bar_display = "ICON"
+show_full_stamina_bar = true
+origin = "BOTTOM_MIDDLE"
+fill_direction = "LEFT_TO_RIGHT"
+dynamically_adjust_to_armor_bar = true
+dynamically_adjust_to_air_bar = true
+
+[iconBarSettings]
+offset_x = 91
+offset_y = -39
+max_icon_amount_per_bar = 10
+reverse_stack_direction = true
+
+[smoothBarSettings]
+show_current_value_overlay = false
+show_icon = false
+enable_smooth_animation = true
+
+[smoothBarSettings.positionSettings]
+offsets_x = [
+    [ 0, -91 ]
+]
+offsets_y = [
+    [ 0, -45 ]
+]
+
+[smoothBarSettings.textureSettings]
+
+[smoothBarSettings.textureSettings.backgroundTextureSettings]
+texture_heights = [
+    [ 0, 5 ]
+]
+texture_widths = [
+    [ 0, 182 ]
+]
+texture_ids = [
+    [ 0, "staminaattributes:textures/gui/sprites/hud/horizontal_stamina_background.png" ]
+]
+
+[smoothBarSettings.textureSettings.progressTextureSettings]
+offset_x = 0
+offset_y = 0
+texture_heights = [
+    [ 0, 5 ]
+]
+texture_widths = [
+    [ 0, 182 ]
+]
+progress_decrease_animation_texture_ids = [
+    [ 0, "staminaattributes:textures/gui/sprites/hud/horizontal_stamina_progress_decrease_animation.png" ]
+]
+progress_increase_animation_texture_ids = [
+    [ 0, "staminaattributes:textures/gui/sprites/hud/horizontal_stamina_progress_increase_animation.png" ]
+]
+progress_increase_value_texture_ids = [
+    [ 0, "staminaattributes:textures/gui/sprites/hud/horizontal_stamina_progress_increase_value.png" ]
+]
+progress_texture_ids = [
+    [ 0, "staminaattributes:textures/gui/sprites/hud/horizontal_stamina_progress.png" ]
+]
+
+[smoothBarSettings.textureSettings.reservedTextureSettings]
+offset_x = 0
+offset_y = 0
+texture_heights = [
+    [ 0, 5 ]
+]
+texture_widths = [
+    [ 0, 182 ]
+]
+texture_ids = [
+    [ 0, "staminaattributes:textures/gui/sprites/hud/horizontal_stamina_reserved.png" ]
+]
+
+[smoothBarSettings.textureSettings.overlayTextureSettings]
+offset_x = -2
+offset_y = 0
+texture_heights = [
+    [ 0, 5 ]
+]
+texture_widths = [
+    [ 0, 5 ]
+]
+texture_ids = [
+    [ 0, "staminaattributes:textures/gui/sprites/hud/horizontal_stamina_overlay.png" ]
+]
+
+[smoothBarSettings.iconTextureSettings]
+offset_x = 0
+offset_y = 0
+texture_heights = [
+    [ 0, 0 ]
+]
+texture_widths = [
+    [ 0, 0 ]
+]
+texture_ids = [  ]
+
+[smoothBarSettings.animationSettings]
+animation_interval = 1
+max_value_change_is_animated = false
+
+[numberSettings]
+show_number = false
+show_max_value = false
+show_when_stamina_full = true
+offset_x = 0
+offset_y = -46
+
+[numberSettings.color]
+# Red component, 0 to 255
+r = 150
+# Green component, 0 to 255
+g = 150
+# Blue component, 0 to 255
+b = 150

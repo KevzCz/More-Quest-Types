@@ -1,0 +1,26 @@
+{
+	version: 1
+	uuid: "ac41f76cb1dd32f9a5d33eb94da3e653"
+	name: "Player204#ac41f76c"
+	lock: false
+	rewards_blocked: false
+	task_progress: {
+		5548D6872808267D: 200
+	}
+	started: {
+		784A22E60FBE2CD3: 1759652364657L
+		0000000000000001: 1759652364657L
+		5548D6872808267D: 1759652364657L
+		30787968D8886B91: 1759652364657L
+	}
+	completed: {
+		784A22E60FBE2CD3: 1759652373526L
+		5548D6872808267D: 1759652373526L
+	}
+	claimed_rewards: { }
+	player_data: {
+		ac41f76cb1dd32f9a5d33eb94da3e653: {
+			can_edit: 1b
+		}
+	}
+}

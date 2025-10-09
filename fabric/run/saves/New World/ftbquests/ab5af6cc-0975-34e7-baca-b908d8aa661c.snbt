@@ -1,0 +1,16 @@
+{
+	version: 1
+	uuid: "ab5af6cc097534e7bacab908d8aa661c"
+	name: "Player354#ab5af6cc"
+	lock: false
+	rewards_blocked: false
+	task_progress: { }
+	started: { }
+	completed: { }
+	claimed_rewards: { }
+	player_data: {
+		ab5af6cc097534e7bacab908d8aa661c: {
+			can_edit: 1b
+		}
+	}
+}

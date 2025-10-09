@@ -1,0 +1,8 @@
+{
+  "debug": false,
+  "permissionsLevels": {
+    "read_only": 1,
+    "edit_on_player": 4,
+    "use": 2
+  }
+}

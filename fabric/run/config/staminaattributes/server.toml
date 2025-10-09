@@ -1,0 +1,18 @@
+# Don't change this! Version used to track needed updates.
+version = 0
+item_use_cooldown_when_no_stamina = 20
+jumping_requires_stamina = true
+sprinting_requires_stamina = true
+
+[tickCosts]
+stamina_cost_sprinting = 0.05
+stamina_cost_sneaking = 0.05
+stamina_cost_walking = 0.0
+stamina_cost_swimming = 0.0
+stamina_cost_walking_underwater = 0.0
+stamina_cost_walking_in_water = 0.05
+stamina_cost_climbing = 0.05
+
+[actionCosts]
+stamina_cost_sprint_jumping = 1.0
+stamina_cost_jumping = 1.0

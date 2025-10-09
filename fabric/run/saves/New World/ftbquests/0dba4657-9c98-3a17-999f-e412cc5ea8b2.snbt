@@ -1,0 +1,26 @@
+{
+	version: 1
+	uuid: "0dba46579c983a17999fe412cc5ea8b2"
+	name: "Player816#0dba4657"
+	lock: false
+	rewards_blocked: false
+	task_progress: {
+		5548D6872808267D: 200
+	}
+	started: {
+		784A22E60FBE2CD3: 1759652688414L
+		0000000000000001: 1759652688414L
+		5548D6872808267D: 1759652688414L
+		30787968D8886B91: 1759652688414L
+	}
+	completed: {
+		784A22E60FBE2CD3: 1759652697677L
+		5548D6872808267D: 1759652697677L
+	}
+	claimed_rewards: { }
+	player_data: {
+		0dba46579c983a17999fe412cc5ea8b2: {
+			can_edit: 1b
+		}
+	}
+}

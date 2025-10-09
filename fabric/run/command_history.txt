@@ -1,0 +1,21 @@
+/puffish_skills experience add @p puffish_skills:combat 100
+/tag @e[type=zombie] add hello
+/tag @e[type=zombie] add Hello
+/tag @e[type=zombie] add hello
+/blabber dialogue start kevs:illustration_tests
+/blabber dialogue start kevs:illustration_tests @p
+/blabber dialogue start kevs:illustration_tests @p @p
+/reload
+/blabber dialogue start kevs:illustration_tests @p @p
+/blabber dialogue start kevs:illustration_tests @p @e[type=zombie,limit=1,sort=nearest]
+/blabber dialogue start kevs:illustration_tests @p
+/blabber dialogue start kevs:illustration_tests @p @p
+/puffish_skills experience add @p puffish_skills:combat 200
+/tag @e[type=zombie] add hello
+/puffish_skills experience add @p puffish_skills:combat 200
+/puffish_skills experience set @p puffish_skills:combat 0
+/puffish_skills experience set @p puffish_skills:combat 5
+/puffish_skills experience set @p puffish_skills:combat 100
+/puffish_skills experience set @p puffish_skills:combat 200
+/puffish_skills experience set @p puffish_skills:combat 150
+/puffish_skills experience set @p puffish_skills:combat 200
