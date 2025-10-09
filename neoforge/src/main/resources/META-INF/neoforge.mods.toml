@@ -1,15 +1,15 @@
 modLoader = "javafml"
 loaderVersion = "[4,)"
 #issueTrackerURL = ""
-license = "Insert License Here"
+license = "MIT"
 
 [[mods]]
 modId = "more_quest_types"
 version = "${version}"
 displayName = "More Quest Types"
-authors = "Me!"
+authors = "KevzCz"
 description = '''
-This is an example description! Tell everyone what your mod is about!
+Add new tasks and rewards to ftbquests!
 '''
 logoFile = "assets/more_quest_types/icon.png"
 

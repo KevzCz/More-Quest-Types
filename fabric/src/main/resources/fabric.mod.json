@@ -5,13 +5,13 @@
   "name": "More Quest Types",
   "description": "Adds new tasks and rewards!",
   "authors": [
-    "Me!"
+    "KevzCz"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://curseforge.com/minecraft/mc-mods/more-quest-types",
+    "sources": "https://github.com/KevzCz/More-Quest-Types"
   },
-  "license": "CC0-1.0",
+  "license": "MIT",
   "icon": "assets/more_quest_types/icon.png",
   "environment": "*",
   "entrypoints": {
