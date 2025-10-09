@@ -31,6 +31,10 @@ logs/
 crash-reports/
 config/
 mods/
+fabric/.gradle
+fabric/build
+neoforge/.gradle
+neoforge/.build
 # If you keep custom dev configs in repo, comment the line above
 
 # ---- Other common ----

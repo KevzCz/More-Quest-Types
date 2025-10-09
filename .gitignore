@@ -31,10 +31,38 @@ logs/
 crash-reports/
 config/
 mods/
-# If you keep custom dev configs in repo, comment the line above
+fabric/.gradle
+fabric/build
+neoforge/.gradle
+neoforge/.build
+
 
 # ---- Other common ----
 *.log
 *.lock
 *.tmp
 *.bak
+
+
+classes/
+
+# eclipse
+
+*.launch
+
+
+# vscode
+
+bin/
+
+
+*.DS_Store
+
+
+# java
+
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
+
