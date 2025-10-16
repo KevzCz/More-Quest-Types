@@ -6,6 +6,7 @@
   "client": [
   ],
   "mixins": [
+    "LivingEntityLastDamageMixin"
   ],
   "injectors": {
     "defaultRequire": 1

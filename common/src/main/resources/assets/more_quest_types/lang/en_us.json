@@ -3,6 +3,8 @@
   "ftbquests.task.ftbquests.skills_level": "Level",
   "ftbquests.task.ftbquests.kill_advanced": "Advanced Kill Entity",
   "ftbquests.task.ftbquests.dialogue": "Dialogue",
+  "ftbquests.task.ftbquests.attributes": "Attribute",
+  "ftbquests.task.ftbquests.damage": "Damage",
 
   "ftbquests.reward.ftbquests.skills_level": "Level",
   "ftbquests.reward.ftbquests.dialogue": "Dialogue",
@@ -20,9 +22,12 @@
   "ftbquests.task.morequesttypes.adv_kill.min_tags": "Minimum Required Tags",
   "ftbquests.task.morequesttypes.adv_kill.nbt": "NBT Filter",
   "ftbquests.task.morequesttypes.adv_kill.tags_csv": "Scoreboard Tags ( Divided by , )",
+  "ftbquests.task.morequesttypes.adv_kill.structure": "Inside structure",
+  "ftbquests.task.morequesttypes.adv_kill.biome": "Inside Biome",
+  "ftbquests.task.morequesttypes.adv_kill.dimension": "Inside Dimension",
   "ftbquests.task.ftbquests.kill_advanced.custom_name": "Entity Name",
   "ftbquests.task.ftbquests.kill_advanced.entity": "Entity",
-  "ftbquests.task.ftbquests.kill_advanced.entity_type_tag": "Entity Tag",
+  "ftbquests.task.ftbquests.kill_advanced.entity_type_tag": "Entity Type Tag",
   "ftbquests.task.ftbquests.kill_advanced.value": "Count",
 
   "ftbquests.task.ftbquests.interact_entity.entity": "Entity",
@@ -56,5 +61,21 @@
   "ftbquests.reward.morequesttypes.skills_level.title": "%s → %s (%s)",
   "ftbquests.reward.morequesttypes.skills_level.category": "Category ID",
   "ftbquests.reward.morequesttypes.skills_level.kind": "Kind",
-  "ftbquests.reward.morequesttypes.skills_level.amount": "Amount"
+  "ftbquests.reward.morequesttypes.skills_level.amount": "Amount",
+
+
+  "ftbquests.morequesttypes.task.attributes.title": "%1$s %2$s %3$s",
+  "ftbquests.task.attributes.attribute": "Attribute",
+  "ftbquests.task.attributes.operator": "Operator",
+  "ftbquests.task.attributes.amount": "Amount",
+
+  "ftbquests.morequesttypes.task.damage.title": "Deal %1$s damage to %2$s (%3$s)",
+
+  "ftbquests.task.damage.mode": "Mode",
+  "ftbquests.task.damage.value": "Damage Required",
+  "ftbquests.task.damage.held_item": "Held Item",
+  "ftbquests.task.damage.held_item_tag": "Held Item Tag",
+  "ftbquests.task.ftbquests.damage.custom_name": "Entity Name",
+  "ftbquests.task.ftbquests.damage.entity": "Entity",
+  "ftbquests.task.ftbquests.damage.entity_type_tag": "Entity Type Tag"
 }

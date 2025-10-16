@@ -15,7 +15,8 @@ public final class MoreTasksTypes {
     public static TaskType SKILLS_LEVEL;
     public static TaskType INTERACT_ENTITY;
     public static TaskType DIALOGUE;
-
+    public static TaskType ATTRIBUTES;
+    public static TaskType DAMAGE;
     public static void init() {
         TIMER = TaskTypes.register(
                 FTBQuestsAPI.rl("timer"),
@@ -30,7 +31,13 @@ public final class MoreTasksTypes {
                     () -> Icon.getIcon("minecraft:item/experience_bottle")
             );
         }
-
+        if (BlabberCompat.isLoaded()){
+            DIALOGUE = TaskTypes.register(
+                    FTBQuestsAPI.rl("dialogue"),
+                    DialogueTask::new,
+                    () -> Icon.getIcon("minecraft:item/writable_book")
+            );
+        }
         KILL_ADVANCED = TaskTypes.register(
                 FTBQuestsAPI.rl("kill_advanced"),
                 AdvancedKillTask::new,
@@ -42,12 +49,15 @@ public final class MoreTasksTypes {
                 InteractEntityTask::new,
                 () -> Icon.getIcon("minecraft:item/lead")
         );
-        if (BlabberCompat.isLoaded()){
-            DIALOGUE = TaskTypes.register(
-                    FTBQuestsAPI.rl("dialogue"),
-                    DialogueTask::new,
-                    () -> Icon.getIcon("minecraft:item/writable_book")
-            );
-        }
+        ATTRIBUTES = TaskTypes.register(
+                FTBQuestsAPI.rl("attributes"),
+                AttributesTask::new,
+                () -> Icon.getIcon("minecraft:item/iron_chestplate")
+        );
+        DAMAGE = TaskTypes.register(
+                FTBQuestsAPI.rl("damage"),
+                DamageTask::new,
+                () -> Icon.getIcon("minecraft:item/wooden_sword")
+        );
     }
 }
