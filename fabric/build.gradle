@@ -37,7 +37,6 @@ dependencies {
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 
     modImplementation("dev.ftb.mods:ftb-library-fabric:${rootProject.ftb_library_version}") { transitive false }
-
     modImplementation("dev.ftb.mods:ftb-teams-fabric:${rootProject.ftb_teams_version}") { transitive false }
     modImplementation("dev.ftb.mods:ftb-quests-fabric:${rootProject.ftb_quests_version}") { transitive false }
     modCompileOnly "curse.maven:puffish-skills-835091:7038166"

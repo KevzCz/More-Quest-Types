@@ -308,7 +308,7 @@ public class AdvancedKillTask extends KillTask {
         return entityTypeTag == null ? "" : entityTypeTag.location().toString();
     }
 
-    private static Icon iconForEntityType(ResourceLocation typeId) {
+    public static Icon iconForEntityType(ResourceLocation typeId) {
         return ENTITY_ICONS.computeIfAbsent(typeId, k -> {
             EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(typeId);
             if (entityType.equals(EntityType.PLAYER)) return Icons.PLAYER;
@@ -423,7 +423,6 @@ public class AdvancedKillTask extends KillTask {
         }
         return out;
     }
-
     private boolean nameMatchOK(LivingEntity e) {
         if (!customName.isEmpty()) {
             if (e instanceof Player p) return p.getGameProfile().getName().equals(customName);

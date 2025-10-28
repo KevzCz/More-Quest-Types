@@ -4,7 +4,7 @@ import dev.architectury.event.EventResult;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.pixeldreamstudios.morequesttypes.interact.InteractEventBuffer;
+import net.pixeldreamstudios.morequesttypes.event.InteractEventBuffer;
 
 public final class InteractEntityHooksFabric {
 

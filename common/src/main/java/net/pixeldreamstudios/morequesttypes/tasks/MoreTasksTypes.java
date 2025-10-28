@@ -17,6 +17,11 @@ public final class MoreTasksTypes {
     public static TaskType DIALOGUE;
     public static TaskType ATTRIBUTES;
     public static TaskType DAMAGE;
+    public static TaskType USE_ITEM;
+    public static TaskType HOLD_ITEM;
+    public static TaskType FIND_ENTITY;
+    public static TaskType CHECK_QUEST;
+    public static TaskType BREAK_BLOCK;
     public static void init() {
         TIMER = TaskTypes.register(
                 FTBQuestsAPI.rl("timer"),
@@ -58,6 +63,31 @@ public final class MoreTasksTypes {
                 FTBQuestsAPI.rl("damage"),
                 DamageTask::new,
                 () -> Icon.getIcon("minecraft:item/wooden_sword")
+        );
+        USE_ITEM = TaskTypes.register(
+                FTBQuestsAPI.rl("use_item"),
+                UseItemTask::new,
+                () -> Icon.getIcon("minecraft:item/lead")
+        );
+        HOLD_ITEM = TaskTypes.register(
+                FTBQuestsAPI.rl("hold_item"),
+                HoldItemTask::new,
+                () -> Icon.getIcon("minecraft:item/totem_of_undying")
+        );
+        FIND_ENTITY = TaskTypes.register(
+                FTBQuestsAPI.rl("find_entity"),
+                FindEntityTask::new,
+                () -> Icon.getIcon("minecraft:item/spyglass")
+        );
+        CHECK_QUEST = TaskTypes.register(
+                FTBQuestsAPI.rl("check_quest"),
+                CheckQuestTask::new,
+                () -> Icon.getIcon("ftbquests:item/book")
+        );
+        BREAK_BLOCK = TaskTypes.register(
+                FTBQuestsAPI.rl("break_block"),
+                BreakBlockTask::new,
+                () -> Icon.getIcon("minecraft:item/iron_pickaxe")
         );
     }
 }

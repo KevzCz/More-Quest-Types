@@ -1,4 +1,4 @@
-package net.pixeldreamstudios.morequesttypes.damage;
+package net.pixeldreamstudios.morequesttypes.event;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;

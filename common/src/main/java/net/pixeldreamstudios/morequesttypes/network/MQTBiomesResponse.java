@@ -9,9 +9,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
-import net.pixeldreamstudios.morequesttypes.tasks.AdvancedKillTask;
-import net.pixeldreamstudios.morequesttypes.tasks.DamageTask;
-import net.pixeldreamstudios.morequesttypes.tasks.InteractEntityTask;
+import net.pixeldreamstudios.morequesttypes.tasks.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +38,9 @@ public record MQTBiomesResponse(List<String> data) implements CustomPacketPayloa
                 AdvancedKillTask.syncKnownBiomeList(data);
                 DamageTask.syncKnownBiomeList(data);
                 InteractEntityTask.syncKnownBiomeList(data);
+                UseItemTask.syncKnownBiomeList(data);
+                HoldItemTask.syncKnownBiomeList(data);
+                FindEntityTask.syncKnownBiomeList(data);
         });
     }
 }

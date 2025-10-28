@@ -31,7 +31,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import net.pixeldreamstudios.morequesttypes.damage.DamageEventBuffer;
+import net.pixeldreamstudios.morequesttypes.event.DamageEventBuffer;
 
 import java.util.ArrayList;
 import java.util.Comparator;

@@ -8,9 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
-import net.pixeldreamstudios.morequesttypes.tasks.AdvancedKillTask;
-import net.pixeldreamstudios.morequesttypes.tasks.DamageTask;
-import net.pixeldreamstudios.morequesttypes.tasks.InteractEntityTask;
+import net.pixeldreamstudios.morequesttypes.tasks.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +27,7 @@ public record MQTWorldsResponse(List<String> data) implements CustomPacketPayloa
 
     public static MQTWorldsResponse create(MinecraftServer server) {
         var list = new ArrayList<String>();
-        // Enumerate actual Level keys (e.g. minecraft:overworld, minecraft:the_nether, ...)
-        for (var key : server.levelKeys()) { // Set<ResourceKey<Level>>
+        for (var key : server.levelKeys()) {
             list.add(key.location().toString());
         }
         list.sort(String::compareTo);
@@ -43,6 +40,9 @@ public record MQTWorldsResponse(List<String> data) implements CustomPacketPayloa
             AdvancedKillTask.syncKnownDimensionList(data);
             DamageTask.syncKnownDimensionList(data);
             InteractEntityTask.syncKnownDimensionList(data);
+            UseItemTask.syncKnownDimensionList(data);
+            HoldItemTask.syncKnownDimensionList(data);
+            FindEntityTask.syncKnownDimensionList(data);
         });
     }
 }

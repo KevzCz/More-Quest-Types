@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
+import net.pixeldreamstudios.morequesttypes.tasks.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,9 +40,12 @@ public record MQTStructuresResponse(List<String> data) implements CustomPacketPa
     public static void handle(MQTStructuresResponse self, NetworkManager.PacketContext ctx) {
         ctx.queue(() -> {
             var list = self.data();
-            net.pixeldreamstudios.morequesttypes.tasks.AdvancedKillTask.syncKnownStructureList(list);
-            net.pixeldreamstudios.morequesttypes.tasks.DamageTask.syncKnownStructureList(list);
-            net.pixeldreamstudios.morequesttypes.tasks.InteractEntityTask.syncKnownStructureList(list);
+            AdvancedKillTask.syncKnownStructureList(list);
+            DamageTask.syncKnownStructureList(list);
+            InteractEntityTask.syncKnownStructureList(list);
+            UseItemTask.syncKnownStructureList(list);
+            HoldItemTask.syncKnownStructureList(list);
+            FindEntityTask.syncKnownStructureList(list);
         });
     }
 }

@@ -13,8 +13,12 @@ public final class MoreRewardTypes {
     public static RewardType DIALOGUE;
     public static RewardType SKILLS_LEVEL;
 
+    public static RewardType COMPLETE_OBJECT;
+    public static RewardType PLAY_SOUND;
+    public static RewardType LOOT_TABLE;
+
     public static void init() {
-        if(BlabberCompat.isLoaded()) {
+        if (BlabberCompat.isLoaded()) {
             DIALOGUE = RewardTypes.register(
                     FTBQuestsAPI.rl("dialogue"),
                     DialogueReward::new,
@@ -28,5 +32,21 @@ public final class MoreRewardTypes {
                     () -> Icon.getIcon("minecraft:item/experience_bottle")
             );
         }
+
+        COMPLETE_OBJECT = RewardTypes.register(
+                FTBQuestsAPI.rl("complete_object"),
+                CompleteObjectReward::new,
+                () -> Icon.getIcon("ftbquests:item/book")
+        );
+        PLAY_SOUND = RewardTypes.register(
+                FTBQuestsAPI.rl("play_sound"),
+                PlaySoundReward::new,
+                () -> Icon.getIcon("minecraft:block/sculk_catalyst_top_bloom")
+        );
+        LOOT_TABLE = RewardTypes.register(
+                FTBQuestsAPI.rl("loot_table"),
+                LootTableReward::new,
+                () -> Icon.getIcon("minecraft:item/chest_minecart")
+        );
     }
 }

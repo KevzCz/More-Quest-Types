@@ -6,9 +6,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
-import net.pixeldreamstudios.morequesttypes.network.MQTStructuresResponse;
-import net.pixeldreamstudios.morequesttypes.network.MQTWorldsResponse;
-import net.pixeldreamstudios.morequesttypes.network.MQTBiomesResponse;
+import net.pixeldreamstudios.morequesttypes.network.*;
 
 @EventBusSubscriber(modid = MoreQuestTypes.MOD_ID)
 public final class ServerLoginHooksImpl {
@@ -22,5 +20,8 @@ public final class ServerLoginHooksImpl {
         NetworkManager.sendToPlayer(sp, MQTStructuresResponse.create(server));
         NetworkManager.sendToPlayer(sp, MQTWorldsResponse.create(server));
         NetworkManager.sendToPlayer(sp, MQTBiomesResponse.create(server));
+        NetworkManager.sendToPlayer(sp, MQTSoundsResponse.create(server));
+        NetworkManager.sendToPlayer(sp, MQTLoottablesResponse.create(server));
+
     }
 }

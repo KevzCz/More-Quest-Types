@@ -5,7 +5,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
-import net.pixeldreamstudios.morequesttypes.interact.InteractEventBuffer;
+import net.pixeldreamstudios.morequesttypes.event.InteractEventBuffer;
 
 @EventBusSubscriber(modid = MoreQuestTypes.MOD_ID)
 public final class InteractEntityHooksNeoForge {

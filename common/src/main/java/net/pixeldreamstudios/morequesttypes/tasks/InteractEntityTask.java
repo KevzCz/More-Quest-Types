@@ -43,8 +43,8 @@ import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.biome.Biome;
-import net.pixeldreamstudios.morequesttypes.interact.InteractEventBuffer;
-import net.pixeldreamstudios.morequesttypes.interact.InteractEventBuffer.Interaction;
+import net.pixeldreamstudios.morequesttypes.event.InteractEventBuffer;
+import net.pixeldreamstudios.morequesttypes.event.InteractEventBuffer.Interaction;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;

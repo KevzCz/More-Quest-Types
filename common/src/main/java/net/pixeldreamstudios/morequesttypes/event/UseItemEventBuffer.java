@@ -1,7 +1,6 @@
-package net.pixeldreamstudios.morequesttypes.interact;
+package net.pixeldreamstudios.morequesttypes.event;
 
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
@@ -9,34 +8,28 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.UUID;
 
-public final class InteractEventBuffer {
+public final class UseItemEventBuffer {
+    private UseItemEventBuffer() {}
 
-    private static final Map<UUID, ConcurrentHashMap<Long, ConcurrentLinkedQueue<Interaction>>> BUCKETS = new ConcurrentHashMap<>();
+    private static final Map<UUID, ConcurrentHashMap<Long, ConcurrentLinkedQueue<Use>>> BUCKETS = new ConcurrentHashMap<>();
+    private static final Map<UUID, ConcurrentHashMap<Long, Set<InteractionHand>>> SEEN = new ConcurrentHashMap<>();
 
-    private static final class Key {
-        final int id; final InteractionHand hand;
-        Key(int id, InteractionHand hand) { this.id = id; this.hand = hand; }
-        @Override public boolean equals(Object o){ return o instanceof Key k && id==k.id && hand==k.hand; }
-        @Override public int hashCode(){ return Objects.hash(id, hand); }
-    }
-    private static final Map<UUID, ConcurrentHashMap<Long, Set<Key>>> SEEN = new ConcurrentHashMap<>();
+    public record Use(InteractionHand hand, ItemStack stack, long gameTime) {}
 
-    private InteractEventBuffer() {}
-    public static void push(UUID playerId, Entity target, InteractionHand hand, ItemStack stack, long gameTime) {
-
+    public static void push(UUID playerId, InteractionHand hand, ItemStack stack, long gameTime) {
         var seenByTick = SEEN.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
         var seen = seenByTick.computeIfAbsent(gameTime, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
-        if (!seen.add(new Key(target.getId(), hand))) return;
+        if (!seen.add(hand)) return;
 
         var byTick = BUCKETS.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>());
         var q = byTick.computeIfAbsent(gameTime, k -> new ConcurrentLinkedQueue<>());
-        q.add(new Interaction(target, hand, stack.copy(), gameTime));
+        q.add(new Use(hand, stack.copy(), gameTime));
 
         pruneOld(playerId, byTick);
         pruneOld(playerId, seenByTick);
     }
 
-    public static List<Interaction> snapshotLatest(UUID playerId) {
+    public static List<Use> snapshotLatest(UUID playerId) {
         var byTick = BUCKETS.get(playerId);
         if (byTick == null || byTick.isEmpty()) return List.of();
         long latest = byTick.keySet().stream().mapToLong(Long::longValue).max().orElse(Long.MIN_VALUE);
@@ -57,6 +50,4 @@ public final class InteractEventBuffer {
         long keep = latest - 1;
         map.keySet().removeIf(t -> t < keep);
     }
-
-    public record Interaction(Entity entity, InteractionHand hand, ItemStack stack, long gameTime) {}
 }
