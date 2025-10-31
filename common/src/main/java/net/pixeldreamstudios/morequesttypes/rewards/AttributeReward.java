@@ -72,7 +72,6 @@ public final class AttributeReward extends Reward {
         try {
             inst.addPermanentModifier(mod);
         } catch (Throwable t) {
-
             try {
                 inst.addTransientModifier(mod);
             } catch (Throwable ignored) {}
@@ -121,7 +120,7 @@ public final class AttributeReward extends Reward {
             var attr = BuiltInRegistries.ATTRIBUTE.get(attributeId);
             if (attr != null) {
                 String key = attr.getDescriptionId();
-                if (key != null && !key.isEmpty()) {
+                if (!key.isEmpty()) {
                     attrName = Component.translatable(key);
                 } else {
                     attrName = Component.literal(attributeId.toString());
@@ -134,7 +133,6 @@ public final class AttributeReward extends Reward {
 
         return Component.translatable("morequesttypes.reward.attribute.title", Component.literal(valueStr), attrName);
     }
-
 
     private static String signedValue(double v) {
         String s = trimDouble(v);
@@ -167,7 +165,7 @@ public final class AttributeReward extends Reward {
                 .toList();
 
         var ATTRS = NameMap.of(attributeId.toString(), keys.toArray(String[]::new))
-                .name(s -> Component.literal(s))
+                .name(Component::literal)
                 .create();
 
         config.addEnum("attribute", attributeId.toString(), s -> {
@@ -221,4 +219,8 @@ public final class AttributeReward extends Reward {
 
     @Override
     public boolean getExcludeFromClaimAll() { return false; }
+
+    public ResourceLocation getAttributeId() {
+        return attributeId;
+    }
 }

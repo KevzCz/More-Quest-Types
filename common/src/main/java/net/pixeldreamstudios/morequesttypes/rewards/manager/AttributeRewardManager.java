@@ -5,7 +5,6 @@ import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,6 +14,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.pixeldreamstudios.morequesttypes.rewards.AttributeReward;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public final class AttributeRewardManager {
     private AttributeRewardManager() {}
@@ -40,12 +41,26 @@ public final class AttributeRewardManager {
         }
 
         try {
+            Set<ResourceLocation> attrsInRewards = new HashSet<>();
+            if (all != null) {
+                for (QuestObjectBase obj : all) {
+                    if (!(obj instanceof Reward r)) continue;
+                    if (!(r instanceof AttributeReward ar)) continue;
+                    ResourceLocation attrId = ar.getAttributeId();
+                    if (attrId != null) attrsInRewards.add(attrId);
+                }
+            }
+
+            if (attrsInRewards.isEmpty()) return;
+
             RegistryAccess ra = player.server.registryAccess();
             var attrRegistry = ra.registryOrThrow(Registries.ATTRIBUTE);
 
-            for (ResourceLocation attrKey : BuiltInRegistries.ATTRIBUTE.keySet()) {
+            for (ResourceLocation attrKey : attrsInRewards) {
                 try {
-                    var holderOpt = attrRegistry.getHolder(ResourceLocation.tryParse(attrKey.toString()));
+                    var key = ResourceLocation.tryParse(attrKey.toString());
+                    if (key == null) continue;
+                    var holderOpt = attrRegistry.getHolder(key);
                     if (holderOpt.isEmpty()) continue;
                     Holder<Attribute> holder = holderOpt.get();
 
@@ -59,7 +74,6 @@ public final class AttributeRewardManager {
                             try {
                                 modId = mod.id();
                             } catch (Throwable t) {
-
                                 continue;
                             }
                             if (!"morequesttypes".equals(modId.getNamespace())) continue;
@@ -86,7 +100,6 @@ public final class AttributeRewardManager {
                             }
                         }
                     } catch (Throwable ignored) {
-
                     }
                 } catch (Throwable ignored) {}
             }

@@ -20,7 +20,10 @@ public record MQTLoottablesRequest() implements CustomPacketPayload {
     public static void handle(MQTLoottablesRequest self, NetworkManager.PacketContext ctx) {
         ctx.queue(() -> {
             if (ctx.getPlayer() instanceof ServerPlayer sp && sp.getServer() != null) {
-                NetworkManager.sendToPlayer(sp, MQTLoottablesResponse.create(sp.getServer()));
+                var batches = MQTLoottablesResponse.createBatches(sp.getServer());
+                for (var batch : batches) {
+                    NetworkManager.sendToPlayer(sp, batch);
+                }
             }
         });
     }

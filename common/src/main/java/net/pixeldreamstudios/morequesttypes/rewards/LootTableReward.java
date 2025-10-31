@@ -26,16 +26,37 @@ import java.util.List;
 
 public final class LootTableReward extends Reward {
     private static final List<String> KNOWN_LOOT_TABLES = new ArrayList<>();
-    public static void syncKnownLootTableList(List<String> data) {
-        KNOWN_LOOT_TABLES.clear();
+    private static int expectedBatches = 0;
+    private static int receivedBatches = 0;
+
+    public static void syncKnownLootTableList(List<String> data, int batchIndex, int totalBatches) {
+        // First batch - clear and reset
+        if (batchIndex == 0) {
+            KNOWN_LOOT_TABLES.clear();
+            expectedBatches = totalBatches;
+            receivedBatches = 0;
+        }
+
+        // Add this batch's data
         KNOWN_LOOT_TABLES.addAll(data);
+        receivedBatches++;
+
+        // Optional: Log progress for debugging
+        if (receivedBatches < expectedBatches) {
+            System.out.println("Received loot table batch " + (receivedBatches) + " of " + expectedBatches);
+        } else {
+            System.out.println("All " + KNOWN_LOOT_TABLES.size() + " loot tables synced successfully!");
+        }
     }
+
     private String tableId = "minecraft:chests/simple_dungeon";
     private int rolls = 1;
     private boolean respectLuck = true;
     private boolean dropIfFull = true;
+
     public LootTableReward(long id, dev.ftb.mods.ftbquests.quest.Quest q) { super(id, q); }
     @Override public RewardType getType() { return MoreRewardTypes.LOOT_TABLE; }
+
     @Override
     public void claim(ServerPlayer player, boolean notify) {
         var server = player.getServer();
@@ -65,6 +86,7 @@ public final class LootTableReward extends Reward {
             }
         }
     }
+
     @Environment(EnvType.CLIENT)
     @Override
     public void fillConfigGroup(ConfigGroup config) {
