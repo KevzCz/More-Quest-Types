@@ -7,9 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.pixeldreamstudios.morequesttypes.compat.SpellEngineCompat;
 import net.pixeldreamstudios.morequesttypes.rewards.SpellReward;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,11 +23,16 @@ public final class SpellRewardManager {
         var file = teamData.getFile();
         if (file == null) return;
 
+        // Track valid reward IDs while applying/removing
+        Set<Long> validRewardIds = new HashSet<>();
+
         Collection<? extends QuestObjectBase> all = file.getAllObjects();
         if (all != null) {
             for (QuestObjectBase obj : all) {
                 if (!(obj instanceof Reward r)) continue;
                 if (!(r instanceof SpellReward sr)) continue;
+
+                validRewardIds.add(sr.getId());  // Track this reward
 
                 boolean claimed = teamData.isRewardClaimed(player.getUUID(), sr);
                 if (claimed) {
@@ -40,6 +43,8 @@ public final class SpellRewardManager {
             }
         }
 
+        // Early exit if no spell rewards exist
+        if (validRewardIds.isEmpty()) return;
         if (!SpellEngineCompat.isLoaded()) return;
 
         try {
@@ -57,6 +62,11 @@ public final class SpellRewardManager {
                 try {
                     rewardId = Long.parseLong(idPart);
                 } catch (NumberFormatException nfe) {
+                    keysToRemove.add(key);
+                    continue;
+                }
+
+                if (!validRewardIds.contains(rewardId)) {
                     keysToRemove.add(key);
                     continue;
                 }
