@@ -8,6 +8,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
 import net.pixeldreamstudios.morequesttypes.commands.MoreQuestTypesCommands;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.AttributeRewardManager;
+import net.pixeldreamstudios.morequesttypes.rewards.manager.SpellRewardManager;
 
 @Mod(MoreQuestTypes.MOD_ID)
 public final class MoreQuestTypesNeoForge {
@@ -23,7 +24,10 @@ public final class MoreQuestTypesNeoForge {
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            player.getServer().execute(() -> AttributeRewardManager.syncForPlayer(player));
+            player.getServer().execute(() -> {
+                AttributeRewardManager.syncForPlayer(player);
+                SpellRewardManager.syncForPlayer(player);
+            });
         }
     }
 }
