@@ -39,7 +39,7 @@ public final class CompleteObjectReward extends Reward {
                 resolved = List.of(getQuest());
             }
             for (QuestObjectBase obj : resolved) {
-                applyToObject(team, obj, false);
+                applyToObject(team, obj);
             }
         });
     }
@@ -68,12 +68,12 @@ public final class CompleteObjectReward extends Reward {
         return new ArrayList<>(out);
     }
 
-    private static void applyToObject(TeamData team, QuestObjectBase obj, boolean reset) {
+    private static void applyToObject(TeamData team, QuestObjectBase obj) {
         if (obj instanceof Task task) {
-            team.setProgress(task, reset ? 0L : task.getMaxProgress());
+            team.setProgress(task, task.getMaxProgress());
         } else if (obj instanceof Quest quest) {
             for (Task t : quest.getTasksAsList()) {
-                team.setProgress(t, reset ? 0L : t.getMaxProgress());
+                team.setProgress(t, t.getMaxProgress());
             }
         }
     }
@@ -82,7 +82,7 @@ public final class CompleteObjectReward extends Reward {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
         config.addList("targets", targets, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
-                .setNameKey("ftbquests.reward.morequesttypes.complete_object.targets");
+                .setNameKey("morequesttypes.reward.complete_object.targets");
     }
 
     @Override
@@ -106,7 +106,7 @@ public final class CompleteObjectReward extends Reward {
         } else {
             // Backwards compat: old single "target" field
             String single = nbt.getString("target");
-            if (single != null && !single.isBlank()) targets.add(single);
+            if (!single.isBlank()) targets.add(single);
         }
     }
 

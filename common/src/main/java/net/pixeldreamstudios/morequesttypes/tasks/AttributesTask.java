@@ -2,13 +2,11 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftbquests.client.FTBQuestsClient;
 import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -23,6 +21,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.Collection;
 import java.util.Locale;
@@ -30,36 +29,29 @@ import java.util.Objects;
 
 public final class AttributesTask extends Task {
     public enum Operator { EQ, LE, GE, GT, LT }
-
     private ResourceLocation attributeId = ResourceLocation.withDefaultNamespace("generic.max_health");
     private Operator op = Operator.GE;
     private double amount = 20.0D;
-
     public AttributesTask(long id, dev.ftb.mods.ftbquests.quest.Quest quest) {
         super(id, quest);
     }
-
     @Override
     public TaskType getType() {
         return MoreTasksTypes.ATTRIBUTES;
     }
-
     @Override
     public long getMaxProgress() {
         return 100L;
     }
-
     @Override
     public boolean hideProgressNumbers() {
         return false;
     }
-
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getButtonText() {
         return Component.literal(trim(amount));
     }
-
     private static String trim(double v) {
         String s = String.format(Locale.ROOT, "%.3f", v);
         int i = s.length() - 1;
@@ -71,13 +63,11 @@ public final class AttributesTask extends Task {
     public String formatMaxProgress() {
         return trim(amount);
     }
-
     @Environment(EnvType.CLIENT)
     @Override
     public String formatProgress(TeamData teamData, long progress) {
         return trim(shownCurrentFromProgress(progress));
     }
-
     @Override
     public int autoSubmitOnPlayerTick() {
         return 20;
@@ -91,19 +81,16 @@ public final class AttributesTask extends Task {
             case EQ     -> target * p;
         };
     }
-
     private double shownCurrentFromProgress(long progress) {
         double p = Math.max(0, Math.min(100, progress)) / 100.0;
         return fromPercent(p, amount, op);
     }
-
     @Override
     public boolean checkOnLogin() {
         return true;
     }
-
     @Override
-    public void submitTask(TeamData teamData, ServerPlayer player, net.minecraft.world.item.ItemStack craftedItem) {
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
@@ -163,8 +150,7 @@ public final class AttributesTask extends Task {
 
     private static double clamp01(double v) {
         if (v < 0.0) return 0.0;
-        if (v > 1.0) return 1.0;
-        return v;
+        return Math.min(v, 1.0);
     }
 
     private static double read(LivingEntity e, Holder<Attribute> holder) {
@@ -178,21 +164,6 @@ public final class AttributesTask extends Task {
         var key = ResourceKey.create(Registries.ATTRIBUTE, rl);
         return reg.getHolder(key).orElse(null);
     }
-
-    @Environment(EnvType.CLIENT)
-    private double lastSeenBest() {
-        try {
-            var clientPlayer = FTBQuestsClient.getClientPlayer();
-            var level = Minecraft.getInstance().level;
-            if (clientPlayer == null || level == null) return 0.0D;
-            Holder<Attribute> holder = resolveAttributeHolder(level.registryAccess(), attributeId);
-            if (holder == null) return 0.0D;
-            return read(clientPlayer, holder);
-        } catch (Throwable t) {
-            return 0.0D;
-        }
-    }
-
     @Environment(EnvType.CLIENT)
     @Override
     public void fillConfigGroup(ConfigGroup config) {
@@ -204,23 +175,23 @@ public final class AttributesTask extends Task {
                 .toList();
 
         var ATTRS = NameMap.of(attributeId.toString(), keys.toArray(String[]::new))
-                .name(s -> Component.literal(s))
+                .name(Component::literal)
                 .create();
 
         config.addEnum("attribute", attributeId.toString(), s -> {
             ResourceLocation rl = ResourceLocation.tryParse(s);
             if (rl != null) attributeId = rl;
-        }, ATTRS).setNameKey("ftbquests.task.attributes.attribute");
+        }, ATTRS).setNameKey("morequesttypes.task.attributes.attribute");
 
         var OPS = NameMap.of(Operator.GE, Operator.values())
                 .name(o -> Component.literal(switch (o) {
                     case EQ -> "="; case LE -> "<="; case GE -> ">="; case GT -> ">"; case LT -> "<";
                 })).create();
         config.addEnum("operator", op, v -> op = v, OPS)
-                .setNameKey("ftbquests.task.attributes.operator");
+                .setNameKey("morequesttypes.task.attributes.operator");
 
         config.addDouble("amount", amount, v -> amount = v, 20.0D, -1_000_000D, 1_000_000D)
-                .setNameKey("ftbquests.task.attributes.amount");
+                .setNameKey("morequesttypes.task.attributes.amount");
     }
 
     @Override
@@ -263,6 +234,6 @@ public final class AttributesTask extends Task {
             case EQ -> "="; case LE -> "<="; case GE -> ">="; case GT -> ">"; case LT -> "<";
         };
         String id = attributeId == null ? "?" : attributeId.toString();
-        return Component.translatable("ftbquests.morequesttypes.task.attributes.title", id, sym, trim(amount));
+        return Component.translatable("morequesttypes.task.attributes.title", id, sym, trim(amount));
     }
 }

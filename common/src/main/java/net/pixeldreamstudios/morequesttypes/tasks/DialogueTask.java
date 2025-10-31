@@ -28,59 +28,46 @@ public final class DialogueTask extends Task {
     private String endStatesCsv = "";
     private transient final Set<UUID> watching = new HashSet<>();
     private transient final Map<UUID, String> lastState = new HashMap<>();
-
     public DialogueTask(long id, dev.ftb.mods.ftbquests.quest.Quest quest) {
         super(id, quest);
     }
-
     @Override
     public TaskType getType() {
         return MoreTasksTypes.DIALOGUE;
     }
-
     @Override
     public long getMaxProgress() {
         return 1L;
     }
-
     @Override
     public boolean hideProgressNumbers() {
         return true;
     }
-
     @Override
     public String formatMaxProgress() {
         return "1";
     }
-
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getButtonText() {
         return Component.empty();
     }
-
     @Environment(EnvType.CLIENT)
     @Override
     public void addMouseOverText(TooltipList list, TeamData teamData) {
-        list.add(Component.translatable("ftbquests.morequesttypes.task.dialogue.id", dialogueId.isBlank() ? "?" : dialogueId));
+        list.add(Component.translatable("morequesttypes.task.dialogue.id_tooltip", dialogueId.isBlank() ? "?" : dialogueId));
         if (!endStatesCsv.isBlank()) {
-            list.add(Component.translatable("ftbquests.morequesttypes.task.dialogue.ends", endStatesCsv));
-        }
-        if (!BlabberCompat.isLoaded()) {
-            list.add(Component.translatable("ftbquests.morequesttypes.task.dialogue.missing_api"));
+            list.add(Component.translatable("morequesttypes.task.dialogue.ends", endStatesCsv));
         }
     }
-
     @Override
     public int autoSubmitOnPlayerTick() {
         return 1;
     }
-
     @Override
     public boolean checkOnLogin() {
         return true;
     }
-
     @Override
     public void submitTask(TeamData teamData, ServerPlayer player, net.minecraft.world.item.ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
@@ -107,57 +94,48 @@ public final class DialogueTask extends Task {
             }
         }
     }
-
     @Override
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
         config.addString("dialogue_id", dialogueId, v -> dialogueId = v.trim(), "")
-                .setNameKey("ftbquests.task.dialogue.dialogue_id");
+                .setNameKey("morequesttypes.task.dialogue.dialogue_id");
         config.addString("end_states_csv", endStatesCsv, v -> endStatesCsv = v.trim(), "")
-                .setNameKey("ftbquests.task.dialogue.end_states_csv");
+                .setNameKey("morequesttypes.task.dialogue.end_states_csv");
     }
-
-
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         if (!dialogueId.isBlank()) nbt.putString("dialogue_id", dialogueId);
         if (!endStatesCsv.isBlank()) nbt.putString("end_states_csv", endStatesCsv);
     }
-
     @Override
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         dialogueId = nbt.getString("dialogue_id");
         endStatesCsv = nbt.getString("end_states_csv");
     }
-
     @Override
     public void writeNetData(RegistryFriendlyByteBuf buffer) {
         super.writeNetData(buffer);
         buffer.writeUtf(dialogueId);
         buffer.writeUtf(endStatesCsv);
     }
-
     @Override
     public void readNetData(RegistryFriendlyByteBuf buffer) {
         super.readNetData(buffer);
         dialogueId = buffer.readUtf();
         endStatesCsv = buffer.readUtf();
     }
-
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getAltTitle() {
         String s = dialogueId.isBlank() ? "?" : dialogueId;
-        return Component.translatable("ftbquests.morequesttypes.task.dialogue.title", s);
+        return Component.translatable("morequesttypes.task.dialogue.title", s);
     }
-
     private static @Nullable ResourceLocation parse(String s) {
         if (s == null || s.isBlank()) return null;
         return ResourceLocation.tryParse(s);
     }
-
     private boolean isAllowedEnd(@Nullable String stateKey) {
         if (stateKey == null) return endStatesCsv.isBlank();
         if (endStatesCsv.isBlank()) return true;

@@ -63,7 +63,7 @@ public final class SkillsLevelReward extends Reward {
         String cat = categoryId.isBlank() ? "?" : categoryId;
         String mode = Integer.toString(amount);
         return Component.translatable(
-                "ftbquests.reward.morequesttypes.skills_level.title",
+                "morequesttypes.reward.skills_level.title",
                 kind.name().toLowerCase(Locale.ROOT),
                 cat,
                 mode
@@ -115,10 +115,10 @@ public final class SkillsLevelReward extends Reward {
 
         var KINDS = NameMap.of(Kind.EXPERIENCE, Kind.values()).create();
         config.addEnum("kind", kind, v -> kind = v, KINDS)
-                .setNameKey("ftbquests.reward.morequesttypes.skills_level.kind");
+                .setNameKey("morequesttypes.reward.skills_level.kind");
 
         config.addInt("amount", amount, v -> amount = v, 0, 0, 1_000_000)
-                .setNameKey("ftbquests.reward.morequesttypes.skills_level.amount");
+                .setNameKey("morequesttypes.reward.skills_level.amount");
 
         final ResourceLocation NONE = ResourceLocation.withDefaultNamespace("none");
 
@@ -145,7 +145,7 @@ public final class SkillsLevelReward extends Reward {
 
         config.addEnum("category", current, rl -> {
             categoryId = rl.equals(NONE) ? "" : rl.toString();
-        }, CAT_MAP).setNameKey("ftbquests.reward.morequesttypes.skills_level.category");
+        }, CAT_MAP).setNameKey("morequesttypes.reward.skills_level.category");
     }
 
     private static ResourceLocation parse(String s) {

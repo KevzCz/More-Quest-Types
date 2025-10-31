@@ -1,4 +1,3 @@
-// net/pixeldreamstudios/morequesttypes/net/MQTStructuresRequest.java
 package net.pixeldreamstudios.morequesttypes.network;
 
 import dev.architectury.networking.NetworkManager;

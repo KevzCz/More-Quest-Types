@@ -26,20 +26,16 @@ import java.util.List;
 
 public final class LootTableReward extends Reward {
     private static final List<String> KNOWN_LOOT_TABLES = new ArrayList<>();
-
     public static void syncKnownLootTableList(List<String> data) {
         KNOWN_LOOT_TABLES.clear();
         KNOWN_LOOT_TABLES.addAll(data);
     }
-
     private String tableId = "minecraft:chests/simple_dungeon";
     private int rolls = 1;
     private boolean respectLuck = true;
     private boolean dropIfFull = true;
-
     public LootTableReward(long id, dev.ftb.mods.ftbquests.quest.Quest q) { super(id, q); }
     @Override public RewardType getType() { return MoreRewardTypes.LOOT_TABLE; }
-
     @Override
     public void claim(ServerPlayer player, boolean notify) {
         var server = player.getServer();
@@ -50,7 +46,7 @@ public final class LootTableReward extends Reward {
 
         var holder = server.reloadableRegistries();
         LootTable table = holder.getLootTable(ResourceKey.create(Registries.LOOT_TABLE, rl));
-        if (table == null || table == LootTable.EMPTY) return;
+        if (table == LootTable.EMPTY) return;
 
         LootParams params = new LootParams.Builder(player.serverLevel())
                 .withParameter(LootContextParams.THIS_ENTITY, player)
@@ -93,16 +89,16 @@ public final class LootTableReward extends Reward {
                 .create();
 
         config.addEnum("loot_table", tableId, v -> tableId = v, TABLES)
-                .setNameKey("ftbquests.reward.loot_table.table");
+                .setNameKey("morequesttypes.reward.loot_table.table");
 
         config.addInt("rolls", rolls, v -> rolls = Math.max(1, v), 1, 1, 64)
-                .setNameKey("ftbquests.reward.loot_table.rolls");
+                .setNameKey("morequesttypes.reward.loot_table.rolls");
 
         config.addBool("respect_luck", respectLuck, v -> respectLuck = v, true)
-                .setNameKey("ftbquests.reward.loot_table.respect_luck");
+                .setNameKey("morequesttypes.reward.loot_table.respect_luck");
 
         config.addBool("drop_if_full", dropIfFull, v -> dropIfFull = v, true)
-                .setNameKey("ftbquests.reward.loot_table.drop_if_full");
+                .setNameKey("morequesttypes.reward.loot_table.drop_if_full");
     }
 
     @Override

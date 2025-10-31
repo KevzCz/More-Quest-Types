@@ -78,16 +78,16 @@ public final class PlaySoundReward extends Reward {
                 .create();
 
         config.addEnum("sound", soundId, v -> soundId = v, SOUNDS)
-                .setNameKey("ftbquests.reward.play_sound.sound");
+                .setNameKey("morequesttypes.reward.play_sound.sound");
 
         var CATS = NameMap.of(SoundSource.PLAYERS, SoundSource.values()).create();
         config.addEnum("category", category, v -> category = v, CATS)
-                .setNameKey("ftbquests.reward.play_sound.category");
+                .setNameKey("morequesttypes.reward.play_sound.category");
 
         config.addDouble("volume", volume, v -> volume = (float) Math.max(0.0, v), 1.0, 0.0, 10.0)
-                .setNameKey("ftbquests.reward.play_sound.volume");
+                .setNameKey("morequesttypes.reward.play_sound.volume");
         config.addDouble("pitch",  pitch,  v -> pitch  = (float) Math.max(0.1, v), 1.0, 0.1, 3.0)
-                .setNameKey("ftbquests.reward.play_sound.pitch");
+                .setNameKey("morequesttypes.reward.play_sound.pitch");
     }
 
     @Override

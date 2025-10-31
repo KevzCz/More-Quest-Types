@@ -5,6 +5,7 @@ import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.IconAnimation;
 import dev.ftb.mods.ftblibrary.icon.ItemIcon;
+import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.task.Task;
@@ -17,6 +18,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
@@ -35,12 +37,10 @@ public final class BreakBlockTask extends Task {
     private transient TagKey<net.minecraft.world.item.Item> toolTag;
     private ItemStack toolItemFilter = ItemStack.EMPTY;
     public BreakBlockTask(long id, Quest quest) { super(id, quest); }
-
     @Override public TaskType getType() { return MoreTasksTypes.BREAK_BLOCK; }
     @Override public long getMaxProgress() { return Math.max(1L, value); }
     @Override public int autoSubmitOnPlayerTick() { return 1; }
-    private transient java.util.Map<java.util.UUID, Long> lastProcessedTick = new java.util.WeakHashMap<>();
-
+    private final transient java.util.Map<java.util.UUID, Long> lastProcessedTick = new java.util.WeakHashMap<>();
     @Override
     public void submitTask(TeamData teamData, net.minecraft.server.level.ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
@@ -69,14 +69,12 @@ public final class BreakBlockTask extends Task {
 
         lastProcessedTick.put(player.getUUID(), latestTick);
     }
-
-
     private boolean matchesBlock(BlockState state) {
         if (state == null) return false;
         if (blockTag != null) return state.is(blockTag);
         if (!blockItemFilter.isEmpty()) {
             var fromBlock = state.getBlock().asItem();
-            return fromBlock != null && ItemStack.isSameItemSameComponents(new ItemStack(fromBlock), blockItemFilter);
+            return ItemStack.isSameItemSameComponents(new ItemStack(fromBlock), blockItemFilter);
         }
         return true;
     }
@@ -108,12 +106,12 @@ public final class BreakBlockTask extends Task {
 
     @Environment(EnvType.CLIENT)
     @Override
-    public net.minecraft.network.chat.MutableComponent getAltTitle() {
+    public MutableComponent getAltTitle() {
         Component blockName;
         if (!blockItemFilter.isEmpty()) blockName = blockItemFilter.getHoverName();
         else if (!blockTagStr.isBlank()) blockName = Component.literal(blockTagStr);
         else blockName = Component.literal("Any Block");
-        return Component.translatable("ftbquests.task.morequesttypes.break_block.title", formatMaxProgress(), blockName);
+        return Component.translatable("morequesttypes.task.break_block.title", formatMaxProgress(), blockName);
     }
 
     @Environment(EnvType.CLIENT)
@@ -130,11 +128,9 @@ public final class BreakBlockTask extends Task {
                 int i = 0;
                 for (var holder : tagSet) {
                     var item = holder.value().asItem();
-                    if (item != null) {
-                        var icon = ItemIcon.getItemIcon(new ItemStack(item));
-                        if (!icon.isEmpty()) icons.add(icon);
-                        if (++i >= 16) break;
-                    }
+                    var icon = ItemIcon.getItemIcon(new ItemStack(item));
+                    if (!icon.isEmpty()) icons.add(icon);
+                    if (++i >= 16) break;
                 }
             });
         }
@@ -148,14 +144,15 @@ public final class BreakBlockTask extends Task {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-        config.addLong("value", value, v -> value = Math.max(1L, v), 1L, 1L, Long.MAX_VALUE);
-        var cisBlock = new dev.ftb.mods.ftbquests.client.ConfigIconItemStack();
-        ((dev.ftb.mods.ftblibrary.config.ConfigValue<ItemStack>) config.add(
+        config.addLong("value", value, v -> value = Math.max(1L, v), 1L, 1L, Long.MAX_VALUE)
+                .setNameKey("morequesttypes.task.break_block.value");
+        var cisBlock = new ConfigIconItemStack();
+        config.add(
                 "block_item", cisBlock, blockItemFilter, v -> {
                     blockItemFilter = v.copy();
                     if (!blockItemFilter.isEmpty()) blockItemFilter.setCount(1);
                 }, ItemStack.EMPTY
-        )).setNameKey("ftbquests.task.morequesttypes.break_block.block_item");
+        ).setNameKey("morequesttypes.task.break_block.block_item");
 
         var BLOCK_TAGS = NameMap.of("",
                 BuiltInRegistries.BLOCK.getTags()
@@ -163,15 +160,15 @@ public final class BreakBlockTask extends Task {
                         .sorted().toArray(String[]::new)
         ).create();
         config.addEnum("block_tag", blockTagStr, v -> { blockTagStr = v; resolveTags(); }, BLOCK_TAGS)
-                .setNameKey("ftbquests.task.morequesttypes.break_block.block_tag");
+                .setNameKey("morequesttypes.task.break_block.block_tag");
 
-        var cisTool = new dev.ftb.mods.ftbquests.client.ConfigIconItemStack();
-        ((dev.ftb.mods.ftblibrary.config.ConfigValue<ItemStack>) config.add(
+        var cisTool = new ConfigIconItemStack();
+        config.add(
                 "tool_item", cisTool, toolItemFilter, v -> {
                     toolItemFilter = v.copy();
                     if (!toolItemFilter.isEmpty()) toolItemFilter.setCount(1);
                 }, ItemStack.EMPTY
-        )).setNameKey("ftbquests.task.morequesttypes.break_block.tool_item");
+        ).setNameKey("morequesttypes.task.break_block.tool_item");
 
         var ITEM_TAGS = NameMap.of("",
                 BuiltInRegistries.ITEM.getTags()
@@ -179,7 +176,7 @@ public final class BreakBlockTask extends Task {
                         .sorted().toArray(String[]::new)
         ).create();
         config.addEnum("tool_tag", toolTagStr, v -> { toolTagStr = v; resolveTags(); }, ITEM_TAGS)
-                .setNameKey("ftbquests.task.morequesttypes.break_block.tool_tag");
+                .setNameKey("morequesttypes.task.break_block.tool_tag");
     }
 
     @Override

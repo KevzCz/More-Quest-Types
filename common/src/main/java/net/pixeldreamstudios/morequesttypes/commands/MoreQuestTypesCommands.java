@@ -98,9 +98,6 @@ public final class MoreQuestTypesCommands {
             for (Task t : quest.getTasksAsList()) {
                 team.setProgress(t, reset ? 0L : t.getMaxProgress());
             }
-            return;
         }
-
-       // cascadeChapterOrGroup(team, obj, reset);
     }
 }

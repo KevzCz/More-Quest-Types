@@ -1,9 +1,11 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
 import com.mojang.datafixers.util.Either;
+import dev.architectury.networking.NetworkManager;
 import dev.architectury.registry.registries.RegistrarManager;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.config.StringConfig;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.IconAnimation;
 import dev.ftb.mods.ftblibrary.icon.Icons;
@@ -38,6 +40,9 @@ import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.biome.Biome;
+import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
+import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
+import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -51,7 +56,7 @@ public class AdvancedKillTask extends KillTask {
     private TagKey<EntityType<?>> entityTypeTag = null;
     private long value = 1;
     private String customName = "";
-    private String scoreboardTagsCsv = "";
+    private final List<String> scoreboardTags = new ArrayList<>();
     private int minTagsRequired = 0;
     private String nbtFilterSnbt = "";
     private transient Tag nbtFilterParsed = null;
@@ -62,21 +67,17 @@ public class AdvancedKillTask extends KillTask {
     private String dimension = "";
     private static final List<String> KNOWN_BIOMES = new ArrayList<>();
     private String biome = "";
-
     public AdvancedKillTask(long id, Quest quest) {
         super(id, quest);
     }
-
     @Override
     public TaskType getType() {
         return MoreTasksTypes.KILL_ADVANCED;
     }
-
     @Override
     public long getMaxProgress() {
         return value;
     }
-
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
@@ -84,7 +85,11 @@ public class AdvancedKillTask extends KillTask {
         if (entityTypeTag != null) nbt.putString("entityTypeTag", entityTypeTag.location().toString());
         nbt.putLong("value", value);
         if (!customName.isEmpty()) nbt.putString("custom_name", customName);
-        if (!scoreboardTagsCsv.isEmpty()) nbt.putString("scoreboard_tags_csv", scoreboardTagsCsv);
+        if (!scoreboardTags.isEmpty()) {
+            ListTag tagList = new ListTag();
+            for (String s : scoreboardTags) tagList.add(StringTag.valueOf(s));
+            nbt.put("scoreboard_tags", tagList);
+        }
         nbt.putInt("min_tags_required", minTagsRequired);
         if (!nbtFilterSnbt.isEmpty()) nbt.putString("nbt_filter_snbt", nbtFilterSnbt);
         String s = getStructure();
@@ -100,16 +105,26 @@ public class AdvancedKillTask extends KillTask {
         entityTypeTag = parseTypeTag(nbt.getString("entityTypeTag"));
         value = nbt.getLong("value");
         customName = nbt.getString("custom_name");
-        scoreboardTagsCsv = nbt.getString("scoreboard_tags_csv");
+        scoreboardTags.clear();
+        if (nbt.contains("scoreboard_tags")) {
+            var list = nbt.getList("scoreboard_tags", Tag.TAG_STRING);
+            for (int i = 0; i < list.size(); i++) {
+                String s = list.getString(i);
+                if (!s.isBlank()) scoreboardTags.add(s.trim());
+            }
+        } else if (nbt.contains("scoreboard_tags_csv")) {
+            String csv = nbt.getString("scoreboard_tags_csv");
+            if (!csv.isBlank()) scoreboardTags.addAll(parseCsv(csv));
+        }
         minTagsRequired = nbt.contains("min_tags_required") ? nbt.getInt("min_tags_required") : 0;
         nbtFilterSnbt = nbt.getString("nbt_filter_snbt");
         parseNbtFilter();
         String s = nbt.getString("structure");
-        if (s != null && !s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s); else structure = null;
         String d = nbt.getString("dimension");
-        dimension = (d == null) ? "" : d.trim();
+        dimension = d.trim();
         String b = nbt.getString("biome");
-        biome = (b == null) ? "" : b.trim();
+        biome = b.trim();
     }
 
     @Override
@@ -119,7 +134,8 @@ public class AdvancedKillTask extends KillTask {
         buf.writeUtf(entityTypeTag == null ? "" : entityTypeTag.location().toString());
         buf.writeVarLong(value);
         buf.writeUtf(customName);
-        buf.writeUtf(scoreboardTagsCsv);
+        buf.writeVarInt(scoreboardTags.size());
+        for (String s : scoreboardTags) buf.writeUtf(s == null ? "" : s);
         buf.writeVarInt(minTagsRequired);
         buf.writeUtf(nbtFilterSnbt);
         buf.writeUtf(getStructure());
@@ -134,12 +150,17 @@ public class AdvancedKillTask extends KillTask {
         entityTypeTag = parseTypeTag(buf.readUtf());
         value = buf.readVarLong();
         customName = buf.readUtf();
-        scoreboardTagsCsv = buf.readUtf();
+        scoreboardTags.clear();
+        int nTags = buf.readVarInt();
+        for (int i = 0; i < nTags; i++) {
+            String s = buf.readUtf();
+            if (!s.isBlank()) scoreboardTags.add(s.trim());
+        }
         minTagsRequired = buf.readVarInt();
         nbtFilterSnbt = buf.readUtf();
         parseNbtFilter();
         String s = buf.readUtf();
-        if (s != null && !s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s); else structure = null;
         dimension = buf.readUtf();
         biome = buf.readUtf();
     }
@@ -147,8 +168,7 @@ public class AdvancedKillTask extends KillTask {
     private void parseNbtFilter() {
         if (nbtFilterSnbt == null || nbtFilterSnbt.isBlank()) { nbtFilterParsed = null; return; }
         try {
-            Tag parsed = TagParser.parseTag(nbtFilterSnbt);
-            nbtFilterParsed = (parsed instanceof CompoundTag) ? parsed : null;
+            nbtFilterParsed = TagParser.parseTag(nbtFilterSnbt);
         } catch (Exception ignored) { nbtFilterParsed = null; }
     }
 
@@ -167,43 +187,43 @@ public class AdvancedKillTask extends KillTask {
     private void setStructure(String resLoc) {
         if (resLoc == null || resLoc.isEmpty()) { this.structure = null; return; }
         this.structure = resLoc.startsWith("#")
-                ? Either.right(TagKey.create(Registries.STRUCTURE, safeStructure(resLoc.substring(1), DEFAULT_STRUCTURE)))
-                : Either.left(ResourceKey.create(Registries.STRUCTURE, safeStructure(resLoc, DEFAULT_STRUCTURE)));
+                ? Either.right(TagKey.create(Registries.STRUCTURE, safeStructure(resLoc.substring(1))))
+                : Either.left(ResourceKey.create(Registries.STRUCTURE, safeStructure(resLoc)));
     }
 
     private String getStructure() {
         if (this.structure == null) return "";
         return this.structure.map(
                 key -> key.location().toString(),
-                tag -> "#" + String.valueOf(tag.location())
+                tag -> "#" + tag.location()
         );
     }
 
-    private ResourceLocation safeStructure(String str, ResourceLocation fallback) {
+    private ResourceLocation safeStructure(String str) {
         ResourceLocation rl = ResourceLocation.tryParse(str);
-        return rl != null ? rl : fallback;
+        return rl != null ? rl : AdvancedKillTask.DEFAULT_STRUCTURE;
     }
 
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            dev.architectury.networking.NetworkManager.sendToServer(
-                    new net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest()
+            NetworkManager.sendToServer(
+                    new MQTStructuresRequest()
             );
         }
     }
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            dev.architectury.networking.NetworkManager.sendToServer(
-                    new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest()
+            NetworkManager.sendToServer(
+                    new MQTWorldsRequest()
             );
         }
     }
 
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            dev.architectury.networking.NetworkManager.sendToServer(
-                    new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest()
+            NetworkManager.sendToServer(
+                    new MQTBiomesRequest()
             );
         }
     }
@@ -242,7 +262,7 @@ public class AdvancedKillTask extends KillTask {
         }
 
         if (ENTITY_TAG_MAP == null) {
-            var list = new ArrayList<String>(List.of(""));
+            var list = new ArrayList<>(List.of(""));
             list.addAll(BuiltInRegistries.ENTITY_TYPE.getTags()
                     .map(p -> p.getFirst().location().toString())
                     .sorted()
@@ -254,12 +274,12 @@ public class AdvancedKillTask extends KillTask {
         config.addEnum("entity_type_tag", getTypeTagStr(), v -> entityTypeTag = parseTypeTag(v), ENTITY_TAG_MAP);
         config.addLong("value", value, v -> value = v, 1L, 1L, Long.MAX_VALUE);
         config.addString("custom_name", customName, v -> customName = v, "");
-        config.addString("scoreboard_tags_csv", scoreboardTagsCsv, v -> scoreboardTagsCsv = v.trim(), "")
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.tags_csv");
+        config.addList("scoreboard_tags", scoreboardTags, new StringConfig(), "")
+                .setNameKey("morequesttypes.task.tags_csv");
         config.addInt("min_tags_required", minTagsRequired, v -> minTagsRequired = Math.max(0, v), 0, 0, 64)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.min_tags");
+                .setNameKey("morequesttypes.task.min_tags");
         config.addString("nbt_filter_snbt", nbtFilterSnbt, v -> { nbtFilterSnbt = v; parseNbtFilter(); }, "")
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.nbt");
+                .setNameKey("morequesttypes.task.nbt");
 
         maybeRequestStructureSync();
         List<String> structureChoices = new ArrayList<>();
@@ -269,7 +289,7 @@ public class AdvancedKillTask extends KillTask {
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "None" : s))
                 .create();
         config.addEnum("structure", getStructure(), this::setStructure, STRUCTURE_MAP)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.structure");
+                .setNameKey("morequesttypes.task.structure");
 
         maybeRequestWorldSync();
         List<String> dimChoices = new ArrayList<>();
@@ -285,7 +305,7 @@ public class AdvancedKillTask extends KillTask {
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
                 .create();
         config.addEnum("dimension", dimension, v -> dimension = v, DIMENSION_MAP)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.dimension");
+                .setNameKey("morequesttypes.task.dimension");
 
         maybeRequestBiomeSync();
         List<String> biomeChoices = new ArrayList<>();
@@ -301,7 +321,7 @@ public class AdvancedKillTask extends KillTask {
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
                 .create();
         config.addEnum("biome", biome, v -> biome = v, BIOME_MAP)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.biome");
+                .setNameKey("morequesttypes.task.biome");
     }
 
     private String getTypeTagStr() {
@@ -345,12 +365,11 @@ public class AdvancedKillTask extends KillTask {
                 : e.getType().is(entityTypeTag) && nameMatchOK(e);
         if (!baseOk) return false;
 
-        if (!scoreboardTagsCsv.isBlank()) {
-            var required = parseCsv(scoreboardTagsCsv);
+        if (!scoreboardTags.isEmpty()) {
             var present = e.getTags();
             int count = 0;
-            for (var r : required) if (present.contains(r)) count++;
-            int need = (minTagsRequired <= 0) ? required.size() : minTagsRequired;
+            for (var r : scoreboardTags) if (present.contains(r)) count++;
+            int need = (minTagsRequired <= 0) ? scoreboardTags.size() : minTagsRequired;
             if (count < need) return false;
         }
 
@@ -465,11 +484,9 @@ public class AdvancedKillTask extends KillTask {
         }
         if (filter instanceof ListTag fList) {
             if (!(actual instanceof ListTag aList)) return false;
-            List<Tag> remaining = new ArrayList<>();
-            for (int i = 0; i < aList.size(); i++) remaining.add(aList.get(i));
+            List<Tag> remaining = new ArrayList<>(aList);
             outer:
-            for (int i = 0; i < fList.size(); i++) {
-                Tag fEl = fList.get(i);
+            for (Tag fEl : fList) {
                 for (int j = 0; j < remaining.size(); j++) {
                     if (nbtSubsetMatches(remaining.get(j), fEl)) {
                         remaining.remove(j);

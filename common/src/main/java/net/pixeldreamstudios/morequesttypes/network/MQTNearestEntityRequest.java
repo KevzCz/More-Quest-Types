@@ -30,9 +30,17 @@ public record MQTNearestEntityRequest(long taskId) implements CustomPacketPayloa
             var file = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE;
             var obj  = file.get(self.taskId());
             if (obj instanceof FindEntityTask t) {
+                var teamOpt = file.getTeamData(sp);
+                if (teamOpt.isEmpty()) return;
+                var team = teamOpt.get();
+                if (team.isCompleted(t)) {
+                    return;
+                }
+
                 double meters = t.nearestDistanceServer(sp);
                 NetworkManager.sendToPlayer(sp, new MQTNearestEntityResponse(self.taskId(), meters));
             }
         });
     }
+
 }

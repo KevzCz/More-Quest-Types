@@ -1,6 +1,7 @@
 package net.pixeldreamstudios.morequesttypes.network;
 
 import dev.architectury.networking.NetworkManager;
+import net.pixeldreamstudios.morequesttypes.network.button.ToggleRewardRequest;
 
 public class MQTNetwork {
     private MQTNetwork() {}
@@ -82,6 +83,13 @@ public class MQTNetwork {
                 MQTLoottablesResponse.STREAM_CODEC,
                 MQTLoottablesResponse::handle
         );
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.C2S,
+                ToggleRewardRequest.TYPE,
+                ToggleRewardRequest.STREAM_CODEC,
+                ToggleRewardRequest::handle
+        );
+
 
     }
 }

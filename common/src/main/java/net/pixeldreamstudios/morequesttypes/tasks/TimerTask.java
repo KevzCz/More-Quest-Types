@@ -5,6 +5,7 @@ import dev.ftb.mods.ftblibrary.util.StringUtils;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
 import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.task.Task;
+import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,20 +13,22 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
 public class TimerTask extends Task {
     private double durationSeconds = 10.0D;
+
     public TimerTask(long id, dev.ftb.mods.ftbquests.quest.Quest quest) {
         super(id, quest);
     }
 
     private long maxTicks() {
-        long ticks = Math.max(1L, Math.round(durationSeconds * 20.0D));
-        return ticks;
+        return Math.max(1L, Math.round(durationSeconds * 20.0D));
     }
 
     @Override
-    public dev.ftb.mods.ftbquests.quest.task.TaskType getType() {
+    public TaskType getType() {
         return MoreTasksTypes.TIMER;
     }
 
@@ -51,14 +54,13 @@ public class TimerTask extends Task {
         return StringUtils.formatDouble(remainingSeconds, true) + "s";
     }
 
-
     @Override
     public int autoSubmitOnPlayerTick() {
         return 1;
     }
 
     @Override
-    public void submitTask(TeamData teamData, net.minecraft.server.level.ServerPlayer player, net.minecraft.world.item.ItemStack craftedItem) {
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
@@ -74,7 +76,6 @@ public class TimerTask extends Task {
         teamData.setProgress(this, Math.min(next, max));
     }
 
-
     @Override
     @Environment(EnvType.CLIENT)
     public void addMouseOverHeader(TooltipList list, TeamData teamData, boolean advanced) {
@@ -87,7 +88,7 @@ public class TimerTask extends Task {
         long p = teamData.getProgress(this);
         long remaining = Math.max(0L, maxTicks() - p);
         double remainS = remaining / 20.0D;
-        list.add(Component.translatable("ftbquests.morequesttypes.task.timer.remaining", StringUtils.formatDouble(remainS, true) + "s"));
+        list.add(Component.translatable("morequesttypes.task.timer.remaining", StringUtils.formatDouble(remainS, true) + "s"));
     }
 
     @Override
@@ -106,7 +107,7 @@ public class TimerTask extends Task {
                 10.0D,
                 0.05D,
                 86400.0D
-        ).setNameKey("ftbquests.task.timer.duration");
+        ).setNameKey("morequesttypes.task.timer.duration");
     }
 
     @Override
@@ -133,5 +134,13 @@ public class TimerTask extends Task {
     public void readNetData(RegistryFriendlyByteBuf buffer) {
         super.readNetData(buffer);
         durationSeconds = Math.max(0.05D, buffer.readDouble());
+    }
+
+    @Override
+    @Environment(EnvType.CLIENT)
+    public Component getAltTitle() {
+        String timeLabel = StringUtils.formatDouble(durationSeconds, true) + "s";
+        String typeName = getType().getDisplayName().getString();
+        return Component.literal( timeLabel + " " + typeName);
     }
 }

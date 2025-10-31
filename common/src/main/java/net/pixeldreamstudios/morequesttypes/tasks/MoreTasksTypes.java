@@ -9,7 +9,6 @@ import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
 
 public final class MoreTasksTypes {
     private MoreTasksTypes() {}
-
     public static TaskType TIMER;
     public static TaskType KILL_ADVANCED;
     public static TaskType SKILLS_LEVEL;
@@ -28,7 +27,6 @@ public final class MoreTasksTypes {
                 TimerTask::new,
                 () -> Icon.getIcon("minecraft:item/clock_00")
         );
-
         if (SkillsCompat.isLoaded()) {
             SKILLS_LEVEL = TaskTypes.register(
                     FTBQuestsAPI.rl("skills_level"),
@@ -48,7 +46,6 @@ public final class MoreTasksTypes {
                 AdvancedKillTask::new,
                 () -> Icon.getIcon("minecraft:item/iron_sword")
         );
-
         INTERACT_ENTITY = TaskTypes.register(
                 FTBQuestsAPI.rl("interact_entity"),
                 InteractEntityTask::new,

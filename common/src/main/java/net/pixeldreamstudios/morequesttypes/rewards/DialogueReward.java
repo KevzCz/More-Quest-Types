@@ -33,7 +33,6 @@ import java.util.Objects;
 
 public final class DialogueReward extends Reward {
     public enum SortMode { NEAREST, FURTHEST, RANDOM }
-
     private String dialogueId = "";
     private String interlocutorType = "";
     private SortMode sort = SortMode.NEAREST;
@@ -42,16 +41,13 @@ public final class DialogueReward extends Reward {
     private int minTagsRequired = 0;
     private String nbtFilterSnbt = "";
     private transient Tag nbtFilterParsed = null;
-
     public DialogueReward(long id, Quest q) {
         super(id, q);
     }
-
     @Override
     public RewardType getType() {
         return MoreRewardTypes.DIALOGUE;
     }
-
     @Override
     public void claim(ServerPlayer player, boolean notify) {
         if (!BlabberCompat.isLoaded()) return;
@@ -61,7 +57,6 @@ public final class DialogueReward extends Reward {
         Entity interlocutor = selectInterlocutor(player);
         BlabberCompat.startDialogue(player, id, interlocutor);
     }
-
     private Entity selectInterlocutor(ServerPlayer player) {
         if (interlocutorType.equalsIgnoreCase("player")) return player;
 
@@ -114,9 +109,7 @@ public final class DialogueReward extends Reward {
         if (nbtFilterParsed != null) {
             var actual = new CompoundTag();
             e.saveWithoutId(actual);
-            if (!(nbtFilterParsed instanceof CompoundTag filter) || !nbtSubsetMatches(actual, filter)) {
-                return false;
-            }
+            return nbtFilterParsed instanceof CompoundTag filter && nbtSubsetMatches(actual, filter);
         }
 
         return true;
@@ -147,12 +140,10 @@ public final class DialogueReward extends Reward {
         if (filter instanceof ListTag fList) {
             if (!(actual instanceof ListTag aList)) return false;
 
-            List<Tag> remaining = new ArrayList<>();
-            for (int i = 0; i < aList.size(); i++) remaining.add(aList.get(i));
+            List<Tag> remaining = new ArrayList<>(aList);
 
             outer:
-            for (int i = 0; i < fList.size(); i++) {
-                Tag fEl = fList.get(i);
+            for (Tag fEl : fList) {
                 for (int j = 0; j < remaining.size(); j++) {
                     if (nbtSubsetMatches(remaining.get(j), fEl)) {
                         remaining.remove(j);
@@ -174,8 +165,7 @@ public final class DialogueReward extends Reward {
             return;
         }
         try {
-            Tag parsed = TagParser.parseTag(nbtFilterSnbt);
-            nbtFilterParsed = (parsed instanceof CompoundTag) ? parsed : null;
+            nbtFilterParsed = TagParser.parseTag(nbtFilterSnbt);
         } catch (Exception ignored) {
             nbtFilterParsed = null;
         }
@@ -186,7 +176,7 @@ public final class DialogueReward extends Reward {
     public Component getAltTitle() {
         String id = dialogueId.isBlank() ? "?" : dialogueId;
         String who = interlocutorType.isBlank() ? "@e" : interlocutorType;
-        return Component.translatable("ftbquests.reward.morequesttypes.dialogue.title",
+        return Component.translatable("morequesttypes.reward.dialogue.title",
                 id, who, sort.name().toLowerCase(Locale.ROOT));
     }
 
@@ -260,11 +250,11 @@ public final class DialogueReward extends Reward {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
         config.addString("dialogue_id", dialogueId, v -> dialogueId = v.trim(), "")
-                .setNameKey("ftbquests.reward.dialogue.dialogue_id");
+                .setNameKey("morequesttypes.reward.dialogue.dialogue_id");
 
         var SORTS = NameMap.of(SortMode.NEAREST, SortMode.values()).create();
         config.addEnum("sort", sort, v -> sort = v, SORTS)
-                .setNameKey("ftbquests.reward.dialogue.sort");
+                .setNameKey("morequesttypes.reward.dialogue.sort");
 
         var ids = BuiltInRegistries.ENTITY_TYPE.keySet().stream()
                 .map(Objects::toString)
@@ -276,16 +266,16 @@ public final class DialogueReward extends Reward {
                         : Component.literal(s))
                 .create();
         config.addEnum("interlocutor_type", interlocutorType, v -> interlocutorType = v.trim(), TYPES)
-                .setNameKey("ftbquests.reward.dialogue.interlocutor_type");
+                .setNameKey("morequesttypes.reward.dialogue.interlocutor_type");
 
-
-        config.addString("custom_name", customName, v -> customName = v.trim(), "");
+        config.addString("custom_name", customName, v -> customName = v.trim(), "")
+                .setNameKey("morequesttypes.reward.dialogue_custom_name");;
         config.addString("scoreboard_tags_csv", scoreboardTagsCsv, v -> scoreboardTagsCsv = v.trim(), "")
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.tags_csv");
+                .setNameKey("morequesttypes.task.tags_csv");
         config.addInt("min_tags_required", minTagsRequired, v -> minTagsRequired = Math.max(0, v), 0, 0, 64)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.min_tags");
+                .setNameKey("morequesttypes.task.min_tags");
         config.addString("nbt_filter_snbt", nbtFilterSnbt, v -> { nbtFilterSnbt = v; parseNbtFilter(); }, "")
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.nbt");
+                .setNameKey("morequesttypes.task.nbt");
     }
 
     private static ResourceLocation parse(String s) {

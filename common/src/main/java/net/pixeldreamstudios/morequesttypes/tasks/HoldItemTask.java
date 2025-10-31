@@ -27,13 +27,11 @@ import java.util.List;
 
 public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     public enum HandMode { ANY, MAIN_HAND, OFF_HAND }
-
     private double durationSeconds = 5.0D;
     private HandMode handMode = HandMode.ANY;
     private ItemStack itemFilter = ItemStack.EMPTY;
     private String itemTagStr = "";
     private transient TagKey<net.minecraft.world.item.Item> itemTag;
-
     private static final ResourceLocation DEFAULT_STRUCTURE = ResourceLocation.withDefaultNamespace("mineshaft");
     private static final List<String> KNOWN_STRUCTURES = new ArrayList<>();
     private Either<ResourceKey<Structure>, TagKey<Structure>> structure = null;
@@ -41,11 +39,8 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     private String dimension = "";
     private static final List<String> KNOWN_BIOMES = new ArrayList<>();
     private String biome = "";
-
     public HoldItemTask(long id, Quest quest) { super(id, quest); }
-
     private long maxTicks() { return Math.max(1L, Math.round(durationSeconds * 20.0D)); }
-
     @Override public TaskType getType() { return MoreTasksTypes.HOLD_ITEM; }
     @Override public long getMaxProgress() { return maxTicks(); }
     @Override public boolean hideProgressNumbers() { return false; }
@@ -56,7 +51,6 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         return StringUtils.formatDouble(remainingSeconds, true) + "s";
     }
     @Override public int autoSubmitOnPlayerTick() { return 1; }
-
     @Override
     public void submitTask(TeamData teamData, net.minecraft.server.level.ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
@@ -93,7 +87,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     private boolean isInsideStructureOrTag(ServerLevel level, net.minecraft.core.BlockPos pos) {
         StructureManager mgr = level.structureManager();
-        return structure == null ? true : structure.map(
+        return structure == null || structure.map(
                 key -> mgr.registryAccess().registryOrThrow(Registries.STRUCTURE).getHolder(key)
                         .map(h -> mgr.getStructureWithPieceAt(pos, h.value()).isValid()).orElse(false),
                 tag -> mgr.registryAccess().registryOrThrow(Registries.STRUCTURE).getTag(tag)
@@ -130,16 +124,16 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     private void setStructure(String resLoc) {
         if (resLoc == null || resLoc.isEmpty()) { structure = null; return; }
         structure = resLoc.startsWith("#")
-                ? Either.right(TagKey.create(Registries.STRUCTURE, safeStructure(resLoc.substring(1), DEFAULT_STRUCTURE)))
-                : Either.left(ResourceKey.create(Registries.STRUCTURE, safeStructure(resLoc, DEFAULT_STRUCTURE)));
+                ? Either.right(TagKey.create(Registries.STRUCTURE, safeStructure(resLoc.substring(1))))
+                : Either.left(ResourceKey.create(Registries.STRUCTURE, safeStructure(resLoc)));
     }
     private String getStructure() {
         if (structure == null) return "";
         return structure.map(k -> k.location().toString(), t -> "#" + String.valueOf(t.location()));
     }
-    private ResourceLocation safeStructure(String s, ResourceLocation fallback) {
+    private ResourceLocation safeStructure(String s) {
         ResourceLocation rl = ResourceLocation.tryParse(s);
-        return rl != null ? rl : fallback;
+        return rl != null ? rl : HoldItemTask.DEFAULT_STRUCTURE;
     }
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
@@ -166,21 +160,21 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         super.fillConfigGroup(config);
 
         config.addDouble("duration_seconds", durationSeconds, v -> durationSeconds = v, 5.0D, 0.05D, 86400.0D)
-                .setNameKey("ftbquests.task.hold_item.duration");
+                .setNameKey("morequesttypes.task.hold_item.duration");
 
         var HANDS = NameMap.of(HandMode.ANY, HandMode.values()).create();
         config.addEnum("hand_mode", handMode, v -> handMode = v, HANDS)
-                .setNameKey("ftbquests.task.hold_item.hand");
+                .setNameKey("morequesttypes.task.hold_item.hand");
 
         dev.ftb.mods.ftbquests.client.ConfigIconItemStack cis = new dev.ftb.mods.ftbquests.client.ConfigIconItemStack();
         ((dev.ftb.mods.ftblibrary.config.ConfigValue<ItemStack>) config.add(
                 "item", cis, itemFilter, v -> { itemFilter = v.copy(); if (!itemFilter.isEmpty()) itemFilter.setCount(1); }, ItemStack.EMPTY
-        )).setNameKey("ftbquests.task.hold_item.item");
+        )).setNameKey("morequesttypes.task.hold_item.item");
 
         var ITEM_TAGS = NameMap.of("", net.minecraft.core.registries.BuiltInRegistries.ITEM.getTags()
                 .map(p -> p.getFirst().location().toString()).sorted().toArray(String[]::new)).create();
         config.addEnum("item_tag", itemTagStr, v -> { itemTagStr = v; resolveItemTag(); }, ITEM_TAGS)
-                .setNameKey("ftbquests.task.hold_item.item_tag");
+                .setNameKey("morequesttypes.task.hold_item.item_tag");
 
         maybeRequestStructureSync();
         List<String> structureChoices = new ArrayList<>();
@@ -190,7 +184,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "None" : s))
                 .create();
         config.addEnum("structure", getStructure(), this::setStructure, STRUCTURE_MAP)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.structure");
+                .setNameKey("morequesttypes.task.structure");
 
         maybeRequestWorldSync();
         List<String> dimChoices = new ArrayList<>();
@@ -204,7 +198,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
                 .create();
         config.addEnum("dimension", dimension, v -> dimension = v, DIMENSION_MAP)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.dimension");
+                .setNameKey("morequesttypes.task.dimension");
 
         maybeRequestBiomeSync();
         List<String> biomeChoices = new ArrayList<>();
@@ -218,7 +212,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
                 .create();
         config.addEnum("biome", biome, v -> biome = v, BIOME_MAP)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.biome");
+                .setNameKey("morequesttypes.task.biome");
     }
 
     @Override
@@ -243,11 +237,11 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         itemTagStr = nbt.getString("item_tag");
         resolveItemTag();
         String s = nbt.getString("structure");
-        if (s != null && !s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s); else structure = null;
         String d = nbt.getString("dimension");
-        dimension = (d == null) ? "" : d.trim();
+        dimension = d.trim();
         String b = nbt.getString("biome");
-        biome = (b == null) ? "" : b.trim();
+        biome = b.trim();
     }
     @Override
     public void writeNetData(RegistryFriendlyByteBuf buf) {
@@ -270,7 +264,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         itemTagStr = buf.readUtf();
         resolveItemTag();
         String s = buf.readUtf();
-        if (s != null && !s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s); else structure = null;
         dimension = buf.readUtf();
         biome = buf.readUtf();
     }
@@ -279,7 +273,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     @Override
     public net.minecraft.network.chat.MutableComponent getAltTitle() {
         var item = itemFilter.isEmpty() ? Component.literal(itemTagStr.isBlank() ? "Any" : itemTagStr) : itemFilter.getHoverName();
-        return Component.translatable("ftbquests.task.hold_item.title", formatMaxProgress(), item);
+        return Component.translatable("morequesttypes.task.hold_item.title", formatMaxProgress(), item);
     }
     @Environment(net.fabricmc.api.EnvType.CLIENT)
     @Override

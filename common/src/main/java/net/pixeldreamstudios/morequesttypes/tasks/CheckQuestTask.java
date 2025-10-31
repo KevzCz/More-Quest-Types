@@ -2,6 +2,7 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.util.TooltipList;
 import dev.ftb.mods.ftbquests.quest.BaseQuestFile;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftbquests.quest.Quest;
@@ -11,39 +12,34 @@ import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     public enum Mode { ANY, ALL }
-
     private final List<String> selectors = new ArrayList<>();
     private Mode mode = Mode.ANY;
     private long requiredCount = 0;
-
     private transient List<Long> cachedTargetIds = Collections.emptyList();
-
     public CheckQuestTask(long id, Quest quest) { super(id, quest); }
-
     @Override public TaskType getType() { return MoreTasksTypes.CHECK_QUEST; }
-
     @Override public long getMaxProgress() {
         int total = cachedTargetIds == null ? 0 : cachedTargetIds.size();
         long needed = computeNeeded(total);
         return Math.max(1, needed);
     }
-
     @Override public boolean hideProgressNumbers() { return false; }
-
     @Override public int autoSubmitOnPlayerTick() { return 1; }
-
     @Override
-    public void submitTask(TeamData teamData, net.minecraft.server.level.ServerPlayer player, net.minecraft.world.item.ItemStack craftedItem) {
+    public void submitTask(TeamData teamData, ServerPlayer player, net.minecraft.world.item.ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
@@ -68,13 +64,10 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
         long next = Math.min(needed, completed);
         if (teamData.getProgress(this) != next) teamData.setProgress(this, next);
     }
-
     private long computeNeeded(int totalResolved) {
         if (mode == Mode.ALL || requiredCount == 0) return Math.max(1, totalResolved);
         return Math.min(requiredCount, Math.max(1, totalResolved));
     }
-
-    /** Works on both client and server – no ServerQuestFile cast. */
     private List<Long> resolveTargets(BaseQuestFile file) {
         if (file == null) return Collections.emptyList();
 
@@ -103,9 +96,9 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
 
     @Environment(EnvType.CLIENT)
     @Override
-    public net.minecraft.network.chat.MutableComponent getAltTitle() {
+    public MutableComponent getAltTitle() {
         String suffix = (mode == Mode.ALL || requiredCount == 0) ? "ALL" : "ANY, need " + requiredCount;
-        return Component.translatable("ftbquests.task.morequesttypes.check_quest.title", suffix);
+        return Component.translatable("morequesttypes.task.check_quest.title", suffix);
     }
 
     @Environment(EnvType.CLIENT)
@@ -116,7 +109,7 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
 
     @Environment(EnvType.CLIENT)
     @Override
-    public void addMouseOverText(dev.ftb.mods.ftblibrary.util.TooltipList list, TeamData teamData) {
+    public void addMouseOverText(TooltipList list, TeamData teamData) {
         if (cachedTargetIds == null || cachedTargetIds.isEmpty()) {
             cachedTargetIds = resolveTargets(getQuestFile());
         }
@@ -126,7 +119,7 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
         } else {
             reqWord = (mode == Mode.ALL) ? "all" : "any";
         }
-        list.add(Component.literal("Complete " + reqWord + " quest(s):").withStyle(net.minecraft.ChatFormatting.YELLOW));
+        list.add(Component.literal("Complete " + reqWord + " quest(s):").withStyle(ChatFormatting.YELLOW));
 
         BaseQuestFile file = getQuestFile();
         int shown = 0;
@@ -139,7 +132,7 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
 
             Component title = qob.getTitle();
             Component line = Component.literal(" - ").append(title.copy());
-            if (done) line = line.copy().withStyle(net.minecraft.ChatFormatting.GREEN);
+            if (done) line = line.copy().withStyle(ChatFormatting.GREEN);
 
             list.add(line);
             shown++;
@@ -163,13 +156,13 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
 
         var MODES = NameMap.of(Mode.ANY, Mode.values()).create();
         config.addEnum("mode", mode, v -> { mode = v; cachedTargetIds = Collections.emptyList(); }, MODES)
-                .setNameKey("ftbquests.task.morequesttypes.check_quest.mode");
+                .setNameKey("morequesttypes.task.check_quest.mode");
 
         config.addLong("required", requiredCount, v -> requiredCount = Math.max(0, v), 0L, 0L, Long.MAX_VALUE)
-                .setNameKey("ftbquests.task.morequesttypes.check_quest.required");
+                .setNameKey("morequesttypes.task.check_quest.required");
 
         config.addList("targets", selectors, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
-                .setNameKey("ftbquests.task.morequesttypes.check_quest.targets");
+                .setNameKey("morequesttypes.task.check_quest.targets");
     }
 
     @Override

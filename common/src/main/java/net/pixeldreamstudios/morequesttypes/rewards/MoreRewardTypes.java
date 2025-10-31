@@ -6,17 +6,18 @@ import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import dev.ftb.mods.ftbquests.quest.reward.RewardTypes;
 import net.pixeldreamstudios.morequesttypes.compat.BlabberCompat;
 import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
+import net.pixeldreamstudios.morequesttypes.compat.SpellEngineCompat;
 
 public final class MoreRewardTypes {
     private MoreRewardTypes() {}
 
     public static RewardType DIALOGUE;
     public static RewardType SKILLS_LEVEL;
-
     public static RewardType COMPLETE_OBJECT;
     public static RewardType PLAY_SOUND;
     public static RewardType LOOT_TABLE;
-
+    public static RewardType ATTRIBUTE;
+    public static RewardType SPELL;
     public static void init() {
         if (BlabberCompat.isLoaded()) {
             DIALOGUE = RewardTypes.register(
@@ -32,7 +33,18 @@ public final class MoreRewardTypes {
                     () -> Icon.getIcon("minecraft:item/experience_bottle")
             );
         }
-
+        if (SpellEngineCompat.isLoaded()) {
+            SPELL = RewardTypes.register(
+                    FTBQuestsAPI.rl("spell"),
+                    SpellReward::new,
+                    () -> Icon.getIcon("minecraft:item/lapis_lazuli")
+            );
+        }
+        ATTRIBUTE = RewardTypes.register(
+                FTBQuestsAPI.rl("attribute"),
+                AttributeReward::new,
+                () -> Icon.getIcon("minecraft:item/nether_star")
+        );
         COMPLETE_OBJECT = RewardTypes.register(
                 FTBQuestsAPI.rl("complete_object"),
                 CompleteObjectReward::new,

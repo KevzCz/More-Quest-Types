@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Either;
 import dev.architectury.registry.registries.RegistrarManager;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.config.StringConfig;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.IconAnimation;
 import dev.ftb.mods.ftblibrary.icon.Icons;
@@ -19,17 +20,14 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
-import net.minecraft.nbt.TagParser;
+import net.minecraft.nbt.*;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -50,20 +48,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
-
     public enum HandMode { ANY, MAIN_HAND, OFF_HAND }
-
     private static final ResourceLocation ZOMBIE = ResourceLocation.withDefaultNamespace("zombie");
-
     private static NameMap<ResourceLocation> ENTITY_NAME_MAP;
     private static NameMap<String> ENTITY_TAG_MAP;
     private static NameMap<String> ITEM_TAG_MAP;
     private static final Map<ResourceLocation, Icon> ENTITY_ICONS = new HashMap<>();
-
     private ResourceLocation entityTypeId = ZOMBIE;
     private TagKey<EntityType<?>> entityTypeTag = null;
     private String customName = "";
-    private String scoreboardTagsCsv = "";
+    private final List<String> scoreboardTags = new ArrayList<>();
     private int minTagsRequired = 0;
     private String nbtFilterSnbt = "";
     private transient Tag nbtFilterParsed = null;
@@ -80,28 +74,28 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     private String dimension = "";
     private static final List<String> KNOWN_BIOMES = new ArrayList<>();
     private String biome = "";
-
     public InteractEntityTask(long id, Quest quest) {
         super(id, quest);
     }
-
     @Override
     public TaskType getType() {
         return MoreTasksTypes.INTERACT_ENTITY;
     }
-
     @Override
     public long getMaxProgress() {
         return value;
     }
-
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         nbt.putString("entity", entityTypeId.toString());
         if (entityTypeTag != null) nbt.putString("entityTypeTag", entityTypeTag.location().toString());
         if (!customName.isEmpty()) nbt.putString("custom_name", customName);
-        if (!scoreboardTagsCsv.isEmpty()) nbt.putString("scoreboard_tags_csv", scoreboardTagsCsv);
+        if (!scoreboardTags.isEmpty()) {
+            ListTag tagList = new ListTag();
+            for (String s : scoreboardTags) tagList.add(StringTag.valueOf(s));
+            nbt.put("scoreboard_tags", tagList);
+        }
         nbt.putInt("min_tags_required", minTagsRequired);
         if (!nbtFilterSnbt.isEmpty()) nbt.putString("nbt_filter_snbt", nbtFilterSnbt);
         nbt.putLong("value", value);
@@ -113,14 +107,23 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         if (!dimension.isEmpty()) nbt.putString("dimension", dimension);
         if (!biome.isEmpty()) nbt.putString("biome", biome);
     }
-
     @Override
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         entityTypeId = ResourceLocation.tryParse(nbt.getString("entity"));
         entityTypeTag = parseEntityTypeTag(nbt.getString("entityTypeTag"));
         customName = nbt.getString("custom_name");
-        scoreboardTagsCsv = nbt.getString("scoreboard_tags_csv");
+        scoreboardTags.clear();
+        if (nbt.contains("scoreboard_tags")) {
+            var list = nbt.getList("scoreboard_tags", Tag.TAG_STRING);
+            for (int i = 0; i < list.size(); i++) {
+                String s = list.getString(i);
+                if (!s.isBlank()) scoreboardTags.add(s.trim());
+            }
+        } else if (nbt.contains("scoreboard_tags_csv")) {
+            String csv = nbt.getString("scoreboard_tags_csv");
+            if (!csv.isBlank()) scoreboardTags.addAll(parseCsv(csv));
+        }
         minTagsRequired = nbt.contains("min_tags_required") ? nbt.getInt("min_tags_required") : 0;
         nbtFilterSnbt = nbt.getString("nbt_filter_snbt");
         parseNbtFilter();
@@ -135,20 +138,20 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         heldItemTagStr = nbt.getString("held_item_tag");
         resolveHeldItemTag();
         String s = nbt.getString("structure");
-        if (s != null && !s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s); else structure = null;
         String d = nbt.getString("dimension");
-        dimension = (d == null) ? "" : d.trim();
+        dimension = d.trim();
         String b = nbt.getString("biome");
-        biome = (b == null) ? "" : b.trim();
+        biome = b.trim();
     }
-
     @Override
     public void writeNetData(RegistryFriendlyByteBuf buf) {
         super.writeNetData(buf);
         buf.writeUtf(entityTypeId.toString());
         buf.writeUtf(entityTypeTag == null ? "" : entityTypeTag.location().toString());
         buf.writeUtf(customName);
-        buf.writeUtf(scoreboardTagsCsv);
+        buf.writeVarInt(scoreboardTags.size());
+        for (String s : scoreboardTags) buf.writeUtf(s == null ? "" : s);
         buf.writeVarInt(minTagsRequired);
         buf.writeUtf(nbtFilterSnbt);
         buf.writeVarLong(value);
@@ -159,14 +162,18 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         buf.writeUtf(dimension);
         buf.writeUtf(biome);
     }
-
     @Override
     public void readNetData(RegistryFriendlyByteBuf buf) {
         super.readNetData(buf);
         entityTypeId = ResourceLocation.tryParse(buf.readUtf());
         entityTypeTag = parseEntityTypeTag(buf.readUtf());
         customName = buf.readUtf();
-        scoreboardTagsCsv = buf.readUtf();
+        scoreboardTags.clear();
+        int nTags = buf.readVarInt();
+        for (int i = 0; i < nTags; i++) {
+            String s = buf.readUtf();
+            if (!s.isBlank()) scoreboardTags.add(s.trim());
+        }
         minTagsRequired = buf.readVarInt();
         nbtFilterSnbt = buf.readUtf();
         parseNbtFilter();
@@ -177,7 +184,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         heldItemTagStr = buf.readUtf();
         resolveHeldItemTag();
         String s = buf.readUtf();
-        if (s != null && !s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s); else structure = null;
         dimension = buf.readUtf();
         biome = buf.readUtf();
     }
@@ -188,8 +195,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
             return;
         }
         try {
-            Tag parsed = TagParser.parseTag(nbtFilterSnbt);
-            nbtFilterParsed = (parsed instanceof CompoundTag) ? parsed : null;
+            nbtFilterParsed = TagParser.parseTag(nbtFilterSnbt);
         } catch (Exception ignored) {
             nbtFilterParsed = null;
         }
@@ -249,27 +255,27 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         config.addEnum("entity", entityTypeId, v -> entityTypeId = v, ENTITY_NAME_MAP, ZOMBIE);
         config.addEnum("entity_type_tag", getEntityTypeTagStr(), v -> entityTypeTag = parseEntityTypeTag(v), ENTITY_TAG_MAP);
         config.addString("custom_name", customName, v -> customName = v, "");
-        config.addString("scoreboard_tags_csv", scoreboardTagsCsv, v -> scoreboardTagsCsv = v.trim(), "")
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.tags_csv");
+        config.addList("scoreboard_tags", scoreboardTags, new StringConfig(), "")
+                .setNameKey("morequesttypes.task.tags_csv");
         config.addInt("min_tags_required", minTagsRequired, v -> minTagsRequired = Math.max(0, v), 0, 0, 64)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.min_tags");
+                .setNameKey("morequesttypes.task.min_tags");
         config.addString("nbt_filter_snbt", nbtFilterSnbt, v -> { nbtFilterSnbt = v; parseNbtFilter(); }, "")
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.nbt");
+                .setNameKey("morequesttypes.task.nbt");
         config.addLong("value", value, v -> value = Math.max(1L, v), 1L, 1L, Long.MAX_VALUE);
         var HANDS = NameMap.of(HandMode.ANY, HandMode.values()).create();
         config.addEnum("hand_mode", handMode, v -> handMode = v, HANDS)
-                .setNameKey("ftbquests.task.interact_entity.hand");
-        ((ConfigIconItemStack) config.add(
+                .setNameKey("morequesttypes.task.interact_entity.hand");
+        config.add(
                 "held_item",
                 new ConfigIconItemStack(),
                 heldItemFilter,
                 v -> { heldItemFilter = v.copy(); if (!heldItemFilter.isEmpty()) heldItemFilter.setCount(1); },
                 ItemStack.EMPTY
-        )).setNameKey("ftbquests.task.interact_entity.held_item");
+        ).setNameKey("morequesttypes.task.interact_entity.held_item");
         config.addEnum("held_item_tag", heldItemTagStr, v -> {
             heldItemTagStr = v;
             resolveHeldItemTag();
-        }, ITEM_TAG_MAP).setNameKey("ftbquests.task.interact_entity.held_item_tag");
+        }, ITEM_TAG_MAP).setNameKey("morequesttypes.task.interact_entity.held_item_tag");
 
         maybeRequestStructureSync();
 
@@ -287,7 +293,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
                 .create();
 
         config.addEnum("structure", getStructure(), this::setStructure, STRUCTURE_MAP)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.structure");
+                .setNameKey("morequesttypes.task.structure");
 
         maybeRequestWorldSync();
         List<String> dimChoices = new ArrayList<>();
@@ -303,7 +309,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
                 .create();
         config.addEnum("dimension", dimension, v -> dimension = v, DIMENSION_MAP)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.dimension");
+                .setNameKey("morequesttypes.task.dimension");
 
         maybeRequestBiomeSync();
         List<String> biomeChoices = new ArrayList<>();
@@ -319,7 +325,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
                 .create();
         config.addEnum("biome", biome, v -> biome = v, BIOME_MAP)
-                .setNameKey("ftbquests.task.morequesttypes.adv_kill.biome");
+                .setNameKey("morequesttypes.task.biome");
     }
 
     private String getEntityTypeTagStr() {
@@ -362,22 +368,22 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         if (heldItemTag != null) {
             itemDesc = Component.literal("#" + heldItemTag.location());
         } else if (heldItemFilter.isEmpty()) {
-            itemDesc = Component.translatable("ftbquests.task.interact_entity.empty_hand");
+            itemDesc = Component.translatable("morequesttypes.task.interact_entity.empty_hand");
         } else {
             itemDesc = heldItemFilter.getHoverName();
         }
         if (handMode == HandMode.ANY) {
-            return Component.translatable("ftbquests.task.interact_entity.title", max, entityName)
+            return Component.translatable("morequesttypes.task.interact_entity.title", max, entityName)
                     .append(Component.literal(" "))
-                    .append(Component.translatable("ftbquests.task.interact_entity.with_item", itemDesc));
+                    .append(Component.translatable("morequesttypes.task.interact_entity.with_item", itemDesc));
         } else {
             String handKey = (handMode == HandMode.MAIN_HAND)
-                    ? "ftbquests.task.interact_entity.main_hand"
-                    : "ftbquests.task.interact_entity.off_hand";
-            return Component.translatable("ftbquests.task.interact_entity.title_with_hand",
+                    ? "morequesttypes.task.interact_entity.main_hand"
+                    : "morequesttypes.task.interact_entity.off_hand";
+            return Component.translatable("morequesttypes.task.interact_entity.title_with_hand",
                             max, entityName, Component.translatable(handKey))
                     .append(Component.literal(" "))
-                    .append(Component.translatable("ftbquests.task.interact_entity.with_item", itemDesc));
+                    .append(Component.translatable("morequesttypes.task.interact_entity.with_item", itemDesc));
         }
     }
 
@@ -397,7 +403,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     }
 
     @Override
-    public void submitTask(TeamData teamData, net.minecraft.server.level.ServerPlayer player, ItemStack craftedItem) {
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
         long current = teamData.getProgress(this);
@@ -434,7 +440,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
             int id = ent.getId();
             if (counted.contains(id)) continue;
             if (!(ent instanceof LivingEntity)) continue;
-            if (!entityMatches((LivingEntity) ent)) continue;
+            if (entityMatches((LivingEntity) ent)) continue;
             if (!heldItemMatches(ev.stack())) continue;
             counted.add(id);
             inc++;
@@ -470,41 +476,38 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         if (handMode == HandMode.OFF_HAND  && ev.hand() != InteractionHand.OFF_HAND)  return false;
         Entity ent = ev.entity();
         if (!(ent instanceof LivingEntity le)) return false;
-        if (!entityMatches(le)) return false;
+        if (entityMatches(le)) return false;
         return heldItemMatches(ev.stack());
     }
-
     private boolean entityMatches(LivingEntity e) {
         boolean baseOk = (entityTypeTag == null)
                 ? entityTypeId.equals(RegistrarManager.getId(e.getType(), Registries.ENTITY_TYPE)) && nameMatchOK(e)
                 : e.getType().is(entityTypeTag) && nameMatchOK(e);
-        if (!baseOk) return false;
+        if (!baseOk) return true;
 
-        if (!scoreboardTagsCsv.isBlank()) {
-            var required = parseCsv(scoreboardTagsCsv);
+        if (!scoreboardTags.isEmpty()) {
             var present = e.getTags();
             int count = 0;
-            for (var r : required) if (present.contains(r)) count++;
-            int need = (minTagsRequired <= 0) ? required.size() : minTagsRequired;
-            if (count < need) return false;
+            for (var r : scoreboardTags) if (present.contains(r)) count++;
+            int need = (minTagsRequired <= 0) ? scoreboardTags.size() : minTagsRequired;
+            if (count < need) return true;
         }
-
         if (nbtFilterParsed != null) {
             var actual = new CompoundTag();
             e.saveWithoutId(actual);
             if (!(nbtFilterParsed instanceof CompoundTag filter) || !nbtSubsetMatches(actual, filter)) {
-                return false;
+                return true;
             }
         }
 
         if (structure != null || (dimension != null && !dimension.isEmpty()) || (biome != null && !biome.isEmpty())) {
-            if (!(e.level() instanceof ServerLevel level)) return false;
-            if (structure != null && !isInsideStructureOrTag(level, e.blockPosition())) return false;
-            if (!isInsideDimension(level)) return false;
-            if (!isInsideBiome(level, e.blockPosition())) return false;
+            if (!(e.level() instanceof ServerLevel level)) return true;
+            if (structure != null && !isInsideStructureOrTag(level, e.blockPosition())) return true;
+            if (!isInsideDimension(level)) return true;
+            if (!isInsideBiome(level, e.blockPosition())) return true;
         }
 
-        return true;
+        return false;
     }
 
     private boolean isInsideStructureOrTag(ServerLevel level, net.minecraft.core.BlockPos pos) {
@@ -564,7 +567,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     private boolean nameMatchOK(LivingEntity e) {
         if (!customName.isEmpty()) {
             if (e instanceof Player p) {
-                if (!p.getGameProfile().getName().equals(customName)) return false;
+                return p.getGameProfile().getName().equals(customName);
             } else if (!e.getName().getString().equals(customName)) {
                 return false;
             }
@@ -590,11 +593,9 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         }
         if (filter instanceof ListTag fList) {
             if (!(actual instanceof ListTag aList)) return false;
-            List<Tag> remaining = new ArrayList<>();
-            for (int i = 0; i < aList.size(); i++) remaining.add(aList.get(i));
+            List<Tag> remaining = new ArrayList<>(aList);
             outer:
-            for (int i = 0; i < fList.size(); i++) {
-                Tag fEl = fList.get(i);
+            for (Tag fEl : fList) {
                 for (int j = 0; j < remaining.size(); j++) {
                     if (nbtSubsetMatches(remaining.get(j), fEl)) {
                         remaining.remove(j);
@@ -624,17 +625,17 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     private void setStructure(String resLoc) {
         if (resLoc == null || resLoc.isEmpty()) { structure = null; return; }
         structure = resLoc.startsWith("#")
-                ? Either.right(TagKey.create(Registries.STRUCTURE, safeStructure(resLoc.substring(1), DEFAULT_STRUCTURE)))
-                : Either.left(ResourceKey.create(Registries.STRUCTURE, safeStructure(resLoc, DEFAULT_STRUCTURE)));
+                ? Either.right(TagKey.create(Registries.STRUCTURE, safeStructure(resLoc.substring(1))))
+                : Either.left(ResourceKey.create(Registries.STRUCTURE, safeStructure(resLoc)));
     }
 
     private String getStructure() {
         if (structure == null) return "";
-        return structure.map(k -> k.location().toString(), t -> "#" + String.valueOf(t.location()));
+        return structure.map(k -> k.location().toString(), t -> "#" + t.location());
     }
 
-    private ResourceLocation safeStructure(String s, ResourceLocation fallback) {
+    private ResourceLocation safeStructure(String s) {
         ResourceLocation rl = ResourceLocation.tryParse(s);
-        return rl != null ? rl : fallback;
+        return rl != null ? rl : InteractEntityTask.DEFAULT_STRUCTURE;
     }
 }
