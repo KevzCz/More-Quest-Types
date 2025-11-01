@@ -2,6 +2,7 @@ package net.pixeldreamstudios.morequesttypes.rewards;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.config.StringConfig;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
@@ -13,6 +14,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -37,17 +39,20 @@ public final class DialogueReward extends Reward {
     private String interlocutorType = "";
     private SortMode sort = SortMode.NEAREST;
     private String customName = "";
-    private String scoreboardTagsCsv = "";
+    private final List<String> scoreboardTags = new ArrayList<>();
     private int minTagsRequired = 0;
     private String nbtFilterSnbt = "";
     private transient Tag nbtFilterParsed = null;
+
     public DialogueReward(long id, Quest q) {
         super(id, q);
     }
+
     @Override
     public RewardType getType() {
         return MoreRewardTypes.DIALOGUE;
     }
+
     @Override
     public void claim(ServerPlayer player, boolean notify) {
         if (!BlabberCompat.isLoaded()) return;
@@ -57,6 +62,7 @@ public final class DialogueReward extends Reward {
         Entity interlocutor = selectInterlocutor(player);
         BlabberCompat.startDialogue(player, id, interlocutor);
     }
+
     private Entity selectInterlocutor(ServerPlayer player) {
         if (interlocutorType.equalsIgnoreCase("player")) return player;
 
@@ -96,13 +102,11 @@ public final class DialogueReward extends Reward {
             }
         }
 
-
-        if (!scoreboardTagsCsv.isBlank()) {
-            var required = parseCsv(scoreboardTagsCsv);
+        if (!scoreboardTags.isEmpty()) {
             var present = e.getTags();
             int count = 0;
-            for (var r : required) if (present.contains(r)) count++;
-            int need = (minTagsRequired <= 0) ? required.size() : minTagsRequired;
+            for (var r : scoreboardTags) if (present.contains(r)) count++;
+            int need = (minTagsRequired <= 0) ? scoreboardTags.size() : minTagsRequired;
             if (count < need) return false;
         }
 
@@ -155,7 +159,6 @@ public final class DialogueReward extends Reward {
             return true;
         }
 
-
         return NbtUtils.compareNbt(filter, actual, false) && NbtUtils.compareNbt(actual, filter, false);
     }
 
@@ -194,10 +197,13 @@ public final class DialogueReward extends Reward {
         nbt.putString("sort", sort.name());
 
         if (!customName.isEmpty()) nbt.putString("custom_name", customName);
-        if (!scoreboardTagsCsv.isEmpty()) nbt.putString("scoreboard_tags_csv", scoreboardTagsCsv);
+        if (!scoreboardTags.isEmpty()) {
+            ListTag tagList = new ListTag();
+            for (String s : scoreboardTags) tagList.add(StringTag.valueOf(s));
+            nbt.put("scoreboard_tags", tagList);
+        }
         if (minTagsRequired > 0) nbt.putInt("min_tags_required", minTagsRequired);
         if (!nbtFilterSnbt.isEmpty()) nbt.putString("nbt_filter_snbt", nbtFilterSnbt);
-
 
         nbt.putBoolean("exclude_from_claim_all", true);
     }
@@ -209,9 +215,21 @@ public final class DialogueReward extends Reward {
         interlocutorType = nbt.getString("interlocutor_type");
         try { sort = SortMode.valueOf(nbt.getString("sort")); } catch (Throwable ignored) { sort = SortMode.NEAREST; }
 
-
         customName = nbt.getString("custom_name");
-        scoreboardTagsCsv = nbt.getString("scoreboard_tags_csv");
+
+        scoreboardTags.clear();
+        ListTag list = nbt.getList("scoreboard_tags", Tag.TAG_STRING);
+        if (!list.isEmpty()) {
+            for (int i = 0; i < list.size(); i++) {
+                String s = list.getString(i);
+                if (!s.isBlank()) scoreboardTags.add(s.trim());
+            }
+        } else {
+            // Backwards compat: old CSV field
+            String csv = nbt.getString("scoreboard_tags_csv");
+            if (!csv.isBlank()) scoreboardTags.addAll(parseCsv(csv));
+        }
+
         minTagsRequired = nbt.contains("min_tags_required") ? nbt.getInt("min_tags_required") : 0;
         nbtFilterSnbt = nbt.getString("nbt_filter_snbt");
         parseNbtFilter();
@@ -224,9 +242,9 @@ public final class DialogueReward extends Reward {
         buffer.writeUtf(interlocutorType);
         buffer.writeEnum(sort);
 
-
         buffer.writeUtf(customName);
-        buffer.writeUtf(scoreboardTagsCsv);
+        buffer.writeVarInt(scoreboardTags.size());
+        for (String s : scoreboardTags) buffer.writeUtf(s == null ? "" : s);
         buffer.writeVarInt(minTagsRequired);
         buffer.writeUtf(nbtFilterSnbt);
     }
@@ -239,7 +257,12 @@ public final class DialogueReward extends Reward {
         sort = buffer.readEnum(SortMode.class);
 
         customName = buffer.readUtf();
-        scoreboardTagsCsv = buffer.readUtf();
+        scoreboardTags.clear();
+        int nTags = buffer.readVarInt();
+        for (int i = 0; i < nTags; i++) {
+            String s = buffer.readUtf();
+            if (!s.isBlank()) scoreboardTags.add(s.trim());
+        }
         minTagsRequired = buffer.readVarInt();
         nbtFilterSnbt = buffer.readUtf();
         parseNbtFilter();
@@ -269,8 +292,8 @@ public final class DialogueReward extends Reward {
                 .setNameKey("morequesttypes.reward.dialogue.interlocutor_type");
 
         config.addString("custom_name", customName, v -> customName = v.trim(), "")
-                .setNameKey("morequesttypes.reward.dialogue_custom_name");;
-        config.addString("scoreboard_tags_csv", scoreboardTagsCsv, v -> scoreboardTagsCsv = v.trim(), "")
+                .setNameKey("morequesttypes.reward.dialogue_custom_name");
+        config.addList("scoreboard_tags", scoreboardTags, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.tags_csv");
         config.addInt("min_tags_required", minTagsRequired, v -> minTagsRequired = Math.max(0, v), 0, 0, 64)
                 .setNameKey("morequesttypes.task.min_tags");

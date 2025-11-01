@@ -57,6 +57,8 @@
   "morequesttypes.task.dialogue.title": "Dialogue: %s",
   "morequesttypes.morequesttypes.task.dialogue.ends": "Valid endings: %s",
   "morequesttypes.task.dialogue.id_tooltip": "Dialogue ID: %s",
+  "morequesttypes.task.dialogue.ends": "Valid endings: %s",
+  "morequesttypes.task.dialogue.end_states": "Valid endings",
 
   "ftbquests.task.ftbquests.find_entity": "Find Entity",
   "ftbquests.task.ftbquests.find_entity.entity": "Entity",

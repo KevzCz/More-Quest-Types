@@ -21,6 +21,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -34,7 +35,7 @@ public final class BreakBlockTask extends Task {
     private String blockTagStr = "";
     private transient TagKey<Block> blockTag;
     private String toolTagStr = "";
-    private transient TagKey<net.minecraft.world.item.Item> toolTag;
+    private transient TagKey<Item> toolTag;
     private ItemStack toolItemFilter = ItemStack.EMPTY;
     public BreakBlockTask(long id, Quest quest) { super(id, quest); }
     @Override public TaskType getType() { return MoreTasksTypes.BREAK_BLOCK; }

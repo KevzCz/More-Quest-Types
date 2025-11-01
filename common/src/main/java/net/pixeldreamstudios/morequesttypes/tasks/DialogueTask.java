@@ -9,6 +9,8 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -17,57 +19,69 @@ import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 import net.pixeldreamstudios.morequesttypes.compat.BlabberCompat;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 public final class DialogueTask extends Task {
     private String dialogueId = "";
-    private String endStatesCsv = "";
+    private final List<String> endStates = new ArrayList<>();
     private transient final Set<UUID> watching = new HashSet<>();
     private transient final Map<UUID, String> lastState = new HashMap<>();
+
     public DialogueTask(long id, dev.ftb.mods.ftbquests.quest.Quest quest) {
         super(id, quest);
     }
+
     @Override
     public TaskType getType() {
         return MoreTasksTypes.DIALOGUE;
     }
+
     @Override
     public long getMaxProgress() {
         return 1L;
     }
+
     @Override
     public boolean hideProgressNumbers() {
         return true;
     }
+
     @Override
     public String formatMaxProgress() {
         return "1";
     }
+
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getButtonText() {
         return Component.empty();
     }
+
     @Environment(EnvType.CLIENT)
     @Override
     public void addMouseOverText(TooltipList list, TeamData teamData) {
         list.add(Component.translatable("morequesttypes.task.dialogue.id_tooltip", dialogueId.isBlank() ? "?" : dialogueId));
-        if (!endStatesCsv.isBlank()) {
-            list.add(Component.translatable("morequesttypes.task.dialogue.ends", endStatesCsv));
+        if (!endStates.isEmpty()) {
+            list.add(Component.translatable("morequesttypes.task.dialogue.ends", String.join(", ", endStates)));
         }
     }
+
     @Override
     public int autoSubmitOnPlayerTick() {
         return 1;
     }
+
     @Override
     public boolean checkOnLogin() {
         return true;
     }
+
     @Override
     public void submitTask(TeamData teamData, ServerPlayer player, net.minecraft.world.item.ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
@@ -94,55 +108,79 @@ public final class DialogueTask extends Task {
             }
         }
     }
+
     @Override
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
         config.addString("dialogue_id", dialogueId, v -> dialogueId = v.trim(), "")
                 .setNameKey("morequesttypes.task.dialogue.dialogue_id");
-        config.addString("end_states_csv", endStatesCsv, v -> endStatesCsv = v.trim(), "")
-                .setNameKey("morequesttypes.task.dialogue.end_states_csv");
+        config.addList("end_states", endStates, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
+                .setNameKey("morequesttypes.task.dialogue.end_states");
     }
+
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         if (!dialogueId.isBlank()) nbt.putString("dialogue_id", dialogueId);
-        if (!endStatesCsv.isBlank()) nbt.putString("end_states_csv", endStatesCsv);
+        if (!endStates.isEmpty()) {
+            ListTag list = new ListTag();
+            for (String s : endStates) list.add(StringTag.valueOf(s));
+            nbt.put("end_states", list);
+        }
     }
+
     @Override
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         dialogueId = nbt.getString("dialogue_id");
-        endStatesCsv = nbt.getString("end_states_csv");
+
+        endStates.clear();
+        ListTag list = nbt.getList("end_states", net.minecraft.nbt.Tag.TAG_STRING);
+        if (!list.isEmpty()) {
+            for (int i = 0; i < list.size(); i++) endStates.add(list.getString(i));
+        } else {
+            String csv = nbt.getString("end_states_csv");
+            if (!csv.isBlank()) {
+                for (String part : csv.split(",")) {
+                    String trimmed = part.trim();
+                    if (!trimmed.isEmpty()) endStates.add(trimmed);
+                }
+            }
+        }
     }
+
     @Override
     public void writeNetData(RegistryFriendlyByteBuf buffer) {
         super.writeNetData(buffer);
         buffer.writeUtf(dialogueId);
-        buffer.writeUtf(endStatesCsv);
+        buffer.writeVarInt(endStates.size());
+        for (String s : endStates) buffer.writeUtf(s);
     }
+
     @Override
     public void readNetData(RegistryFriendlyByteBuf buffer) {
         super.readNetData(buffer);
         dialogueId = buffer.readUtf();
-        endStatesCsv = buffer.readUtf();
+        endStates.clear();
+        int n = buffer.readVarInt();
+        for (int i = 0; i < n; i++) endStates.add(buffer.readUtf());
     }
+
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getAltTitle() {
         String s = dialogueId.isBlank() ? "?" : dialogueId;
         return Component.translatable("morequesttypes.task.dialogue.title", s);
     }
+
     private static @Nullable ResourceLocation parse(String s) {
         if (s == null || s.isBlank()) return null;
         return ResourceLocation.tryParse(s);
     }
+
     private boolean isAllowedEnd(@Nullable String stateKey) {
-        if (stateKey == null) return endStatesCsv.isBlank();
-        if (endStatesCsv.isBlank()) return true;
-        for (String p : endStatesCsv.split(",")) {
-            String t = p.trim();
-            if (!t.isEmpty() && t.equals(stateKey)) return true;
-        }
-        return false;
+        if (stateKey == null) return endStates.isEmpty();
+        if (endStates.isEmpty()) return true;
+        return endStates.contains(stateKey);
     }
 }
