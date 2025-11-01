@@ -3,7 +3,9 @@ package net.pixeldreamstudios.morequesttypes.mixin.client;
 import dev.architectury.networking.NetworkManager;
 import dev.ftb.mods.ftbquests.client.gui.quests.RewardButton;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
+import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
+import net.minecraft.client.Minecraft;
 import net.pixeldreamstudios.morequesttypes.network.button.ToggleRewardRequest;
 import net.pixeldreamstudios.morequesttypes.rewards.AttributeReward;
 import net.pixeldreamstudios.morequesttypes.rewards.SpellReward;
@@ -22,8 +24,17 @@ public abstract class RewardButtonMixin {
         if (reward == null) return;
 
         if (button.isLeft() && (reward instanceof SpellReward || reward instanceof AttributeReward)) {
-            NetworkManager.sendToServer(new ToggleRewardRequest(reward.getId()));
-            ci.cancel();
+            try {
+                var player = Minecraft.getInstance().player;
+                if (player != null) {
+                    var teamData = TeamData.get(player);
+
+                    if (teamData.isCompleted(reward.getQuest())) {
+                        NetworkManager.sendToServer(new ToggleRewardRequest(reward.getId()));
+                        ci.cancel();
+                    }
+                }
+            } catch (Throwable ignored) {}
         }
     }
 }

@@ -141,9 +141,12 @@
   "ftbquests.task.ftbquests.timer": "Timer",
   "morequesttypes.task.timer.duration": "Duration (seconds)",
   "morequesttypes.task.timer.remaining": "Remaining: %s",
-  "morequesttypes.task.timer.title": "Timer"
+  "morequesttypes.task.timer.title": "Timer",
 
-
+  "morequesttypes.reward.status": "Status: %s",
+  "morequesttypes.reward.status.on": "On",
+  "morequesttypes.reward.status.off": "Off",
+  "morequesttypes.reward.toggle_hint": "Click again to toggle on/off"
 
 
 

@@ -3,11 +3,14 @@ package net.pixeldreamstudios.morequesttypes.rewards;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.icon.Icon;
+import dev.ftb.mods.ftblibrary.util.TooltipList;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -21,22 +24,27 @@ import java.util.Objects;
 
 public final class SpellReward extends Reward {
     private ResourceLocation spellId = null;
+
     public SpellReward(long id, Quest q) {
         super(id, q);
     }
+
     @Override
     public RewardType getType() {
         return MoreRewardTypes.SPELL;
     }
+
     private String baseKey() {
         return "morequesttypes/reward_" + id;
     }
+
     @Override
     public void claim(ServerPlayer player, boolean notify) {
         try {
             applyToPlayer(player);
         } catch (Throwable ignored) {}
     }
+
     public void applyToPlayer(ServerPlayer player) {
         if (player == null || spellId == null) return;
         if (!SpellEngineCompat.isLoaded()) return;
@@ -44,6 +52,7 @@ public final class SpellReward extends Reward {
             SpellEngineCompat.installSpells(player, baseKey(), List.of(spellId));
         } catch (Throwable ignored) {}
     }
+
     public void removeFromPlayer(ServerPlayer player) {
         if (player == null) return;
         if (!SpellEngineCompat.isLoaded()) return;
@@ -51,6 +60,7 @@ public final class SpellReward extends Reward {
             SpellEngineCompat.uninstallSpells(player, baseKey());
         } catch (Throwable ignored) {}
     }
+
     @Environment(EnvType.CLIENT)
     @Override
     public Component getAltTitle() {
@@ -59,6 +69,7 @@ public final class SpellReward extends Reward {
         String key = "spell." + spellId.getNamespace() + "." + spellId.getPath() + ".name";
         return Component.translatable(key);
     }
+
     @Environment(EnvType.CLIENT)
     @Override
     public Icon getAltIcon() {
@@ -79,6 +90,28 @@ public final class SpellReward extends Reward {
 
         return super.getAltIcon();
     }
+
+    @Environment(EnvType.CLIENT)
+    @Override
+    public void addMouseOverText(TooltipList list) {
+        super.addMouseOverText(list);
+
+        try {
+            var player = Minecraft.getInstance().player;
+            if (player != null) {
+                var teamData = dev.ftb.mods.ftbquests.quest.TeamData.get(player);
+                boolean isClaimed = teamData.isRewardClaimed(player.getUUID(), this);
+
+                Component status = isClaimed
+                        ? Component.translatable("morequesttypes.reward.status.on").withStyle(ChatFormatting.GREEN)
+                        : Component.translatable("morequesttypes.reward.status.off").withStyle(ChatFormatting.RED);
+
+                list.add(Component.translatable("morequesttypes.reward.status", status));
+                list.add(Component.translatable("morequesttypes.reward.toggle_hint").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+            }
+        } catch (Throwable ignored) {}
+    }
+
     @Environment(EnvType.CLIENT)
     @Override
     public void fillConfigGroup(ConfigGroup config) {

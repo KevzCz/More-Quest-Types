@@ -2,10 +2,14 @@ package net.pixeldreamstudios.morequesttypes.rewards;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.util.TooltipList;
+import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
@@ -132,6 +136,27 @@ public final class AttributeReward extends Reward {
         }
 
         return Component.translatable("morequesttypes.reward.attribute.title", Component.literal(valueStr), attrName);
+    }
+
+    @Environment(EnvType.CLIENT)
+    @Override
+    public void addMouseOverText(TooltipList list) {
+        super.addMouseOverText(list);
+
+        try {
+            var player = Minecraft.getInstance().player;
+            if (player != null) {
+                var teamData = TeamData.get(player);
+                boolean isClaimed = teamData.isRewardClaimed(player.getUUID(), this);
+
+                Component status = isClaimed
+                        ? Component.translatable("morequesttypes.reward.status.on").withStyle(ChatFormatting.GREEN)
+                        : Component.translatable("morequesttypes.reward.status.off").withStyle(ChatFormatting.RED);
+
+                list.add(Component.translatable("morequesttypes.reward.status", status));
+                list.add(Component.translatable("morequesttypes.reward.toggle_hint").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+            }
+        } catch (Throwable ignored) {}
     }
 
     private static String signedValue(double v) {
