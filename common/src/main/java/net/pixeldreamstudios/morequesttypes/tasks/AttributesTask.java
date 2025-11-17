@@ -233,7 +233,15 @@ public final class AttributesTask extends Task {
         String sym = switch (op) {
             case EQ -> "="; case LE -> "<="; case GE -> ">="; case GT -> ">"; case LT -> "<";
         };
-        String id = attributeId == null ? "?" : attributeId.toString();
-        return Component.translatable("morequesttypes.task.attributes.title", id, sym, trim(amount));
+
+        Component attrName;
+        if (attributeId == null) {
+            attrName = Component.literal("?");
+        } else {
+            String translationKey = "attribute.name." + attributeId.getNamespace() + "." + attributeId.getPath();
+            attrName = Component.translatable(translationKey);
+        }
+
+        return Component.translatable("morequesttypes.task.attributes.title", attrName, sym, trim(amount));
     }
 }
