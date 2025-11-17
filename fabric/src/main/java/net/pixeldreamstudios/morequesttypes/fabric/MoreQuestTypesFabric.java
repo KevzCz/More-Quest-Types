@@ -2,6 +2,7 @@ package net.pixeldreamstudios.morequesttypes.fabric;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
@@ -26,6 +27,11 @@ public final class MoreQuestTypesFabric implements ModInitializer {
                 SpellRewardManager.syncForPlayer(player);
             });
         });
+        ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+            newPlayer.getServer().execute(() -> {
+                AttributeRewardManager.syncForPlayer(newPlayer);
+                SpellRewardManager.syncForPlayer(newPlayer);
+            });
+        });
     }
-
 }

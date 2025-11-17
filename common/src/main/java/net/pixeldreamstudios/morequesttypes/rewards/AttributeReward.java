@@ -31,8 +31,9 @@ import java.util.Objects;
 public final class AttributeReward extends Reward {
     private ResourceLocation attributeId = ResourceLocation.withDefaultNamespace("generic.max_health");
     private double amount = 2.0D;
-
     private AttributeModifier.Operation operation = AttributeModifier.Operation.ADD_VALUE;
+    private String modifierId = "";
+    private boolean locked = false;
 
     public AttributeReward(long id, dev.ftb.mods.ftbquests.quest.Quest q) {
         super(id, q);
@@ -43,9 +44,21 @@ public final class AttributeReward extends Reward {
         return MoreRewardTypes.ATTRIBUTE;
     }
 
+    private ResourceLocation getModifierId() {
+        if (modifierId == null || modifierId.isEmpty()) {
+            return ResourceLocation.fromNamespaceAndPath("morequesttypes", "reward_" + id);
+        }
+
+        ResourceLocation parsed = ResourceLocation.tryParse(modifierId);
+        if (parsed != null) {
+            return parsed;
+        }
+
+        return ResourceLocation.fromNamespaceAndPath("morequesttypes", "reward_" + id);
+    }
+
     private AttributeModifier buildModifier() {
-        ResourceLocation modId = ResourceLocation.fromNamespaceAndPath("morequesttypes", "reward_" + id);
-        return new AttributeModifier(modId, amount, operation);
+        return new AttributeModifier(getModifierId(), amount, operation);
     }
 
     @Override
@@ -154,7 +167,12 @@ public final class AttributeReward extends Reward {
                         : Component.translatable("morequesttypes.reward.status.off").withStyle(ChatFormatting.RED);
 
                 list.add(Component.translatable("morequesttypes.reward.status", status));
-                list.add(Component.translatable("morequesttypes.reward.toggle_hint").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+
+                if (locked) {
+                    list.add(Component.translatable("morequesttypes.reward.locked").withStyle(ChatFormatting.GOLD, ChatFormatting.ITALIC));
+                } else {
+                    list.add(Component.translatable("morequesttypes.reward.toggle_hint").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+                }
             }
         } catch (Throwable ignored) {}
     }
@@ -207,6 +225,12 @@ public final class AttributeReward extends Reward {
 
         config.addDouble("amount", amount, v -> amount = v, 2.0D, -1_000_000D, 1_000_000D)
                 .setNameKey("morequesttypes.reward.attribute.amount");
+
+        config.addString("modifier_id", modifierId, v -> modifierId = v, "")
+                .setNameKey("morequesttypes.reward.attribute.modifier_id");
+
+        config.addBool("locked", locked, v -> locked = v, false)
+                .setNameKey("morequesttypes.reward.locked");
     }
 
     @Override
@@ -215,6 +239,12 @@ public final class AttributeReward extends Reward {
         if (attributeId != null) nbt.putString("attribute", attributeId.toString());
         nbt.putDouble("amount", amount);
         nbt.putString("operation", operation.name());
+        if (modifierId != null && !modifierId.isEmpty()) {
+            nbt.putString("modifier_id", modifierId);
+        }
+        if (locked) {
+            nbt.putBoolean("locked", true);
+        }
     }
 
     @Override
@@ -223,6 +253,8 @@ public final class AttributeReward extends Reward {
         attributeId = ResourceLocation.tryParse(nbt.getString("attribute"));
         amount = nbt.contains("amount") ? nbt.getDouble("amount") : 0.0D;
         try { operation = AttributeModifier.Operation.valueOf(nbt.getString("operation")); } catch (Throwable t) { operation = AttributeModifier.Operation.ADD_VALUE; }
+        modifierId = nbt.contains("modifier_id") ? nbt.getString("modifier_id") : "";
+        locked = nbt.getBoolean("locked");
     }
 
     @Override
@@ -231,6 +263,8 @@ public final class AttributeReward extends Reward {
         buf.writeUtf(attributeId == null ? "" : attributeId.toString());
         buf.writeDouble(amount);
         buf.writeUtf(operation.name());
+        buf.writeUtf(modifierId == null ? "" : modifierId);
+        buf.writeBoolean(locked);
     }
 
     @Override
@@ -240,6 +274,8 @@ public final class AttributeReward extends Reward {
         attributeId = s.isEmpty() ? null : ResourceLocation.tryParse(s);
         amount = buf.readDouble();
         try { operation = AttributeModifier.Operation.valueOf(buf.readUtf()); } catch (Throwable t) { operation = AttributeModifier.Operation.ADD_VALUE; }
+        modifierId = buf.readUtf();
+        locked = buf.readBoolean();
     }
 
     @Override
@@ -247,5 +283,9 @@ public final class AttributeReward extends Reward {
 
     public ResourceLocation getAttributeId() {
         return attributeId;
+    }
+
+    public boolean isLocked() {
+        return locked;
     }
 }

@@ -24,6 +24,7 @@ import java.util.Objects;
 
 public final class SpellReward extends Reward {
     private ResourceLocation spellId = null;
+    private boolean locked = false;
 
     public SpellReward(long id, Quest q) {
         super(id, q);
@@ -107,7 +108,12 @@ public final class SpellReward extends Reward {
                         : Component.translatable("morequesttypes.reward.status.off").withStyle(ChatFormatting.RED);
 
                 list.add(Component.translatable("morequesttypes.reward.status", status));
-                list.add(Component.translatable("morequesttypes.reward.toggle_hint").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+
+                if (locked) {
+                    list.add(Component.translatable("morequesttypes.reward.locked").withStyle(ChatFormatting.GOLD, ChatFormatting.ITALIC));
+                } else {
+                    list.add(Component.translatable("morequesttypes.reward.toggle_hint").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+                }
             }
         } catch (Throwable ignored) {}
     }
@@ -139,12 +145,16 @@ public final class SpellReward extends Reward {
         } catch (Throwable t) {
             config.addString("spell", spellId == null ? "" : spellId.toString(), s -> spellId = ResourceLocation.tryParse(s), "");
         }
+
+        config.addBool("locked", locked, v -> locked = v, false)
+                .setNameKey("morequesttypes.reward.locked");
     }
 
     @Override
     public void writeData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         if (spellId != null) nbt.putString("spell", spellId.toString());
+        if (locked) nbt.putBoolean("locked", true);
     }
 
     @Override
@@ -152,12 +162,14 @@ public final class SpellReward extends Reward {
         super.readData(nbt, provider);
         if (nbt.contains("spell")) spellId = ResourceLocation.tryParse(nbt.getString("spell"));
         else spellId = null;
+        locked = nbt.getBoolean("locked");
     }
 
     @Override
     public void writeNetData(RegistryFriendlyByteBuf buf) {
         super.writeNetData(buf);
         buf.writeUtf(spellId == null ? "" : spellId.toString());
+        buf.writeBoolean(locked);
     }
 
     @Override
@@ -165,5 +177,10 @@ public final class SpellReward extends Reward {
         super.readNetData(buf);
         String s = buf.readUtf();
         spellId = s.isEmpty() ? null : ResourceLocation.tryParse(s);
+        locked = buf.readBoolean();
+    }
+
+    public boolean isLocked() {
+        return locked;
     }
 }

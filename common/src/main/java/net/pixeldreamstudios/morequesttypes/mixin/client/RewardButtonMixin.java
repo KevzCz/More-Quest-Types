@@ -30,6 +30,22 @@ public abstract class RewardButtonMixin {
                     var teamData = TeamData.get(player);
 
                     if (teamData.isCompleted(reward.getQuest())) {
+                        boolean isLocked = false;
+
+                        if (reward instanceof AttributeReward ar) {
+                            isLocked = ar.isLocked();
+                        } else if (reward instanceof SpellReward sr) {
+                            isLocked = sr.isLocked();
+                        }
+
+                        if (isLocked) {
+                            boolean isClaimed = teamData.isRewardClaimed(player.getUUID(), reward);
+                            if (isClaimed) {
+                                ci.cancel();
+                                return;
+                            }
+                        }
+
                         NetworkManager.sendToServer(new ToggleRewardRequest(reward.getId()));
                         ci.cancel();
                     }

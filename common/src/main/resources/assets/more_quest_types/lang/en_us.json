@@ -27,6 +27,7 @@
   "morequesttypes.reward.attribute.attribute": "Attribute",
   "morequesttypes.reward.attribute.operation": "Operation",
   "morequesttypes.reward.attribute.amount": "Amount",
+  "morequesttypes.reward.attribute.modifier_id": "Modifier ID",
 
   "ftbquests.task.ftbquests.attributes": "Attribute",
   "morequesttypes.task.attributes.title": "%1$s %2$s %3$s",
@@ -146,7 +147,9 @@
   "morequesttypes.reward.status": "Status: %s",
   "morequesttypes.reward.status.on": "On",
   "morequesttypes.reward.status.off": "Off",
-  "morequesttypes.reward.toggle_hint": "Click again to toggle on/off"
+  "morequesttypes.reward.toggle_hint": "Click again to toggle on/off",
+  "morequesttypes.reward.locked": "Locked"
+
 
 
 

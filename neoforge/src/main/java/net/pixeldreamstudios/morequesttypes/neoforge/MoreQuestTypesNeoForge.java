@@ -30,4 +30,14 @@ public final class MoreQuestTypesNeoForge {
             });
         }
     }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            player.getServer().execute(() -> {
+                AttributeRewardManager.syncForPlayer(player);
+                SpellRewardManager.syncForPlayer(player);
+            });
+        }
+    }
 }
