@@ -1,10 +1,13 @@
 package net.pixeldreamstudios.morequesttypes.commands;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import dev.architectury.networking.NetworkManager;
+import dev.ftb.mods.ftbquests.net.EditObjectResponseMessage;
 import dev.ftb.mods.ftbquests.quest.*;
 import dev.ftb.mods.ftbquests.quest.task.Task;
 import net.minecraft.commands.CommandSourceStack;
@@ -19,27 +22,93 @@ import java.util.List;
 
 public final class MoreQuestTypesCommands {
 
+    private static final SimpleCommandExceptionType NO_FILE = new SimpleCommandExceptionType(
+            Component.literal("No quest file loaded!")
+    );
+
+    private static final DynamicCommandExceptionType NO_OBJECT = new DynamicCommandExceptionType(
+            id -> Component.literal("Quest object not found: " + id)
+    );
+
+    private static final DynamicCommandExceptionType INVALID_ID = new DynamicCommandExceptionType(
+            id -> Component.literal("Invalid quest object ID: " + id)
+    );
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-                ((LiteralArgumentBuilder<CommandSourceStack>) Commands.literal("morequesttypes")
+                Commands.literal("morequesttypes")
                         .requires(stack -> stack.hasPermission(2))
                         .then(Commands.literal("change_progress")
-                                .then(((RequiredArgumentBuilder<CommandSourceStack, ?>) Commands.argument("players", EntityArgument.players()))
+                                .then(Commands.argument("players", EntityArgument.players())
                                         .then(Commands.literal("complete")
                                                 .then(Commands.argument("quest_object", StringArgumentType.string())
                                                         .executes(ctx -> applyProgress(ctx.getSource(),
                                                                 EntityArgument.getPlayers(ctx, "players"),
                                                                 false,
-                                                                StringArgumentType.getString(ctx, "quest_object"))))))
-                                .then(Commands.literal("reset")
-                                        .then(Commands.argument("quest_object", StringArgumentType.string())
-                                                .executes(ctx -> applyProgress(ctx.getSource(),
-                                                        EntityArgument.getPlayers(ctx, "players"),
-                                                        true,
-                                                        StringArgumentType.getString(ctx, "quest_object")))))
+                                                                StringArgumentType.getString(ctx, "quest_object")))))
+                                        .then(Commands.literal("reset")
+                                                .then(Commands.argument("quest_object", StringArgumentType.string())
+                                                        .executes(ctx -> applyProgress(ctx.getSource(),
+                                                                EntityArgument.getPlayers(ctx, "players"),
+                                                                true,
+                                                                StringArgumentType.getString(ctx, "quest_object")))))
+                                )
                         )
-                )
+                        .then(Commands.literal("refresh_chapter")
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .then(Commands.argument("chapter_id", StringArgumentType.string())
+                                                .executes(ctx -> refreshChapter(
+                                                        ctx.getSource(),
+                                                        EntityArgument.getPlayer(ctx, "player"),
+                                                        StringArgumentType.getString(ctx, "chapter_id")))
+                                        )
+                                )
+                        )
         );
+    }
+
+    private static QuestObjectBase getQuestObjectForString(String idStr) throws CommandSyntaxException {
+        ServerQuestFile file = ServerQuestFile.INSTANCE;
+        if (file == null) {
+            throw NO_FILE.create();
+        }
+
+        if (idStr.startsWith("#")) {
+            String val = idStr.substring(1);
+            for (QuestObjectBase qob : file.getAllObjects()) {
+                if (qob.hasTag(val)) {
+                    return qob;
+                }
+            }
+            throw NO_OBJECT.create(idStr);
+        } else {
+            long id = QuestObjectBase.parseHexId(idStr)
+                    .orElseThrow(() -> INVALID_ID.create(idStr));
+            QuestObjectBase qob = file.getBase(id);
+            if (qob == null) {
+                throw NO_OBJECT.create(idStr);
+            }
+            return qob;
+        }
+    }
+
+    private static int refreshChapter(CommandSourceStack source, ServerPlayer player, String chapterId) throws CommandSyntaxException {
+        QuestObjectBase object = getQuestObjectForString(chapterId);
+
+        if (!(object instanceof Chapter chapter)) {
+            throw NO_OBJECT.create(chapterId);
+        }
+
+        ServerQuestFile.INSTANCE.clearCachedData();
+        chapter.clearCachedData();
+
+        NetworkManager.sendToPlayer(player, new EditObjectResponseMessage(chapter));
+
+        source.sendSuccess(() -> Component.literal(
+                        "Refreshed chapter '" + chapter.getTitle().getString() + "' for player " + player.getName().getString()),
+                true);
+
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int applyProgress(CommandSourceStack source,
@@ -69,8 +138,9 @@ public final class MoreQuestTypesCommands {
         }
 
         source.sendSuccess(() -> Component.literal(
-                (reset ? "Reset" : "Completed") + " " + targets.size() + " object(s) for " + players.size() + " player(s)."), false);
-        return 1;
+                (reset ? "Reset" : "Completed") + " " + targets.size() +
+                        " object(s) for " + players.size() + " player(s)."), false);
+        return Command.SINGLE_SUCCESS;
     }
 
     private static List<QuestObjectBase> resolveTargets(ServerQuestFile file, String idOrTag) throws CommandSyntaxException {
@@ -78,12 +148,14 @@ public final class MoreQuestTypesCommands {
             String tag = idOrTag.substring(1);
             List<QuestObjectBase> all = new ArrayList<>();
             for (QuestObjectBase qob : file.getAllObjects()) {
-                if (qob.hasTag(tag)) all.add(qob);
+                if (qob.hasTag(tag)) {
+                    all.add(qob);
+                }
             }
             return all;
         } else {
-            long id = QuestObjectBase.parseHexId(idOrTag).orElseThrow(
-                    () -> new CommandSyntaxException(null, Component.literal("Invalid ID: " + idOrTag)));
+            long id = QuestObjectBase.parseHexId(idOrTag)
+                    .orElseThrow(() -> INVALID_ID.create(idOrTag));
             QuestObjectBase qob = file.getBase(id);
             return (qob == null) ? List.of() : List.of(qob);
         }
