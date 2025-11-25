@@ -46,5 +46,9 @@ config = "more_quest_types.mixins.json"
 side = "BOTH"
 
 [[mixins]]
+config = "morequesttypes-common.mixins.json"
+side = "BOTH"
+
+[[mixins]]
 config = "more_quest_types.neoforge.mixins.json"
 side = "BOTH"

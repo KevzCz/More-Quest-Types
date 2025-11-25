@@ -89,7 +89,12 @@ public class MQTNetwork {
                 ToggleRewardRequest.STREAM_CODEC,
                 ToggleRewardRequest::handle
         );
-
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.C2S,
+                ResetRepeatCounterMessage.TYPE,
+                ResetRepeatCounterMessage.STREAM_CODEC,
+                ResetRepeatCounterMessage::handle
+        );
 
     }
 }

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "net.pixeldreamstudios.morequesttypes.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "LivingEntityLastDamageMixin",
+    "QuestExtensions",
+    "TeamDataExtensions"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

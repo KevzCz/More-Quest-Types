@@ -34,4 +34,5 @@ public final class MoreQuestTypesFabric implements ModInitializer {
             });
         });
     }
+
 }

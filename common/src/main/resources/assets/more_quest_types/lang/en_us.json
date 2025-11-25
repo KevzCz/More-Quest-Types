@@ -148,9 +148,44 @@
   "morequesttypes.reward.status.on": "On",
   "morequesttypes.reward.status.off": "Off",
   "morequesttypes.reward.toggle_hint": "Click again to toggle on/off",
-  "morequesttypes.reward.locked": "Locked"
+  "morequesttypes.reward.locked": "Locked",
 
+  "ftbquests.task.ftbquests.potion_effect": "Potion Effect",
+  "morequesttypes.task.potion_effect.effect": "Effect",
+  "morequesttypes.task.potion_effect.amplifier": "Amplifier (-1 = any)",
+  "morequesttypes.task.potion_effect.title_with_amp": "%s %s",
+  "morequesttypes.task.potion_effect.tooltip.any_amp": "Have the %s effect (any amplifier)",
+  "morequesttypes.task.potion_effect.tooltip.specific_amp": "Have the %s effect at amp %s",
 
+  "morequesttypes.quest.max_repeats": "Max Repeats",
+  "morequesttypes.quest.always_invisible": "Always Invisible",
+  "morequesttypes.quest.always_invisible.toggle": "Always Invisible: %s",
+  "morequesttypes.quest.reset_repeat_counter": "Reset Repeat Counter",
+  "morequesttypes.quest.reset_repeat_counter.confirm": "Reset the completion counter and quest progress?",
+  "morequesttypes.quest.repeatable_limited": "Repeatable Quest (%s times)",
+  "morequesttypes.quest.repeatable_remaining": "Repeatable Quest (%s/%s remaining)",
+  "morequesttypes.quest.linked_item": "Linked Item",
 
+  "key.categories.morequesttypes": "More Quest Types",
+  "key.morequesttypes.search_quest_by_item": "Search/Open Quest for Item",
 
+  "morequesttypes.search.title": "Quests for %s",
+  "morequesttypes.search.no_quest_file": "Quest file not loaded!",
+  "morequesttypes.search.no_item": "You must be holding an item!",
+  "morequesttypes.search.no_quests_found": "No active quests found for %s",
+  "morequesttypes.search.found_one": "Opening quest: %s",
+  "morequesttypes.search.found_multiple": "Found %s quests",
+
+  "morequesttypes.link.opened": "Opened linked quest: %s",
+  "morequesttypes.link.opened_quest_item": "Opened quest linked to item: %s",
+
+  "morequesttypes.command.link.no_item": "You must be holding an item!",
+  "morequesttypes.command.link.success": "Linked quest '%s' to %s",
+
+  "ftbquests.reward.ftbquests.potion": "Potion Effect",
+  "morequesttypes.reward.potion.title_with_amp": "%s %s",
+  "morequesttypes.reward.potion.effect": "Effect",
+  "morequesttypes.reward.potion.amplifier": "Amplifier",
+  "morequesttypes.reward.potion.duration_ticks": "Duration (ticks)",
+  "morequesttypes.reward.potion.show_particles": "Show Particles"
 }

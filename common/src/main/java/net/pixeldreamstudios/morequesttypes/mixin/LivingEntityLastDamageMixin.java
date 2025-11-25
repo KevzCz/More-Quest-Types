@@ -29,7 +29,6 @@ public abstract class LivingEntityLastDamageMixin implements LivingEntityLastDam
     @Unique private float mqt$newHealth;
     @Unique private int   mqt$damageSeqCounter = 0;
     @Unique private int   mqt$lastDamageSeq    = 0;
-
     @Inject(method = "actuallyHurt(Lnet/minecraft/world/damagesource/DamageSource;F)V", at = @At("HEAD"))
     private void mqt$atHead(DamageSource source, float passed, CallbackInfo ci) {
         mqt$lastDamageSeq = ++mqt$damageSeqCounter;
@@ -37,11 +36,11 @@ public abstract class LivingEntityLastDamageMixin implements LivingEntityLastDam
         Entity origin = mqt$resolveOrigin(source);
         if (origin == null) origin = (Entity)(Object)this;
         mqt$lastAttacker = origin.getUUID();
-
         mqt$prevHealth = ((LivingEntity)(Object)this).getHealth();
         mqt$lastBaseline = 0.0F;
         mqt$lastFinal = 0.0F;
         mqt$newHealth = mqt$prevHealth;
+
     }
 
     @ModifyArg(
@@ -53,7 +52,6 @@ public abstract class LivingEntityLastDamageMixin implements LivingEntityLastDam
         mqt$newHealth = newHealth;
         float applied = Math.max(0.0F, mqt$prevHealth - newHealth);
         mqt$lastFinal = applied;
-
         mqt$lastBaseline = applied;
         return newHealth;
     }
@@ -73,7 +71,6 @@ public abstract class LivingEntityLastDamageMixin implements LivingEntityLastDam
 
         long gt = sp.level().getGameTime();
         var used = sp.getMainHandItem();
-
         DamageEventBuffer.push(
                 sp.getUUID(),
                 (LivingEntity)(Object)this,

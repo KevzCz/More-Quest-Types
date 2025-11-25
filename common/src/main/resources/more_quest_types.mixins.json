@@ -5,10 +5,9 @@
   "minVersion": "0.8",
   "client": [
     "client.TitleDistanceMixin",
-    "client.RewardButtonMixin"
-  ],
-  "mixins": [
-    "LivingEntityLastDamageMixin"
+    "client.RewardButtonMixin",
+    "client.QuestScreenMixin",
+    "client.QuestButtonMixin"
   ],
   "injectors": {
     "defaultRequire": 1

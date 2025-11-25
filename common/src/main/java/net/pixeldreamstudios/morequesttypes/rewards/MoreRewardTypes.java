@@ -18,6 +18,7 @@ public final class MoreRewardTypes {
     public static RewardType LOOT_TABLE;
     public static RewardType ATTRIBUTE;
     public static RewardType SPELL;
+    public static RewardType POTION;
     public static void init() {
         if (BlabberCompat.isLoaded()) {
             DIALOGUE = RewardTypes.register(
@@ -59,6 +60,11 @@ public final class MoreRewardTypes {
                 FTBQuestsAPI.rl("loot_table"),
                 LootTableReward::new,
                 () -> Icon.getIcon("minecraft:item/chest_minecart")
+        );
+        POTION = RewardTypes.register(
+                FTBQuestsAPI.rl("potion"),
+                PotionReward::new,
+                () -> Icon.getIcon("minecraft:item/potion")
         );
     }
 }

@@ -21,6 +21,7 @@ public final class MoreTasksTypes {
     public static TaskType FIND_ENTITY;
     public static TaskType CHECK_QUEST;
     public static TaskType BREAK_BLOCK;
+    public static TaskType POTION_EFFECT;
     public static void init() {
         TIMER = TaskTypes.register(
                 FTBQuestsAPI.rl("timer"),
@@ -85,6 +86,11 @@ public final class MoreTasksTypes {
                 FTBQuestsAPI.rl("break_block"),
                 BreakBlockTask::new,
                 () -> Icon.getIcon("minecraft:item/iron_pickaxe")
+        );
+        POTION_EFFECT = TaskTypes.register(
+                FTBQuestsAPI.rl("potion_effect"),
+                PotionEffectTask::new,
+                () -> Icon.getIcon("minecraft:item/potion")
         );
     }
 }

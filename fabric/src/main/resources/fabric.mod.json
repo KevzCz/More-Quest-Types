@@ -17,11 +17,15 @@
   "entrypoints": {
     "main": [
       "net.pixeldreamstudios.morequesttypes.fabric.MoreQuestTypesFabric"
+    ],
+    "client": [
+      "net.pixeldreamstudios.morequesttypes.fabric.client.MoreQuestTypesFabricClient"
     ]
   },
   "mixins": [
     "more_quest_types.mixins.json",
-    "more_quest_types_fabric.mixins.json"
+    "more_quest_types_fabric.mixins.json",
+    "morequesttypes-common.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.16.0",
