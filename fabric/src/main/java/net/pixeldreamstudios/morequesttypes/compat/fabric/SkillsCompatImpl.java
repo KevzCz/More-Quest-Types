@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.puffish.skillsmod.SkillsMod;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class SkillsCompatImpl {
@@ -24,7 +25,7 @@ public final class SkillsCompatImpl {
     }
 
     public static int getCategoryLevel(ServerPlayer player, ResourceLocation categoryId) {
-        if (!isLoaded()) return 0;
+        if (! isLoaded()) return 0;
         return SkillsMod.getInstance().getCurrentLevel(player, categoryId).orElse(0);
     }
 
@@ -33,5 +34,23 @@ public final class SkillsCompatImpl {
 
         return SkillsMod.getInstance().getCategories(onlyWithExperience)
                 .stream().collect(Collectors.toUnmodifiableList());
+    }
+
+    public static Map<String, String> getCategoryIconData(ServerPlayer player) {
+        Map<String, String> result = new java.util.HashMap<>();
+        if (! isLoaded()) return result;
+
+        try {
+            var skillsMod = SkillsMod.getInstance();
+            var categories = skillsMod.getCategories(false);
+
+            for (ResourceLocation catId : categories) {
+                result.put(catId.toString(), "LOOKUP:" + catId.toString());
+            }
+        } catch (Exception e) {
+
+        }
+
+        return result;
     }
 }

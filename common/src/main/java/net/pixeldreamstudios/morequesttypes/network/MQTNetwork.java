@@ -95,6 +95,17 @@ public class MQTNetwork {
                 ResetRepeatCounterMessage.STREAM_CODEC,
                 ResetRepeatCounterMessage::handle
         );
-
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.C2S,
+                MQTSkillsCategoriesRequest.TYPE,
+                MQTSkillsCategoriesRequest.STREAM_CODEC,
+                MQTSkillsCategoriesRequest::handle
+        );
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.S2C,
+                MQTSkillsCategoriesResponse.TYPE,
+                MQTSkillsCategoriesResponse.STREAM_CODEC,
+                MQTSkillsCategoriesResponse::handle
+        );
     }
 }

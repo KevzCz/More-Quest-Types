@@ -163,7 +163,7 @@
   "morequesttypes.quest.reset_repeat_counter": "Reset Repeat Counter",
   "morequesttypes.quest.reset_repeat_counter.confirm": "Reset the completion counter and quest progress?",
   "morequesttypes.quest.repeatable_limited": "Repeatable Quest (%s times)",
-  "morequesttypes.quest.repeatable_remaining": "Repeatable Quest (%s/%s remaining)",
+  "morequesttypes.quest.repeatable_remaining": "%s/%s remaining",
   "morequesttypes.quest.linked_item": "Linked Item",
 
   "key.categories.morequesttypes": "More Quest Types",
@@ -187,5 +187,60 @@
   "morequesttypes.reward.potion.effect": "Effect",
   "morequesttypes.reward.potion.amplifier": "Amplifier",
   "morequesttypes.reward.potion.duration_ticks": "Duration (ticks)",
-  "morequesttypes.reward.potion.show_particles": "Show Particles"
+  "morequesttypes.reward.potion.show_particles": "Show Particles",
+
+  "ftbquests.task.ftbquests.levelz": "LevelZ",
+  "morequesttypes.task.levelz.mode": "Mode",
+  "morequesttypes.task.levelz.required": "Required Amount",
+  "morequesttypes.task.levelz.skill": "Skill",
+  "morequesttypes.task.levelz.tooltip.total": "Reach total skill level ≥ %s",
+  "morequesttypes.task.levelz.tooltip.skill": "Reach %s ≥ %s",
+
+  "ftbquests.reward.ftbquests.levelz": "LevelZ",
+  "morequesttypes.reward.levelz.kind": "Type",
+  "morequesttypes.reward.levelz.amount": "Amount",
+  "morequesttypes.reward.levelz.skill": "Skill",
+  "morequesttypes.reward.levelz.title": "%s → %s (%s)",
+
+  "ftbquests.task.ftbquests.trading": "Trading",
+  "ftbquests.task.ftbquests.trading.custom_name": "Entity Name",
+  "ftbquests.task.ftbquests.trading.entity": "Entity",
+  "ftbquests.task.ftbquests.trading.entity_type_tag": "Entity Type Tag",
+  "ftbquests.task.ftbquests.trading.value": "Number of Trades",
+  "morequesttypes.task.trading.profession": "Villager Profession",
+  "morequesttypes.task.trading.traded_item": "Traded Item",
+  "morequesttypes.task.trading.traded_item_tag": "Traded Item Tag",
+  "morequesttypes.task.trading.check_buy_item": "Check Buy Item",
+  "morequesttypes.task.trading.title": "Trade %s× with %s",
+  "morequesttypes.task.trading.title_with_sold_item": "Trade %s× with %s (selling %s)",
+  "morequesttypes.task.trading.title_with_received_item": "Trade %s× with %s (receiving %s)",
+
+  "ftbquests.task.ftbquests.reskillable": "Reskillable",
+  "morequesttypes.task.reskillable.mode": "Mode",
+  "morequesttypes.task.reskillable.required": "Required Amount",
+  "morequesttypes.task.reskillable.skill": "Skill",
+  "morequesttypes.task.reskillable.tooltip.total": "Reach total skill level ≥ %s",
+  "morequesttypes.task.reskillable.tooltip.skill": "Reach %s ≥ %s",
+
+  "ftbquests.reward.ftbquests.reskillable": "Reskillable",
+  "morequesttypes.reward.reskillable.kind": "Type",
+  "morequesttypes.reward.reskillable.amount": "Amount",
+  "morequesttypes.reward.reskillable.skill": "Skill",
+  "morequesttypes.reward.reskillable.title": "%s → %s (%s)",
+
+  "morequesttypes.comparison.equals": "Equals (==)",
+  "morequesttypes.comparison.greater_than": "Greater Than (>)",
+  "morequesttypes.comparison.less_than": "Less Than (<)",
+  "morequesttypes.comparison.greater_or_equal": "Greater or Equal (≥)",
+  "morequesttypes.comparison.less_or_equal": "Less or Equal (≤)",
+  "morequesttypes.comparison.range": "Range (x > y > z)",
+  "morequesttypes.comparison.range_equal": "Range Equal (x ≥ y ≥ z)",
+  "morequesttypes.comparison.range_equal_first": "Range Equal First (x ≥ y > z)",
+  "morequesttypes.comparison.range_equal_second": "Range Equal Second (x > y ≥ z)",
+
+  "morequesttypes.task.comparison_mode": "Comparison Mode",
+  "morequesttypes.task.first_number": "First Number (Min for Range)",
+  "morequesttypes.task.second_number": "Second Number (Max for Range)",
+
+  "morequesttypes.chapter_image.permission_level": "Permission Level"
 }

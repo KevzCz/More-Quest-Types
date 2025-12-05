@@ -4,9 +4,7 @@ import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftbquests.api.FTBQuestsAPI;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import dev.ftb.mods.ftbquests.quest.reward.RewardTypes;
-import net.pixeldreamstudios.morequesttypes.compat.BlabberCompat;
-import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
-import net.pixeldreamstudios.morequesttypes.compat.SpellEngineCompat;
+import net.pixeldreamstudios.morequesttypes.compat.*;
 
 public final class MoreRewardTypes {
     private MoreRewardTypes() {}
@@ -19,6 +17,8 @@ public final class MoreRewardTypes {
     public static RewardType ATTRIBUTE;
     public static RewardType SPELL;
     public static RewardType POTION;
+    public static RewardType LEVELZ;
+    public static RewardType RESKILLABLE;
     public static void init() {
         if (BlabberCompat.isLoaded()) {
             DIALOGUE = RewardTypes.register(
@@ -66,5 +66,19 @@ public final class MoreRewardTypes {
                 PotionReward::new,
                 () -> Icon.getIcon("minecraft:item/potion")
         );
+        if (LevelZCompat.isLoaded()) {
+            LEVELZ = RewardTypes.register(
+                    FTBQuestsAPI.rl("levelz"),
+                    LevelZReward::new,
+                    () -> Icon.getIcon("levelz:icon.png")
+            );
+        }
+        if (ReskillableCompat.isLoaded()) {
+            RESKILLABLE = RewardTypes.register(
+                    FTBQuestsAPI.rl("reskillable"),
+                    ReskillableReward::new,
+                    () -> Icon.getIcon("minecraft:item/experience_bottle")
+            );
+        }
     }
 }

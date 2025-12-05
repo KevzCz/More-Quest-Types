@@ -16,6 +16,7 @@ import dev.ftb.mods.ftbquests.net.EditObjectResponseMessage;
 import dev.ftb.mods.ftbquests.quest.*;
 import dev.ftb.mods.ftbquests.quest.task.KillTask;
 import dev.ftb.mods.ftbquests.quest.task.Task;
+import dev.ftb.mods.ftbquests.util.ProgressChange;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -38,7 +39,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.pixeldreamstudios.morequesttypes.api.IQuestExtension;
-import net.pixeldreamstudios.morequesttypes.api.ITeamDataExtension;
 import net.pixeldreamstudios.morequesttypes.tasks.*;
 
 import java.util.*;
@@ -840,12 +840,17 @@ public final class MoreQuestTypesCommands {
 
         IQuestExtension ext = (IQuestExtension) (Object) quest;
         if (ext.getMaxRepeats() <= 0) {
-            source.sendFailure(Component.literal("This quest has no repeat limit!"));
+            source.sendFailure(Component. literal("This quest has no repeat limit!"));
             return 0;
         }
 
         ServerQuestFile.INSTANCE.getTeamData(player).ifPresent(teamData -> {
-            ((ITeamDataExtension) teamData).resetQuestCompletionCount(quest.id, player.getUUID());
+            ProgressChange progressChange = new ProgressChange(quest, player.getUUID());
+            progressChange.setReset(true);
+            quest.forceProgress(teamData, progressChange);
+
+            teamData.clearRepeatCooldown(quest);
+
             teamData.markDirty();
         });
 
@@ -853,7 +858,7 @@ public final class MoreQuestTypesCommands {
                         "Reset repeat counter for quest '" + quest.getTitle().getString() + "' for player " + player.getName().getString()),
                 true);
 
-        return Command.SINGLE_SUCCESS;
+        return Command. SINGLE_SUCCESS;
     }
 
     private static QuestObjectBase getQuestObjectForString(String idStr) throws CommandSyntaxException {

@@ -5,6 +5,8 @@ import dev.ftb.mods.ftbquests.api.FTBQuestsAPI;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import dev.ftb.mods.ftbquests.quest.task.TaskTypes;
 import net.pixeldreamstudios.morequesttypes.compat.BlabberCompat;
+import net.pixeldreamstudios.morequesttypes.compat.LevelZCompat;
+import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
 import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
 
 public final class MoreTasksTypes {
@@ -22,6 +24,10 @@ public final class MoreTasksTypes {
     public static TaskType CHECK_QUEST;
     public static TaskType BREAK_BLOCK;
     public static TaskType POTION_EFFECT;
+    public static TaskType TRADING;
+    public static TaskType LEVELZ;
+    public static TaskType RESKILLABLE;
+
     public static void init() {
         TIMER = TaskTypes.register(
                 FTBQuestsAPI.rl("timer"),
@@ -39,7 +45,7 @@ public final class MoreTasksTypes {
             DIALOGUE = TaskTypes.register(
                     FTBQuestsAPI.rl("dialogue"),
                     DialogueTask::new,
-                    () -> Icon.getIcon("minecraft:item/writable_book")
+                    () -> Icon.getIcon("blabber:icon.png")
             );
         }
         KILL_ADVANCED = TaskTypes.register(
@@ -92,5 +98,24 @@ public final class MoreTasksTypes {
                 PotionEffectTask::new,
                 () -> Icon.getIcon("minecraft:item/potion")
         );
+        TRADING = TaskTypes.register(
+                FTBQuestsAPI.rl("trading"),
+                TradingTask::new,
+                () -> Icon.getIcon("minecraft:item/emerald")
+        );
+        if (LevelZCompat.isLoaded()) {
+            LEVELZ = TaskTypes.register(
+                    FTBQuestsAPI.rl("levelz"),
+                    LevelZTask::new,
+                    () -> Icon.getIcon("levelz:icon.png")
+            );
+        }
+        if (ReskillableCompat.isLoaded()) {
+            RESKILLABLE = TaskTypes.register(
+                    FTBQuestsAPI.rl("reskillable"),
+                    ReskillableTask::new,
+                    () -> Icon.getIcon("minecraft:item/experience_bottle")
+            );
+        }
     }
 }

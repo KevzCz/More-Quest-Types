@@ -46,6 +46,7 @@ public record MQTStructuresResponse(List<String> data) implements CustomPacketPa
             UseItemTask.syncKnownStructureList(list);
             HoldItemTask.syncKnownStructureList(list);
             FindEntityTask.syncKnownStructureList(list);
+            TradingTask.syncKnownStructureList(list);
         });
     }
 }

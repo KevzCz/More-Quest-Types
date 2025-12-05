@@ -11,44 +11,34 @@ import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
+import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 
-public class SkillsLevelTask extends Task {
-    public enum Mode { TOTAL_LEVEL, CATEGORY_LEVEL }
+public class ReskillableTask extends Task {
+    public enum Mode { SKILL_LEVEL, TOTAL_LEVEL }
 
-    private Mode mode = Mode.TOTAL_LEVEL;
+    private Mode mode = Mode.SKILL_LEVEL;
     private ComparisonMode comparisonMode = ComparisonMode.GREATER_OR_EQUAL;
     private int firstNumber = 10;
     private int secondNumber = 20;
-    private String categoryId = "";
+    private int skillIndex = 0;
 
-    private static final Map<String, String> CATEGORY_ICONS = new ConcurrentHashMap<>();
-
-    public SkillsLevelTask(long id, Quest quest) {
+    public ReskillableTask(long id, Quest quest) {
         super(id, quest);
-    }
-
-    public static void syncCategoryIcons(Map<String, String> icons) {
-        CATEGORY_ICONS.clear();
-        CATEGORY_ICONS.putAll(icons);
     }
 
     @Override
     public TaskType getType() {
-        return MoreTasksTypes.SKILLS_LEVEL;
+        return MoreTasksTypes.RESKILLABLE;
     }
 
     @Override
@@ -99,48 +89,42 @@ public class SkillsLevelTask extends Task {
     @Environment(EnvType.CLIENT)
     @Override
     public Icon getAltIcon() {
-        if (mode == Mode.TOTAL_LEVEL || categoryId.isEmpty()) {
-            return getType().getIconSupplier();
-        }
+        return getSkillIcon(skillIndex, this.getType());
+    }
 
-        String iconData = CATEGORY_ICONS.get(categoryId);
-        if (iconData != null && iconData.startsWith("LOOKUP:")) {
+    @Environment(EnvType.CLIENT)
+    private static Icon getSkillIcon(int skillIndex, TaskType taskType) {
+        String iconName = switch (skillIndex) {
+            case 0 -> "mining";
+            case 1 -> "gathering";
+            case 2 -> "attack";
+            case 3 -> "defense";
+            case 4 -> "building";
+            case 5 -> "farming";
+            case 6 -> "agility";
+            case 7 -> "magic";
+            default -> null;
+        };
+
+        if (iconName != null) {
             try {
-                String catIdStr = iconData.substring(7);
-                ResourceLocation catId = ResourceLocation.tryParse(catIdStr);
-                if (catId != null && SkillsCompat.isLoaded()) {
-                    var clientMod = net.puffish.skillsmod.client.SkillsClientMod.getInstance();
-                    var clientModAccessor = (net.pixeldreamstudios.morequesttypes.mixin.accessor.SkillsClientModAccessor) clientMod;
-                    var screenData = clientModAccessor.mqt$getScreenData();
-                    var screenDataAccessor = (net.pixeldreamstudios.morequesttypes.mixin.accessor.ClientSkillScreenDataAccessor) screenData;
-                    var categoryData = screenDataAccessor.mqt$getCategory(catId);
-
-                    if (categoryData.isPresent()) {
-                        var config = categoryData.get().getConfig();
-                        var iconConfig = config.icon();
-
-                        if (iconConfig instanceof net.puffish.skillsmod.client.config.ClientIconConfig.ItemIconConfig itemIcon) {
-                            return dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(itemIcon.item());
-                        } else if (iconConfig instanceof net.puffish.skillsmod.client.config.ClientIconConfig.TextureIconConfig textureIcon) {
-                            return Icon.getIcon(textureIcon.texture());
-                        }
-                    }
-                }
+                ResourceLocation iconLocation = ResourceLocation.fromNamespaceAndPath("more_quest_types",
+                        "textures/reskillable_compat/" + iconName + ".png");
+                return Icon.getIcon(iconLocation);
             } catch (Exception e) {
-
+                return taskType.getIconSupplier();
             }
         }
-
-        return getType().getIconSupplier();
+        return taskType.getIconSupplier();
     }
 
     @Override
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-        var MODE_MAP = NameMap.of(Mode.TOTAL_LEVEL, Mode.values()).create();
+        var MODE_MAP = NameMap.of(Mode.SKILL_LEVEL, Mode.values()).create();
         config.addEnum("mode", mode, v -> mode = v, MODE_MAP)
-                .setNameKey("morequesttypes.task.skills_level.mode");
+                .setNameKey("morequesttypes.task.reskillable.mode");
 
         var COMPARISON_MAP = NameMap.of(ComparisonMode.GREATER_OR_EQUAL, ComparisonMode.values())
                 .name(cm -> Component.translatable(cm.getTranslationKey()))
@@ -167,32 +151,32 @@ public class SkillsLevelTask extends Task {
             }
         }, 20, 0, 100000).setNameKey("morequesttypes.task.second_number");
 
-        final var NONE = ResourceLocation.withDefaultNamespace("none");
-
-        ArrayList<ResourceLocation> cats = new ArrayList<>();
-        if (SkillsCompat.isLoaded()) {
-            cats.addAll(SkillsCompat.getCategories(true));
+        Map<Integer, String> skills = new LinkedHashMap<>();
+        if (ReskillableCompat.isLoaded()) {
+            skills.putAll(ReskillableCompat.getAvailableSkills());
         }
-        cats.add(0, NONE);
+        
+        if (skills.isEmpty()) {
+            skills.put(0, "No Skills Available");
+        }
 
-        ResourceLocation current = (mode == Mode.TOTAL_LEVEL)
-                ? NONE
-                : Objects.requireNonNullElse(ResourceLocation.tryParse(categoryId),
-                (cats.size() > 1 ? cats.get(1) : NONE));
+        List<Integer> skillIds = new ArrayList<>(skills.keySet());
+        Integer currentSkillId = skillIds.contains(skillIndex) ? skillIndex : skillIds.get(0);
 
-        if (current.equals(NONE) && cats.size() > 1) current = cats.get(1);
-
-        var CAT_MAP = NameMap
-                .of(current, cats.toArray(ResourceLocation[]::new))
-                .name(rl -> {
-                    if (rl == null) return Component.literal("Unknown");
-                    return rl.equals(NONE) ? Component.literal("None") : Component.literal(rl.toString());
+        TaskType taskType = this.getType();
+        var SKILL_MAP = NameMap.of(currentSkillId, skillIds.toArray(Integer[]::new))
+                .name(id -> {
+                    if (id == null) return Component.literal("Unknown");
+                    return Component.literal(skills.getOrDefault(id, "Unknown (" + id + ")"));
+                })
+                .icon(id -> {
+                    if (id == null) return taskType.getIconSupplier();
+                    return getSkillIcon(id, taskType);
                 })
                 .create();
 
-        config.addEnum("category", current, rl -> {
-            categoryId = rl.equals(NONE) ? "" : rl.toString();
-        }, CAT_MAP).setNameKey("morequesttypes.task.skills_level.category");
+        config.addEnum("skill", currentSkillId, v -> skillIndex = v, SKILL_MAP)
+                .setNameKey("morequesttypes.task.reskillable.skill");
     }
 
     @Override
@@ -202,52 +186,58 @@ public class SkillsLevelTask extends Task {
         nbt.putString("comparison_mode", comparisonMode.name());
         nbt.putInt("first_number", firstNumber);
         nbt.putInt("second_number", secondNumber);
-        if (!  categoryId.isBlank()) nbt.putString("category", categoryId);
+        nbt.putInt("skill_index", skillIndex);
     }
 
     @Override
     public void readData(net.minecraft.nbt.CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         if (nbt.contains("mode")) {
-            try { mode = Mode.valueOf(nbt.getString("mode")); }
-            catch (IllegalArgumentException ignored) { mode = Mode.TOTAL_LEVEL; }
+            try {
+                mode = Mode.valueOf(nbt.getString("mode"));
+            } catch (IllegalArgumentException ignored) {
+                mode = Mode.SKILL_LEVEL;
+            }
         }
         if (nbt.contains("comparison_mode")) {
-            try { comparisonMode = ComparisonMode.valueOf(nbt.getString("comparison_mode")); }
-            catch (IllegalArgumentException ignored) { comparisonMode = ComparisonMode.GREATER_OR_EQUAL; }
+            try {
+                comparisonMode = ComparisonMode.valueOf(nbt.getString("comparison_mode"));
+            } catch (IllegalArgumentException ignored) {
+                comparisonMode = ComparisonMode.GREATER_OR_EQUAL;
+            }
         }
         firstNumber = Math.max(0, nbt.getInt("first_number"));
         secondNumber = Math.max(0, nbt.getInt("second_number"));
-        categoryId = nbt.getString("category");
+        skillIndex = nbt.getInt("skill_index");
 
         if (comparisonMode.isRange() && secondNumber <= firstNumber) {
             secondNumber = firstNumber + 10;
         }
 
-        if (nbt.contains("required_level") && !  nbt.contains("first_number")) {
-            firstNumber = Math.max(1, nbt.getInt("required_level"));
+        if (nbt.contains("required_amount") && !nbt.contains("first_number")) {
+            firstNumber = Math.max(1, nbt.getInt("required_amount"));
             comparisonMode = ComparisonMode.GREATER_OR_EQUAL;
         }
     }
 
     @Override
-    public void writeNetData(net.minecraft.network.RegistryFriendlyByteBuf buf) {
+    public void writeNetData(RegistryFriendlyByteBuf buf) {
         super.writeNetData(buf);
         buf.writeEnum(mode);
         buf.writeEnum(comparisonMode);
         buf.writeVarInt(firstNumber);
         buf.writeVarInt(secondNumber);
-        buf.writeUtf(categoryId);
+        buf.writeVarInt(skillIndex);
     }
 
     @Override
-    public void readNetData(net.minecraft.network.RegistryFriendlyByteBuf buf) {
+    public void readNetData(RegistryFriendlyByteBuf buf) {
         super.readNetData(buf);
         mode = buf.readEnum(Mode.class);
         comparisonMode = buf.readEnum(ComparisonMode.class);
         firstNumber = Math.max(0, buf.readVarInt());
         secondNumber = Math.max(0, buf.readVarInt());
-        categoryId = buf.readUtf();
+        skillIndex = buf.readVarInt();
 
         if (comparisonMode.isRange() && secondNumber <= firstNumber) {
             secondNumber = firstNumber + 10;
@@ -267,24 +257,22 @@ public class SkillsLevelTask extends Task {
     @Override
     public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
-        if (!  checkTaskSequence(teamData)) return;
-        if (! SkillsCompat.isLoaded()) return;
+        if (!checkTaskSequence(teamData)) return;
+        if (!ReskillableCompat.isLoaded()) return;
 
         Collection<ServerPlayer> online = teamData.getOnlineMembers();
         if (online == null || online.isEmpty()) return;
-        if (! online.iterator().next().getUUID().equals(player.getUUID())) return;
+        if (!online.iterator().next().getUUID().equals(player.getUUID())) return;
 
         int best = 0;
-        if (mode == Mode.TOTAL_LEVEL) {
-            for (ServerPlayer p : online) {
-                best = Math.max(best, SkillsCompat.getTotalLevel(p));
+        for (ServerPlayer p : online) {
+            int value = 0;
+            if (mode == Mode.TOTAL_LEVEL) {
+                value = ReskillableCompat.getTotalSkillLevels(p);
+            } else {
+                value = ReskillableCompat.getSkillLevel(p, skillIndex);
             }
-        } else {
-            var cat = parseCategoryOrNull(categoryId);
-            if (cat == null) return;
-            for (ServerPlayer p : online) {
-                best = Math.max(best, SkillsCompat.getCategoryLevel(p, cat));
-            }
+            best = Math.max(best, value);
         }
 
         long current = teamData.getProgress(this);
@@ -306,15 +294,11 @@ public class SkillsLevelTask extends Task {
     public void addMouseOverText(TooltipList list, TeamData teamData) {
         String compDesc = ComparisonManager.getDescription(comparisonMode, firstNumber, secondNumber);
         if (mode == Mode.TOTAL_LEVEL) {
-            list.add(Component.translatable("morequesttypes.task.skills_level.tooltip.total_comparison", compDesc));
+            list.add(Component.translatable("morequesttypes.task.reskillable.tooltip.total_comparison", compDesc));
         } else {
-            var shown = categoryId.isEmpty() ? "?" : categoryId;
-            list.add(Component.translatable("morequesttypes.task.skills_level.tooltip.category_comparison", shown, compDesc));
+            Map<Integer, String> skills = ReskillableCompat.getAvailableSkills();
+            String skillName = skills.getOrDefault(skillIndex, "Unknown");
+            list.add(Component.translatable("morequesttypes.task.reskillable.tooltip.skill_comparison", skillName, compDesc));
         }
-    }
-
-    private static ResourceLocation parseCategoryOrNull(String s) {
-        if (s == null || s.isBlank()) return null;
-        return ResourceLocation.tryParse(s);
     }
 }

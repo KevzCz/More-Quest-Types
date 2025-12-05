@@ -45,6 +45,7 @@ dependencies {
     modImplementation("dev.ftb.mods:ftb-quests-neoforge:${rootProject.ftb_quests_version}") { transitive false }
     modCompileOnly "curse.maven:puffish-skills-835091:7038165"
     modCompileOnly("maven.modrinth:spell-engine:1.8.9+1.21.1-neoforge")
+    modCompileOnly "curse.maven:reskillable-reimagined-1170464:7262614"
 }
 
 processResources {

@@ -5,6 +5,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Collection;
+import java.util.Map;
 
 public final class SkillsCompat {
     private SkillsCompat() {}
@@ -20,4 +21,7 @@ public final class SkillsCompat {
 
     @ExpectPlatform
     public static Collection<ResourceLocation> getCategories(boolean onlyWithExperience) { throw new AssertionError(); }
+
+    @ExpectPlatform
+    public static Map<String, String> getCategoryIconData(ServerPlayer player) { throw new AssertionError(); }
 }

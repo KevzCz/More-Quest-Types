@@ -18,7 +18,9 @@ import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class SkillsLevelReward extends Reward {
     public enum Kind { EXPERIENCE, POINTS }
@@ -26,7 +28,12 @@ public final class SkillsLevelReward extends Reward {
     private String categoryId = "";
     private Kind kind = Kind.EXPERIENCE;
     private int amount = 0;
+    private static final Map<String, String> CATEGORY_ICONS = new ConcurrentHashMap<>();
 
+    public static void syncCategoryIcons(Map<String, String> icons) {
+        CATEGORY_ICONS.clear();
+        CATEGORY_ICONS.putAll(icons);
+    }
     public SkillsLevelReward(long id, Quest quest) {
         super(id, quest);
     }
@@ -68,12 +75,6 @@ public final class SkillsLevelReward extends Reward {
                 cat,
                 mode
         );
-    }
-
-    @Environment(EnvType.CLIENT)
-    @Override
-    public Icon getAltIcon() {
-        return this.getType().getIconSupplier();
     }
 
     @Override
@@ -151,5 +152,43 @@ public final class SkillsLevelReward extends Reward {
     private static ResourceLocation parse(String s) {
         if (s == null || s.isBlank()) return null;
         return ResourceLocation.tryParse(s);
+    }
+
+    @Environment(EnvType.CLIENT)
+    @Override
+    public Icon getAltIcon() {
+        if (categoryId.isEmpty()) {
+            return getType().getIconSupplier();
+        }
+
+        String iconData = CATEGORY_ICONS.get(categoryId);
+        if (iconData != null && iconData.startsWith("LOOKUP:")) {
+            try {
+                String catIdStr = iconData.substring(7);
+                ResourceLocation catId = ResourceLocation.tryParse(catIdStr);
+                if (catId != null && SkillsCompat.isLoaded()) {
+                    var clientMod = net.puffish.skillsmod.client.SkillsClientMod.getInstance();
+                    var clientModAccessor = (net.pixeldreamstudios.morequesttypes.mixin.accessor.SkillsClientModAccessor) clientMod;
+                    var screenData = clientModAccessor.mqt$getScreenData();
+                    var screenDataAccessor = (net.pixeldreamstudios.morequesttypes.mixin.accessor.ClientSkillScreenDataAccessor) screenData;
+                    var categoryData = screenDataAccessor.mqt$getCategory(catId);
+
+                    if (categoryData.isPresent()) {
+                        var config = categoryData.get().getConfig();
+                        var iconConfig = config.icon();
+
+                        if (iconConfig instanceof net.puffish.skillsmod.client.config.ClientIconConfig.ItemIconConfig itemIcon) {
+                            return dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(itemIcon.item());
+                        } else if (iconConfig instanceof net.puffish.skillsmod.client.config.ClientIconConfig.TextureIconConfig textureIcon) {
+                            return Icon.getIcon(textureIcon.texture());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+
+            }
+        }
+
+        return getType().getIconSupplier();
     }
 }

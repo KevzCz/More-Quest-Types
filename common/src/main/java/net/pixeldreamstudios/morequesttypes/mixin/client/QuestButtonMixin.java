@@ -8,7 +8,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.pixeldreamstudios.morequesttypes.api.IQuestExtension;
-import net.pixeldreamstudios.morequesttypes.api.ITeamDataExtension;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -34,14 +33,14 @@ public class QuestButtonMixin {
                     var player = Minecraft.getInstance().player;
                     if (player != null) {
                         TeamData teamData = TeamData.get(player);
-                        ITeamDataExtension teamExt = (ITeamDataExtension) (Object) teamData;
 
-                        int currentCount = teamExt.getQuestCompletionCount(quest.id, player.getUUID());
+                        int currentCount = teamData.getCompletionCount(quest);
                         int remaining = Math.max(0, maxRepeats - currentCount);
 
                         List<Component> lines = list.getLines();
 
                         if (!lines.isEmpty()) {
+
                             lines.remove(lines.size() - 1);
 
                             list.add(Component.translatable("morequesttypes.quest.repeatable_remaining",
@@ -49,6 +48,7 @@ public class QuestButtonMixin {
                         }
                     }
                 } catch (Exception e) {
+
                 }
             }
         }

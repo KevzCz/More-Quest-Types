@@ -44,6 +44,7 @@ dependencies {
     modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-base:6.1.2"
     modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:6.1.2"
     modCompileOnly("maven.modrinth:spell-engine:1.8.9+1.21.1-fabric")
+    modCompileOnly "curse.maven:levelz-517130:6181516"
 }
 
 processResources {

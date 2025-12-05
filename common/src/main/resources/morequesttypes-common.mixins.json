@@ -5,7 +5,9 @@
   "mixins": [
     "LivingEntityLastDamageMixin",
     "QuestExtensions",
-    "TeamDataExtensions"
+    "MerchantResultSlotMixin",
+    "accessor.SkillsClientModAccessor",
+    "accessor.ClientSkillScreenDataAccessor"
   ],
   "injectors": {
     "defaultRequire": 0
