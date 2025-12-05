@@ -8,8 +8,9 @@ import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 import java.util.Optional;
+
 @Pseudo
-@Mixin(ClientSkillScreenData.class)
+@Mixin(value = ClientSkillScreenData.class, remap = false)
 public interface ClientSkillScreenDataAccessor {
     @Invoker("getCategory")
     Optional<ClientCategoryData> mqt$getCategory(ResourceLocation categoryId);

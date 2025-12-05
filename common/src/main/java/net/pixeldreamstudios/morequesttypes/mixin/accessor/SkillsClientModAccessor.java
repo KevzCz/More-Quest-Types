@@ -5,8 +5,9 @@ import net.puffish.skillsmod.client.data.ClientSkillScreenData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.gen.Accessor;
+
 @Pseudo
-@Mixin(SkillsClientMod.class)
+@Mixin(value = SkillsClientMod.class, remap = false)
 public interface SkillsClientModAccessor {
     @Accessor("screenData")
     ClientSkillScreenData mqt$getScreenData();
