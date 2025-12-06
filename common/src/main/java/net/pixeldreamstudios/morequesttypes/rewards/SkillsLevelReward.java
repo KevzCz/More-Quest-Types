@@ -24,16 +24,21 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class SkillsLevelReward extends Reward {
     public enum Kind { EXPERIENCE, POINTS }
+    public enum OperationType { ADD, SET, REDUCE }
 
     private String categoryId = "";
     private Kind kind = Kind.EXPERIENCE;
+    private OperationType operationType = OperationType.ADD;
     private int amount = 0;
+    private String pointSource = "more_quest_types:reward";
+
     private static final Map<String, String> CATEGORY_ICONS = new ConcurrentHashMap<>();
 
     public static void syncCategoryIcons(Map<String, String> icons) {
         CATEGORY_ICONS.clear();
         CATEGORY_ICONS.putAll(icons);
     }
+
     public SkillsLevelReward(long id, Quest quest) {
         super(id, quest);
     }
@@ -45,20 +50,36 @@ public final class SkillsLevelReward extends Reward {
 
     @Override
     public void claim(ServerPlayer player, boolean notify) {
-        if (!SkillsCompat.isLoaded()) return;
+        if (! SkillsCompat.isLoaded()) return;
         final ResourceLocation cat = parse(categoryId);
         if (cat == null) return;
+        if (amount == 0 && operationType != OperationType.SET) return;
+
+        final ResourceLocation source = ResourceLocation.tryParse(pointSource);
+        if (source == null) return;
 
         switch (kind) {
             case EXPERIENCE -> {
-                if (amount != 0) {
-                    net.puffish.skillsmod.SkillsMod.getInstance().addExperience(player, cat, amount);
+                switch (operationType) {
+                    case ADD -> SkillsCompat.addCategoryExperience(player, cat, amount);
+                    case SET -> SkillsCompat.setCategoryExperience(player, cat, amount);
+                    case REDUCE -> {
+                        // FIXED: Get current EXPERIENCE (not level) and subtract
+                        int currentXp = SkillsCompat.getCategoryExperience(player, cat);
+                        int newXp = Math.max(0, currentXp - amount);
+                        SkillsCompat.setCategoryExperience(player, cat, newXp);
+                    }
                 }
             }
             case POINTS -> {
-                if (amount != 0) {
-                    final ResourceLocation SRC = ResourceLocation.fromNamespaceAndPath("more_quest_types", "reward");
-                    net.puffish.skillsmod.SkillsMod.getInstance().addPoints(player, cat, SRC, amount, false);
+                switch (operationType) {
+                    case ADD -> SkillsCompat.addCategoryPoints(player, cat, source, amount);
+                    case SET -> SkillsCompat.setCategoryPoints(player, cat, source, amount);
+                    case REDUCE -> {
+                        int current = SkillsCompat.getCategoryPoints(player, cat, source);
+                        int newAmount = current - amount; // Points can go negative
+                        SkillsCompat.setCategoryPoints(player, cat, source, newAmount);
+                    }
                 }
             }
         }
@@ -68,21 +89,26 @@ public final class SkillsLevelReward extends Reward {
     @Override
     public Component getAltTitle() {
         String cat = categoryId.isBlank() ? "?" : categoryId;
-        String mode = Integer.toString(amount);
+        String kindStr = kind.name().toLowerCase(Locale.ROOT);
+        String opStr = operationType.name().toLowerCase(Locale.ROOT);
+
         return Component.translatable(
                 "morequesttypes.reward.skills_level.title",
-                kind.name().toLowerCase(Locale.ROOT),
-                cat,
-                mode
+                opStr,
+                amount,
+                kindStr,
+                cat
         );
     }
 
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
-        if (!categoryId.isBlank()) nbt.putString("category", categoryId);
+        if (! categoryId.isBlank()) nbt.putString("category", categoryId);
         nbt.putString("kind", kind.name());
+        nbt.putString("operation_type", operationType.name());
         nbt.putInt("amount", amount);
+        nbt.putString("point_source", pointSource);
     }
 
     @Override
@@ -90,7 +116,9 @@ public final class SkillsLevelReward extends Reward {
         super.readData(nbt, provider);
         categoryId = nbt.getString("category");
         try { kind = Kind.valueOf(nbt.getString("kind")); } catch (Throwable ignored) { kind = Kind.EXPERIENCE; }
+        try { operationType = OperationType.valueOf(nbt.getString("operation_type")); } catch (Throwable ignored) { operationType = OperationType.ADD; }
         amount = nbt.getInt("amount");
+        pointSource = nbt.contains("point_source") ? nbt.getString("point_source") : "more_quest_types:reward";
     }
 
     @Override
@@ -98,7 +126,9 @@ public final class SkillsLevelReward extends Reward {
         super.writeNetData(buf);
         buf.writeUtf(categoryId);
         buf.writeEnum(kind);
+        buf.writeEnum(operationType);
         buf.writeVarInt(amount);
+        buf.writeUtf(pointSource);
     }
 
     @Override
@@ -106,7 +136,9 @@ public final class SkillsLevelReward extends Reward {
         super.readNetData(buf);
         categoryId = buf.readUtf();
         kind = buf.readEnum(Kind.class);
+        operationType = buf.readEnum(OperationType.class);
         amount = buf.readVarInt();
+        pointSource = buf.readUtf();
     }
 
     @Environment(EnvType.CLIENT)
@@ -114,13 +146,21 @@ public final class SkillsLevelReward extends Reward {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
+        // Kind selector
         var KINDS = NameMap.of(Kind.EXPERIENCE, Kind.values()).create();
         config.addEnum("kind", kind, v -> kind = v, KINDS)
                 .setNameKey("morequesttypes.reward.skills_level.kind");
 
+        // Operation type selector
+        var OPERATIONS = NameMap.of(OperationType.ADD, OperationType.values()).create();
+        config.addEnum("operation_type", operationType, v -> operationType = v, OPERATIONS)
+                .setNameKey("morequesttypes.reward.skills_level.operation_type");
+
+        // Amount input
         config.addInt("amount", amount, v -> amount = v, 0, 0, 1_000_000)
                 .setNameKey("morequesttypes.reward.skills_level.amount");
 
+        // Category selector
         final ResourceLocation NONE = ResourceLocation.withDefaultNamespace("none");
 
         ArrayList<ResourceLocation> cats = new ArrayList<>();
@@ -131,7 +171,7 @@ public final class SkillsLevelReward extends Reward {
 
         ResourceLocation current = Objects.requireNonNullElse(
                 parse(categoryId),
-                (cats.size() > 1 ? cats.get(1) : NONE)
+                (cats.size() > 1 ?  cats.get(1) : NONE)
         );
         if (current.equals(NONE) && cats.size() > 1) {
             current = cats.get(1);
@@ -147,6 +187,9 @@ public final class SkillsLevelReward extends Reward {
         config.addEnum("category", current, rl -> {
             categoryId = rl.equals(NONE) ? "" : rl.toString();
         }, CAT_MAP).setNameKey("morequesttypes.reward.skills_level.category");
+
+        config.addString("point_source", pointSource, v -> pointSource = v, "more_quest_types:reward")
+                .setNameKey("morequesttypes.reward.skills_level.point_source");
     }
 
     private static ResourceLocation parse(String s) {

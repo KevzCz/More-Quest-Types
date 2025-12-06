@@ -30,10 +30,11 @@
   "morequesttypes.reward.attribute.modifier_id": "Modifier ID",
 
   "ftbquests.task.ftbquests.attributes": "Attribute",
-  "morequesttypes.task.attributes.title": "%1$s %2$s %3$s",
+  "morequesttypes.task.attributes.title": "%s: %s",
   "morequesttypes.task.attributes.amount": "Amount",
   "morequesttypes.task.attributes.attribute": "Attribute",
   "morequesttypes.task.attributes.operator": "Operator",
+  "morequesttypes.task.attributes.tooltip": "%s: %s",
 
   "ftbquests.task.ftbquests.damage": "Damage",
   "ftbquests.task.ftbquests.damage.custom_name": "Entity Name",
@@ -123,7 +124,9 @@
   "morequesttypes.reward.skills_level.amount": "Amount",
   "morequesttypes.reward.skills_level.category": "Category ID",
   "morequesttypes.reward.skills_level.kind": "Kind",
-  "morequesttypes.reward.skills_level.title": "%s → %s (%s)",
+  "morequesttypes.reward.skills_level.title": "%s %s (%s) to %s",
+  "morequesttypes.reward.skills_level.operation_type": "Operation",
+  "morequesttypes.reward.skills_level.point_source": "Point Source",
 
   "ftbquests.task.ftbquests.use_item": "Use item",
   "ftbquests.task.ftbquests.use_item.value": "Times to use",
@@ -200,7 +203,8 @@
   "morequesttypes.reward.levelz.kind": "Type",
   "morequesttypes.reward.levelz.amount": "Amount",
   "morequesttypes.reward.levelz.skill": "Skill",
-  "morequesttypes.reward.levelz.title": "%s → %s (%s)",
+  "morequesttypes.reward.levelz.title": "%s %s (%s) to %s",
+  "morequesttypes.reward.levelz.operation_type": "Operation",
 
   "ftbquests.task.ftbquests.trading": "Trading",
   "ftbquests.task.ftbquests.trading.custom_name": "Entity Name",
@@ -223,10 +227,10 @@
   "morequesttypes.task.reskillable.tooltip.skill": "Reach %s ≥ %s",
 
   "ftbquests.reward.ftbquests.reskillable": "Reskillable",
-  "morequesttypes.reward.reskillable.kind": "Type",
+  "morequesttypes.reward.reskillable.operation_type": "Operation",
   "morequesttypes.reward.reskillable.amount": "Amount",
   "morequesttypes.reward.reskillable.skill": "Skill",
-  "morequesttypes.reward.reskillable.title": "%s → %s (%s)",
+  "morequesttypes.reward.reskillable.title": "%s %s to %s",
 
   "morequesttypes.comparison.equals": "Equals (==)",
   "morequesttypes.comparison.greater_than": "Greater Than (>)",
@@ -242,5 +246,13 @@
   "morequesttypes.task.first_number": "First Number (Min for Range)",
   "morequesttypes.task.second_number": "Second Number (Max for Range)",
 
-  "morequesttypes.chapter_image.permission_level": "Permission Level"
+  "morequesttypes.task.skills_level.tooltip.category_comparison": "%s: %s",
+  "morequesttypes.task.skills_level.tooltip.total_comparison": "Total Level: %s",
+  "morequesttypes.task.skills_level.tooltip.specific_skill": "%s: %s",
+
+  "morequesttypes.task.reskillable.tooltip.total_comparison": "Total Level: %s",
+  "morequesttypes.task.reskillable.tooltip.skill_comparison": "%s: %s",
+
+  "morequesttypes.task.levelz.tooltip.total_comparison": "Total Level: %s",
+  "morequesttypes.task.levelz.tooltip.skill_comparison": "%s: %s"
 }

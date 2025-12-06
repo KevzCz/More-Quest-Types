@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.puffish.skillsmod.SkillsMod;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -25,12 +26,42 @@ public final class SkillsCompatImpl {
     }
 
     public static int getCategoryLevel(ServerPlayer player, ResourceLocation categoryId) {
-        if (! isLoaded()) return 0;
+        if (!isLoaded()) return 0;
         return SkillsMod.getInstance().getCurrentLevel(player, categoryId).orElse(0);
     }
 
+    public static int getCategoryExperience(ServerPlayer player, ResourceLocation categoryId) {
+        if (!isLoaded()) return 0;
+        return SkillsMod.getInstance().getExperience(player, categoryId).orElse(0);
+    }
+
+    public static int getCategoryPoints(ServerPlayer player, ResourceLocation categoryId, ResourceLocation source) {
+        if (!isLoaded()) return 0;
+        return SkillsMod.getInstance().getPoints(player, categoryId, source).orElse(0);
+    }
+
+    public static void addCategoryExperience(ServerPlayer player, ResourceLocation categoryId, int amount) {
+        if (!isLoaded()) return;
+        SkillsMod.getInstance().addExperience(player, categoryId, amount);
+    }
+
+    public static void setCategoryExperience(ServerPlayer player, ResourceLocation categoryId, int amount) {
+        if (!isLoaded()) return;
+        SkillsMod.getInstance().setExperience(player, categoryId, amount);
+    }
+
+    public static void addCategoryPoints(ServerPlayer player, ResourceLocation categoryId, ResourceLocation source, int amount) {
+        if (! isLoaded()) return;
+        SkillsMod.getInstance().addPoints(player, categoryId, source, amount, false);
+    }
+
+    public static void setCategoryPoints(ServerPlayer player, ResourceLocation categoryId, ResourceLocation source, int amount) {
+        if (!isLoaded()) return;
+        SkillsMod.getInstance().setPoints(player, categoryId, source, amount, false);
+    }
+
     public static Collection<ResourceLocation> getCategories(boolean onlyWithExperience) {
-        if (!isLoaded()) return java.util.List.of();
+        if (!isLoaded()) return List.of();
 
         return SkillsMod.getInstance().getCategories(onlyWithExperience)
                 .stream().collect(Collectors.toUnmodifiableList());
@@ -38,7 +69,7 @@ public final class SkillsCompatImpl {
 
     public static Map<String, String> getCategoryIconData(ServerPlayer player) {
         Map<String, String> result = new java.util.HashMap<>();
-        if (! isLoaded()) return result;
+        if (!isLoaded()) return result;
 
         try {
             var skillsMod = SkillsMod.getInstance();

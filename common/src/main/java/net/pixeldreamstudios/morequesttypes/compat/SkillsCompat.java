@@ -20,6 +20,24 @@ public final class SkillsCompat {
     public static int getCategoryLevel(ServerPlayer player, ResourceLocation categoryId) { throw new AssertionError(); }
 
     @ExpectPlatform
+    public static int getCategoryExperience(ServerPlayer player, ResourceLocation categoryId) { throw new AssertionError(); }
+
+    @ExpectPlatform
+    public static int getCategoryPoints(ServerPlayer player, ResourceLocation categoryId, ResourceLocation source) { throw new AssertionError(); }
+
+    @ExpectPlatform
+    public static void addCategoryExperience(ServerPlayer player, ResourceLocation categoryId, int amount) { throw new AssertionError(); }
+
+    @ExpectPlatform
+    public static void setCategoryExperience(ServerPlayer player, ResourceLocation categoryId, int amount) { throw new AssertionError(); }
+
+    @ExpectPlatform
+    public static void addCategoryPoints(ServerPlayer player, ResourceLocation categoryId, ResourceLocation source, int amount) { throw new AssertionError(); }
+
+    @ExpectPlatform
+    public static void setCategoryPoints(ServerPlayer player, ResourceLocation categoryId, ResourceLocation source, int amount) { throw new AssertionError(); }
+
+    @ExpectPlatform
     public static Collection<ResourceLocation> getCategories(boolean onlyWithExperience) { throw new AssertionError(); }
 
     @ExpectPlatform

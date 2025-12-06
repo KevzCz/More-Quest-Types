@@ -19,9 +19,11 @@ import net.pixeldreamstudios.morequesttypes.compat.LevelZCompat;
 import java.util.*;
 
 public final class LevelZReward extends Reward {
-    public enum Kind { EXPERIENCE, LEVEL }
+    public enum Kind { EXPERIENCE, LEVEL, SKILL_POINT }
+    public enum OperationType { ADD, SET, REDUCE }
 
     private Kind kind = Kind.EXPERIENCE;
+    private OperationType operationType = OperationType.ADD;
     private int amount = 0;
     private int skillId = -1;
 
@@ -36,25 +38,48 @@ public final class LevelZReward extends Reward {
 
     @Override
     public void claim(ServerPlayer player, boolean notify) {
-        if (! LevelZCompat.isLoaded()) return;
-        if (amount == 0) return;
+        if (!LevelZCompat.isLoaded()) return;
+        if (amount == 0 && operationType != OperationType.SET) return;
 
         switch (kind) {
             case EXPERIENCE -> {
-
-                LevelZCompat.addExperience(player, amount);
+                switch (operationType) {
+                    case ADD -> LevelZCompat.addExperience(player, amount);
+                    case SET -> LevelZCompat.setExperience(player, amount);
+                    case REDUCE -> {
+                        int current = LevelZCompat.getTotalExperience(player);
+                        LevelZCompat.setExperience(player, Math.max(0, current - amount));
+                    }
+                }
             }
             case LEVEL -> {
-
                 if (skillId == -1) {
-
-                    int current = LevelZCompat.getLevel(player);
-                    LevelZCompat.setLevel(player, current + amount);
+                    int currentLevel = LevelZCompat.getLevel(player);
+                    int newLevel = switch (operationType) {
+                        case ADD -> currentLevel + amount;
+                        case SET -> amount;
+                        case REDUCE -> Math.max(0, currentLevel - amount);
+                    };
+                    LevelZCompat.setLevel(player, newLevel);
                 } else {
-
-                    int current = LevelZCompat.getSkillLevel(player, skillId);
-                    LevelZCompat.setSkillLevel(player, skillId, current + amount);
+                    int currentLevel = LevelZCompat.getSkillLevel(player, skillId);
+                    int newLevel = switch (operationType) {
+                        case ADD -> currentLevel + amount;
+                        case SET -> amount;
+                        case REDUCE -> Math.max(0, currentLevel - amount);
+                    };
+                    LevelZCompat.setSkillLevel(player, skillId, newLevel);
                 }
+            }
+            case SKILL_POINT -> {
+
+                int currentPoints = LevelZCompat.getSkillPoints(player);
+                int newPoints = switch (operationType) {
+                    case ADD -> currentPoints + amount;
+                    case SET -> amount;
+                    case REDUCE -> Math.max(0, currentPoints - amount);
+                };
+                LevelZCompat.setSkillPoints(player, newPoints);
             }
         }
     }
@@ -68,12 +93,14 @@ public final class LevelZReward extends Reward {
 
         String skillName = skillId == -1 ? "Player Level" : skills.getOrDefault(skillId, "Unknown");
         String kindStr = kind.name().toLowerCase(Locale.ROOT);
+        String opStr = operationType.name().toLowerCase(Locale.ROOT);
 
         return Component.translatable(
                 "morequesttypes.reward.levelz.title",
+                opStr,
+                amount,
                 kindStr,
-                skillName,
-                amount
+                skillName
         );
     }
 
@@ -82,6 +109,10 @@ public final class LevelZReward extends Reward {
     public Icon getAltIcon() {
         if (kind == Kind.EXPERIENCE) {
             return getType().getIconSupplier();
+        }
+
+        if (kind == Kind.SKILL_POINT) {
+            return Icon.getIcon(ResourceLocation.fromNamespaceAndPath("levelz", "textures/gui/sprites/skill_point.png"));
         }
 
         if (skillId == -1) {
@@ -103,10 +134,12 @@ public final class LevelZReward extends Reward {
 
         return getType().getIconSupplier();
     }
+
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         nbt.putString("kind", kind.name());
+        nbt.putString("operation_type", operationType.name());
         nbt.putInt("amount", amount);
         nbt.putInt("skill_id", skillId);
     }
@@ -119,6 +152,11 @@ public final class LevelZReward extends Reward {
         } catch (Throwable ignored) {
             kind = Kind.EXPERIENCE;
         }
+        try {
+            operationType = OperationType.valueOf(nbt.getString("operation_type"));
+        } catch (Throwable ignored) {
+            operationType = OperationType.ADD;
+        }
         amount = nbt.getInt("amount");
         skillId = nbt.getInt("skill_id");
     }
@@ -127,6 +165,7 @@ public final class LevelZReward extends Reward {
     public void writeNetData(RegistryFriendlyByteBuf buf) {
         super.writeNetData(buf);
         buf.writeEnum(kind);
+        buf.writeEnum(operationType);
         buf.writeVarInt(amount);
         buf.writeVarInt(skillId);
     }
@@ -135,6 +174,7 @@ public final class LevelZReward extends Reward {
     public void readNetData(RegistryFriendlyByteBuf buf) {
         super.readNetData(buf);
         kind = buf.readEnum(Kind.class);
+        operationType = buf.readEnum(OperationType.class);
         amount = buf.readVarInt();
         skillId = buf.readVarInt();
     }
@@ -144,11 +184,13 @@ public final class LevelZReward extends Reward {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-
         var KINDS = NameMap.of(Kind.EXPERIENCE, Kind.values()).create();
         config.addEnum("kind", kind, v -> kind = v, KINDS)
                 .setNameKey("morequesttypes.reward.levelz.kind");
 
+        var OPERATIONS = NameMap.of(OperationType.ADD, OperationType.values()).create();
+        config.addEnum("operation_type", operationType, v -> operationType = v, OPERATIONS)
+                .setNameKey("morequesttypes.reward.levelz.operation_type");
 
         config.addInt("amount", amount, v -> amount = v, 0, 0, 1_000_000)
                 .setNameKey("morequesttypes.reward.levelz.amount");
@@ -170,5 +212,4 @@ public final class LevelZReward extends Reward {
         config.addEnum("skill", currentSkillId, v -> skillId = v, SKILL_MAP)
                 .setNameKey("morequesttypes.reward.levelz.skill");
     }
-
 }

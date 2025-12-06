@@ -15,6 +15,10 @@ public final class LevelZCompatImpl {
         return 0;
     }
 
+    public static int getTotalExperience(ServerPlayer player) {
+        return 0;
+    }
+
     public static int getSkillPoints(ServerPlayer player) {
         return 0;
     }
@@ -27,19 +31,23 @@ public final class LevelZCompatImpl {
         return 0;
     }
 
-    public static void addExperience(ServerPlayer player, int amount) {
-        // No-op
-    }
-
-    public static void addSkillPoints(ServerPlayer player, int amount) {
-        // No-op
-    }
-
     public static void setLevel(ServerPlayer player, int level) {
         // No-op
     }
 
+    public static void addExperience(ServerPlayer player, int xpAmount) {
+        // No-op
+    }
+
+    public static void setExperience(ServerPlayer player, int xpAmount) {
+        // No-op
+    }
+
     public static void setSkillLevel(ServerPlayer player, int skillId, int level) {
+        // No-op
+    }
+
+    public static void setSkillPoints(ServerPlayer player, int points) {
         // No-op
     }
 
