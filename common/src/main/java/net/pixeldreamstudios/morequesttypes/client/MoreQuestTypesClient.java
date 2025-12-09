@@ -2,6 +2,7 @@ package net.pixeldreamstudios.morequesttypes.client;
 
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientRawInputEvent;
+import dev.architectury.injectables.annotations.ExpectPlatform;
 import org.lwjgl.glfw.GLFW;
 
 public class MoreQuestTypesClient {
@@ -10,7 +11,7 @@ public class MoreQuestTypesClient {
 
     public static void init() {
         MoreQuestTypesKeys.register();
-
+        initPlatformRenderer();
         ClientRawInputEvent.KEY_PRESSED.register((client, keyCode, scanCode, action, modifiers) -> {
             if (client.player == null) {
                 return EventResult.pass();
@@ -38,5 +39,9 @@ public class MoreQuestTypesClient {
 
             return EventResult.pass();
         });
+    }
+    @ExpectPlatform
+    public static void initPlatformRenderer() {
+        throw new AssertionError();
     }
 }

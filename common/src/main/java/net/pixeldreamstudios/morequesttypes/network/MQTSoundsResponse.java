@@ -1,7 +1,6 @@
 package net.pixeldreamstudios.morequesttypes.network;
 
 import dev.architectury.networking.NetworkManager;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -27,8 +26,13 @@ public record MQTSoundsResponse(List<String> data) implements CustomPacketPayloa
 
     public static MQTSoundsResponse create(MinecraftServer server) {
         var list = new ArrayList<String>();
-        server.registryAccess().registryOrThrow(Registries.SOUND_EVENT)
-                .registryKeySet().stream().map(k -> k.location().toString()).sorted().forEach(list::add);
+
+        server.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.SOUND_EVENT)
+                .registryKeySet().stream()
+                .map(k -> k.location().toString())
+                .sorted()
+                .forEach(list::add);
+
         return new MQTSoundsResponse(list);
     }
 

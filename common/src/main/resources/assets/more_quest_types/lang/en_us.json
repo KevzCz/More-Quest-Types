@@ -2,6 +2,9 @@
   "ftbquests.reward.ftbquests.complete_object": "Complete Quest",
   "morequesttypes.reward.complete_object.targets": "Targets",
 
+  "ftbquests.reward.ftbquests": "More Quest Types Rewards",
+  "ftbquests.task.ftbquests": "More Quest Types Tasks",
+
   "ftbquests.reward.ftbquests.loot_table": "Loot Table",
   "morequesttypes.reward.loot_table.drop_if_full": "Drop If Full",
   "morequesttypes.reward.loot_table.respect_luck": "Respect Luck",
@@ -16,9 +19,7 @@
 
   "ftbquests.reward.ftbquests.spell": "Spell",
   "morequesttypes.reward.ftbquests.spell": "Spell Reward",
-  "morequesttypes.reward.spell.description": "Grants the selected spell to the player while this reward is claimed. The spell(s) are removed if the reward is unclaimed or deleted.",
   "morequesttypes.reward.spell.spell": "Spell",
-  "morequesttypes.reward.spell.help": "Pick a spell ID from the dropdown (requires spell_engine). You can also type an id manually.",
   "morequesttypes.reward.spell.button.install": "Install spell",
   "morequesttypes.reward.spell.button.remove": "Remove spell",
 
@@ -254,5 +255,74 @@
   "morequesttypes.task.reskillable.tooltip.skill_comparison": "%s: %s",
 
   "morequesttypes.task.levelz.tooltip.total_comparison": "Total Level: %s",
-  "morequesttypes.task.levelz.tooltip.skill_comparison": "%s: %s"
+  "morequesttypes.task.levelz.tooltip.skill_comparison": "%s: %s",
+
+  "morequesttypes.config.group.dynamic_difficulty": "Dynamic Difficulty",
+  "morequesttypes.config.group.dungeon_difficulty": "Dungeon Difficulty",
+
+  "morequesttypes.task.mob_level_comparison": "Mob Level Comparison",
+  "morequesttypes.task.mob_level_first": "Mob Level (First/Min)",
+  "morequesttypes.task.mob_level_second": "Mob Level (Second/Max)",
+
+  "morequesttypes.task.dungeon_difficulty_comparison": "Dungeon Difficulty Comparison",
+  "morequesttypes.task.dungeon_difficulty_first": "Difficulty Level (First/Min)",
+  "morequesttypes.task.dungeon_difficulty_second": "Difficulty Level (Second/Max)",
+
+  "morequesttypes.reward.summon.set_mob_level": "Set Mob Level",
+  "morequesttypes.reward.summon.mob_level": "Mob Level",
+
+  "morequesttypes.reward.summon.set_dungeon_difficulty_level": "Set Dungeon Difficulty Level",
+  "morequesttypes.reward.summon.dungeon_difficulty_level":  "Difficulty Level",
+
+  "ftbquests.reward.ftbquests.summon":  "Summon Entity",
+  "morequesttypes.reward.summon.entity": "Entity",
+  "morequesttypes.reward.summon.random_spawn_area": "Random Spawn Area",
+  "morequesttypes.reward.summon.amount": "Amount",
+  "morequesttypes.reward.summon.smart_spawn":  "Smart Spawn",
+  "morequesttypes.reward.summon.use_absolute_coords": "Use Absolute Coords",
+  "morequesttypes.reward.summon.spawn_x": "Spawn X",
+  "morequesttypes.reward.summon.spawn_y":  "Spawn Y",
+  "morequesttypes.reward.summon.spawn_z": "Spawn Z",
+  "morequesttypes.reward.summon.duration_ticks": "Duration (ticks)",
+  "morequesttypes.reward.summon.spawn_limit": "Spawn Limit",
+  "morequesttypes.reward.summon.despawn_distance": "Despawn Distance",
+  "morequesttypes.reward.summon.despawn_if_offline": "Despawn If Offline",
+  "morequesttypes.reward.summon.despawn_if_dead": "Despawn If Dead",
+  "morequesttypes.reward.summon.persistent": "Persistent",
+  "morequesttypes.reward.summon.set_owner": "Set Owner",
+  "morequesttypes.reward.summon.follow":  "Follow",
+  "morequesttypes.reward.summon.aggro":  "Aggro",
+  "morequesttypes.reward.summon.aggro.none": "None",
+  "morequesttypes.reward.summon.aggro.closest":  "Closest Player",
+  "morequesttypes.reward.summon.aggro.farthest": "Farthest Player",
+  "morequesttypes.reward.summon.aggro.claimer": "Quest Claimer",
+  "morequesttypes.reward.summon.helmet": "Helmet",
+  "morequesttypes.reward.summon.chestplate": "Chestplate",
+  "morequesttypes.reward.summon.leggings": "Leggings",
+  "morequesttypes.reward.summon.boots": "Boots",
+  "morequesttypes.reward.summon.mainhand": "Main Hand",
+  "morequesttypes.reward.summon.offhand": "Off Hand",
+  "morequesttypes.reward.summon.texture_above_mob": "Texture Above Mob",
+  "morequesttypes.reward.summon.texture_scale": "Texture Scale",
+  "morequesttypes.reward.summon.texture_offset_x": "Texture Offset X",
+  "morequesttypes.reward.summon.texture_offset_y": "Texture Offset Y",
+  "morequesttypes.reward.summon.texture_offset_z":  "Texture Offset Z",
+  "morequesttypes.reward.summon.scoreboard_tags": "Scoreboard Tags",
+  "morequesttypes.reward.summon.custom_nbt": "Custom NBT",
+  "ftbquests.reward.ftbquests.summon.spawn": "Spawn",
+  "ftbquests.reward.ftbquests.summon.despawn": "Despawn",
+  "ftbquests.reward.ftbquests.summon.behavior": "Behavior",
+  "ftbquests.reward.ftbquests.summon.equipment": "Equipment",
+  "ftbquests.reward.ftbquests.summon.visual": "Visual",
+  "ftbquests.reward.ftbquests.summon.advanced": "Advanced",
+
+  "morequesttypes.task.dynamic_difficulty.check_level": "Check level",
+  "morequesttypes.task.dynamic_difficulty.comparison": "Mode",
+  "morequesttypes.task.dynamic_difficulty.level_first": "First Number",
+  "morequesttypes.task.dynamic_difficulty.level_second": "Second Number",
+  "morequesttypes.task.dungeon_difficulty.check_level": "Check level",
+  "morequesttypes.task.dungeon_difficulty.comparison": "Mode",
+  "morequesttypes.task.dungeon_difficulty.level_first": "First Number",
+  "morequesttypes.task.dungeon_difficulty.level_second": "Second Number"
+
 }

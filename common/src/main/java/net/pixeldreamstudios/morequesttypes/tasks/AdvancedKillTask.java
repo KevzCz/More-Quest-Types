@@ -38,14 +38,22 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.StructureManager;
-import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.pixeldreamstudios.morequesttypes.api.ITaskDungeonDifficultyExtension;
+import net.pixeldreamstudios.morequesttypes.api.ITaskDynamicDifficultyExtension;
+import net.pixeldreamstudios.morequesttypes.compat.DungeonDifficultyCompat;
+import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
+import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AdvancedKillTask extends KillTask {
     private static final ResourceLocation ZOMBIE = ResourceLocation.withDefaultNamespace("zombie");
@@ -385,7 +393,31 @@ public class AdvancedKillTask extends KillTask {
             if (!isInsideDimension(level)) return false;
             if (!isInsideBiome(level, e.blockPosition())) return false;
         }
+        if (DynamicDifficultyCompat.isLoaded()) {
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            if (ext.shouldCheckDynamicDifficultyLevel() && DynamicDifficultyCompat.canHaveLevel(e)) {
+                int mobLevel = DynamicDifficultyCompat.getLevel(e);
+                if (! ComparisonManager.compare(mobLevel,
+                        ext.getDynamicDifficultyComparison(),
+                        ext.getDynamicDifficultyFirst(),
+                        ext.getDynamicDifficultySecond())) {
+                    return false;
+                }
+            }
+        }
 
+        if (DungeonDifficultyCompat.isLoaded()) {
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            if (dungeonExt.shouldCheckDungeonDifficultyLevel() && DungeonDifficultyCompat.canHaveLevel(e)) {
+                int dungeonLevel = DungeonDifficultyCompat.getLevel(e);
+                if (!ComparisonManager.compare(dungeonLevel,
+                        dungeonExt.getDungeonDifficultyComparison(),
+                        dungeonExt.getDungeonDifficultyFirst(),
+                        dungeonExt.getDungeonDifficultySecond())) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 

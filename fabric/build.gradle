@@ -39,12 +39,18 @@ dependencies {
     modImplementation("dev.ftb.mods:ftb-library-fabric:${rootProject.ftb_library_version}") { transitive false }
     modImplementation("dev.ftb.mods:ftb-teams-fabric:${rootProject.ftb_teams_version}") { transitive false }
     modImplementation("dev.ftb.mods:ftb-quests-fabric:${rootProject.ftb_quests_version}") { transitive false }
-    modCompileOnly "curse.maven:puffish-skills-835091:7038166"
+    modCompileOnly("net.puffish:skillsmod:${puffish_skills}:fabric")
     modCompileOnly "curse.maven:blabber-565396:6445342"
     modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-base:6.1.2"
     modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:6.1.2"
+
     modCompileOnly("maven.modrinth:spell-engine:1.8.9+1.21.1-fabric")
+
     modCompileOnly "curse.maven:levelz-517130:6181516"
+
+    modCompileOnly("dev.muon.dynamic_difficulty:dynamic_difficulty-fabric:${dynamic_difficulty_version}")
+    modCompileOnly "curse.maven:dungeon-difficulty-645559:7310940"
+
 }
 
 processResources {

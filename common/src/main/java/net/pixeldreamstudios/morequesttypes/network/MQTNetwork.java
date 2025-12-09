@@ -107,5 +107,11 @@ public class MQTNetwork {
                 MQTSkillsCategoriesResponse.STREAM_CODEC,
                 MQTSkillsCategoriesResponse::handle
         );
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.S2C,
+                QuestEntityDataSyncPacket.TYPE,
+                QuestEntityDataSyncPacket.STREAM_CODEC,
+                QuestEntityDataSyncPacket::handle
+        );
     }
 }

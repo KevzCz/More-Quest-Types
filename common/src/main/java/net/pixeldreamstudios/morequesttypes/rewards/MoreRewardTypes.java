@@ -19,6 +19,7 @@ public final class MoreRewardTypes {
     public static RewardType POTION;
     public static RewardType LEVELZ;
     public static RewardType RESKILLABLE;
+    public static RewardType SUMMON;
     public static void init() {
         if (BlabberCompat.isLoaded()) {
             DIALOGUE = RewardTypes.register(
@@ -65,6 +66,11 @@ public final class MoreRewardTypes {
                 FTBQuestsAPI.rl("potion"),
                 PotionReward::new,
                 () -> Icon.getIcon("minecraft:item/potion")
+        );
+        SUMMON = RewardTypes.register(
+                FTBQuestsAPI.rl("summon"),
+                SummonReward::new,
+                () -> Icon.getIcon("minecraft:item/totem_of_undying")
         );
         if (LevelZCompat.isLoaded()) {
             LEVELZ = RewardTypes.register(

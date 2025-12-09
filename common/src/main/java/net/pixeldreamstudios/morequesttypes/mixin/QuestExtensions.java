@@ -1,19 +1,21 @@
-package net. pixeldreamstudios.morequesttypes.mixin;
+package net.pixeldreamstudios.morequesttypes.mixin;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods. ftbquests.quest.Quest;
-import dev.ftb. mods.ftbquests. quest.TeamData;
+import dev.ftb.mods.ftbquests.quest.Quest;
+import dev.ftb.mods.ftbquests.quest.TeamData;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.core.HolderLookup;
-import net. minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.pixeldreamstudios.morequesttypes.api.IQuestExtension;
-import org.spongepowered. asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import org. spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin. injection.Inject;
-import org.spongepowered. asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered. asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.UUID;
 
@@ -34,7 +36,7 @@ public abstract class QuestExtensions implements IQuestExtension {
             nbt.putInt("max_repeats", maxRepeats);
         }
         if (alwaysInvisible) {
-            nbt. putBoolean("always_invisible", true);
+            nbt.putBoolean("always_invisible", true);
         }
         if (! linkedItem.isEmpty()) {
             nbt.put("linked_item", linkedItem.save(provider));
@@ -48,15 +50,15 @@ public abstract class QuestExtensions implements IQuestExtension {
         if (nbt.contains("linked_item")) {
             linkedItem = ItemStack.parseOptional(provider, nbt.getCompound("linked_item"));
         } else {
-            linkedItem = ItemStack. EMPTY;
+            linkedItem = ItemStack.EMPTY;
         }
     }
 
     @Inject(method = "writeNetData", at = @At("TAIL"), remap = false)
     private void writeCustomNetData(RegistryFriendlyByteBuf buffer, CallbackInfo ci) {
         buffer.writeVarInt(maxRepeats);
-        buffer. writeBoolean(alwaysInvisible);
-        ItemStack. OPTIONAL_STREAM_CODEC.encode(buffer, linkedItem);
+        buffer.writeBoolean(alwaysInvisible);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, linkedItem);
     }
 
     @Inject(method = "readNetData", at = @At("TAIL"), remap = false)
@@ -65,7 +67,7 @@ public abstract class QuestExtensions implements IQuestExtension {
         alwaysInvisible = buffer.readBoolean();
         linkedItem = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
     }
-
+    @Environment(EnvType.CLIENT)
     @Inject(method = "fillConfigGroup", at = @At("TAIL"), remap = false)
     private void addCustomConfig(ConfigGroup config, CallbackInfo ci) {
         Quest self = (Quest) (Object) this;
@@ -73,16 +75,16 @@ public abstract class QuestExtensions implements IQuestExtension {
         ConfigGroup misc = config.getOrCreateSubgroup("misc");
         misc.addInt("max_repeats", maxRepeats, (v) -> {
             maxRepeats = v;
-        }, 0, 0, Integer.MAX_VALUE). setCanEdit(self.canBeRepeated()).setNameKey("morequesttypes.quest. max_repeats");
+        }, 0, 0, Integer.MAX_VALUE).setCanEdit(self.canBeRepeated()).setNameKey("morequesttypes.quest.max_repeats");
 
         ConfigGroup visibility = config.getOrCreateSubgroup("visibility");
         visibility.addBool("always_invisible", alwaysInvisible, (v) -> {
             alwaysInvisible = v;
-        }, false).setNameKey("morequesttypes. quest.always_invisible");
+        }, false).setNameKey("morequesttypes.quest.always_invisible");
 
         visibility.addItemStack("linked_item", linkedItem, (v) -> {
             linkedItem = v;
-        }, ItemStack. EMPTY, true, false).setNameKey("morequesttypes. quest.linked_item");
+        }, ItemStack.EMPTY, true, false).setNameKey("morequesttypes.quest.linked_item");
     }
 
     @Inject(method = "isVisible", at = @At("HEAD"), cancellable = true, remap = false)

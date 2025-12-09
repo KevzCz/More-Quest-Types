@@ -39,10 +39,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.StructureManager;
-import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.pixeldreamstudios.morequesttypes.api.ITaskDungeonDifficultyExtension;
+import net.pixeldreamstudios.morequesttypes.api.ITaskDynamicDifficultyExtension;
+import net.pixeldreamstudios.morequesttypes.compat.DungeonDifficultyCompat;
+import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.event.InteractEventBuffer;
 import net.pixeldreamstudios.morequesttypes.event.InteractEventBuffer.Interaction;
+import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -506,7 +511,31 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
             if (!isInsideDimension(level)) return true;
             if (!isInsideBiome(level, e.blockPosition())) return true;
         }
+        if (DynamicDifficultyCompat.isLoaded()) {
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            if (ext.shouldCheckDynamicDifficultyLevel() && DynamicDifficultyCompat.canHaveLevel(e)) {
+                int mobLevel = DynamicDifficultyCompat.getLevel(e);
+                if (! ComparisonManager.compare(mobLevel,
+                        ext.getDynamicDifficultyComparison(),
+                        ext.getDynamicDifficultyFirst(),
+                        ext.getDynamicDifficultySecond())) {
+                    return false;
+                }
+            }
+        }
 
+        if (DungeonDifficultyCompat.isLoaded()) {
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            if (dungeonExt.shouldCheckDungeonDifficultyLevel() && DungeonDifficultyCompat.canHaveLevel(e)) {
+                int dungeonLevel = DungeonDifficultyCompat.getLevel(e);
+                if (!ComparisonManager.compare(dungeonLevel,
+                        dungeonExt.getDungeonDifficultyComparison(),
+                        dungeonExt.getDungeonDifficultyFirst(),
+                        dungeonExt.getDungeonDifficultySecond())) {
+                    return false;
+                }
+            }
+        }
         return false;
     }
 

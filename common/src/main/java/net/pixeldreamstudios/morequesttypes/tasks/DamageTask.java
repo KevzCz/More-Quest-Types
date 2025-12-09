@@ -34,10 +34,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.pixeldreamstudios.morequesttypes.api.ITaskDungeonDifficultyExtension;
+import net.pixeldreamstudios.morequesttypes.api.ITaskDynamicDifficultyExtension;
+import net.pixeldreamstudios.morequesttypes.compat.DungeonDifficultyCompat;
+import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.event.DamageEventBuffer;
 import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
+import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -183,7 +188,31 @@ public final class DamageTask extends Task {
             if (!isInsideDimension(level)) return false;
             if (!isInsideBiome(level, e.blockPosition())) return false;
         }
+        if (DynamicDifficultyCompat.isLoaded()) {
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            if (ext.shouldCheckDynamicDifficultyLevel() && DynamicDifficultyCompat.canHaveLevel(e)) {
+                int mobLevel = DynamicDifficultyCompat.getLevel(e);
+                if (! ComparisonManager.compare(mobLevel,
+                        ext.getDynamicDifficultyComparison(),
+                        ext.getDynamicDifficultyFirst(),
+                        ext.getDynamicDifficultySecond())) {
+                    return false;
+                }
+            }
+        }
 
+        if (DungeonDifficultyCompat.isLoaded()) {
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            if (dungeonExt.shouldCheckDungeonDifficultyLevel() && DungeonDifficultyCompat.canHaveLevel(e)) {
+                int dungeonLevel = DungeonDifficultyCompat.getLevel(e);
+                if (!ComparisonManager.compare(dungeonLevel,
+                        dungeonExt.getDungeonDifficultyComparison(),
+                        dungeonExt.getDungeonDifficultyFirst(),
+                        dungeonExt.getDungeonDifficultySecond())) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 

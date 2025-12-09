@@ -1,30 +1,40 @@
 package net.pixeldreamstudios.morequesttypes.rewards;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public final class PlaySoundReward extends Reward {
-    private static final List<String> KNOWN_SOUNDS = new ArrayList<>();
+    private static final List<String> SERVER_SOUNDS = new ArrayList<>();
+    private static long lastSyncTime = 0;
+    private static final long SYNC_COOLDOWN_MS = 500;
 
     public static void syncKnownSoundList(List<String> data) {
-        KNOWN_SOUNDS.clear();
-        KNOWN_SOUNDS.addAll(data);
+        SERVER_SOUNDS.clear();
+        SERVER_SOUNDS.addAll(data);
+        lastSyncTime = System.currentTimeMillis();
     }
 
     private String soundId = "minecraft:entity.player.levelup";
@@ -51,7 +61,63 @@ public final class PlaySoundReward extends Reward {
         if (ev != null) {
             player.playNotifySound(ev, category,
                     Math.max(0f, volume), Math.max(0.1f, pitch));
+            return;
         }
+
+        try {
+            var soundPacket = new ClientboundSoundPacket(
+                    Holder.direct(SoundEvent.createVariableRangeEvent(rl)),
+                    category,
+                    player.getX(),
+                    player.getY(),
+                    player.getZ(),
+                    Math.max(0f, volume),
+                    Math.max(0.1f, pitch),
+                    player.getRandom().nextLong()
+            );
+            player.connection.send(soundPacket);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Environment(EnvType.CLIENT)
+    private static List<String> collectClientSounds() {
+        var soundSet = new LinkedHashSet<String>();
+
+        BuiltInRegistries.SOUND_EVENT.keySet().stream()
+                .map(ResourceLocation::toString)
+                .forEach(soundSet::add);
+
+        try {
+            var minecraft = Minecraft.getInstance();
+            var resourceManager = minecraft.getResourceManager();
+
+            var namespaces = resourceManager.getNamespaces();
+
+            for (String namespace : namespaces) {
+                ResourceLocation soundsJsonLocation = ResourceLocation.fromNamespaceAndPath(namespace, "sounds.json");
+
+                try {
+                    var resources = resourceManager.getResourceStack(soundsJsonLocation);
+                    for (Resource resource : resources) {
+                        try (var reader = new InputStreamReader(resource.open())) {
+                            JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+
+                            for (String soundEvent : json.keySet()) {
+                                soundSet.add(namespace + ":" + soundEvent);
+                            }
+                        } catch (Exception e) {
+                        }
+                    }
+                } catch (Exception e) {
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return new ArrayList<>(soundSet);
     }
 
     @Environment(EnvType.CLIENT)
@@ -59,19 +125,30 @@ public final class PlaySoundReward extends Reward {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-        if (KNOWN_SOUNDS.isEmpty()) {
+        if (SERVER_SOUNDS.isEmpty() || (System.currentTimeMillis() - lastSyncTime) > SYNC_COOLDOWN_MS) {
             dev.architectury.networking.NetworkManager
                     .sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTSoundsRequest());
         }
 
-        var choices = new ArrayList<String>();
-        if (KNOWN_SOUNDS.isEmpty()) {
+        var choices = collectClientSounds();
+
+        for (String serverSound : SERVER_SOUNDS) {
+            if (!choices.contains(serverSound)) {
+                choices.add(serverSound);
+            }
+        }
+
+        if (choices.isEmpty()) {
             choices.add("minecraft:entity.player.levelup");
             choices.add("minecraft:ui.button.click");
             choices.add("minecraft:block.note_block.harp");
-        } else {
-            choices.addAll(KNOWN_SOUNDS);
         }
+
+        if (! soundId.isEmpty() && !choices.contains(soundId)) {
+            choices.add(soundId);
+        }
+
+        choices.sort(String::compareTo);
 
         var SOUNDS = NameMap.of(soundId, choices)
                 .name(s -> Component.literal((s == null || s.isEmpty()) ? "?" : s))
