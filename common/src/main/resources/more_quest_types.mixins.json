@@ -7,7 +7,17 @@
     "client.TitleDistanceMixin",
     "client.RewardButtonMixin",
     "client.QuestScreenMixin",
-    "client.QuestButtonMixin"
+    "client.QuestButtonMixin",
+    "client.QuestPanelCrosshairMixin",
+    "client.ViewQuestPanelMixin",
+    "client.QuestPanelMixin",
+    "client.TaskMouseOverTextMixin",
+    "client.ItemTaskMouseOverTextMixin",
+    "client.accessor.QuestButtonAccessor",
+    "client.accessor.ViewQuestPanelAccessor",
+    "client.accessor.TaskButtonAccessor",
+    "client.accessor.QuestScreenAccessor",
+    "client.accessor.RewardButtonAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

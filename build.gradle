@@ -57,6 +57,7 @@ subprojects {
         maven{ url = "https://maven.puffish.net"}
         maven{url = "https://maven.bawnorton.com/releases"}
         maven{url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"}
+
     }
 
     loom {

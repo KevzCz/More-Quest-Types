@@ -4,10 +4,7 @@ import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftbquests.api.FTBQuestsAPI;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import dev.ftb.mods.ftbquests.quest.task.TaskTypes;
-import net.pixeldreamstudios.morequesttypes.compat.BlabberCompat;
-import net.pixeldreamstudios.morequesttypes.compat.LevelZCompat;
-import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
-import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
+import net.pixeldreamstudios.morequesttypes.compat.*;
 
 public final class MoreTasksTypes {
     private MoreTasksTypes() {}
@@ -28,6 +25,7 @@ public final class MoreTasksTypes {
     public static TaskType LEVELZ;
     public static TaskType RESKILLABLE;
 
+    public static TaskType ORIGIN;
     public static void init() {
         TIMER = TaskTypes.register(
                 FTBQuestsAPI.rl("timer"),
@@ -46,6 +44,13 @@ public final class MoreTasksTypes {
                     FTBQuestsAPI.rl("dialogue"),
                     DialogueTask::new,
                     () -> Icon.getIcon("blabber:icon.png")
+            );
+        }
+        if (OriginsCompat.isLoaded()) {
+            ORIGIN = TaskTypes.register(
+                    FTBQuestsAPI.rl("origin"),
+                    OriginTask::new,
+                    () -> Icon.getIcon("origins:icon.png")
             );
         }
         KILL_ADVANCED = TaskTypes.register(

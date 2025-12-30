@@ -51,6 +51,10 @@ dependencies {
     modCompileOnly("dev.muon.dynamic_difficulty:dynamic_difficulty-fabric:${dynamic_difficulty_version}")
     modCompileOnly "curse.maven:dungeon-difficulty-645559:7310940"
 
+    modCompileOnly ("curse.maven:origins-391943:6112839"){
+        transitive = false
+    }
+    modCompileOnly files("libs/Calio-1.14.0-alpha.9+mc.1.21.x.jar")
 }
 
 processResources {

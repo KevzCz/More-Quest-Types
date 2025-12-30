@@ -48,7 +48,9 @@ import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
+import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Unique;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -488,10 +490,56 @@ public class AdvancedKillTask extends KillTask {
         MutableComponent name = (entityTypeTag == null)
                 ? Component.translatable("entity." + entityTypeId.toLanguageKey())
                 : Component.literal("#" + getTypeTagStr());
-        if (!customName.isEmpty()) {
-            return Component.translatable("ftbquests.task.ftbquests.kill.title_named", formatMaxProgress(), name, Component.literal(customName));
+
+        MutableComponent baseTitle;
+        if (! customName.isEmpty()) {
+            baseTitle = Component.translatable("ftbquests.task.ftbquests.kill.title_named", formatMaxProgress(), name, Component.literal(customName));
+        } else {
+            baseTitle = Component.translatable("ftbquests.task.ftbquests.kill.title", formatMaxProgress(), name);
         }
-        return Component.translatable("ftbquests.task.ftbquests.kill.title", formatMaxProgress(), name);
+
+        if (DynamicDifficultyCompat.isLoaded()) {
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            if (ext.shouldCheckDynamicDifficultyLevel()) {
+                String levelReq = mqt$formatLevelRequirement(
+                        ext.getDynamicDifficultyComparison(),
+                        ext.getDynamicDifficultyFirst(),
+                        ext.getDynamicDifficultySecond()
+                );
+                baseTitle = Component.translatable("morequesttypes.task.kill_advanced.title_with_dynamic_difficulty",
+                        baseTitle, levelReq);
+            }
+        }
+
+        if (DungeonDifficultyCompat.isLoaded()) {
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            if (dungeonExt.shouldCheckDungeonDifficultyLevel()) {
+                String difficultyReq = mqt$formatLevelRequirement(
+                        dungeonExt.getDungeonDifficultyComparison(),
+                        dungeonExt.getDungeonDifficultyFirst(),
+                        dungeonExt.getDungeonDifficultySecond()
+                );
+                baseTitle = Component.translatable("morequesttypes.task.kill_advanced.title_with_dungeon_difficulty",
+                        baseTitle, difficultyReq);
+            }
+        }
+
+        return baseTitle;
+    }
+
+    @Unique
+    private String mqt$formatLevelRequirement(ComparisonMode mode, int first, int second) {
+        return switch (mode) {
+            case EQUALS -> "= " + first;
+            case GREATER_THAN -> "> " + first;
+            case LESS_THAN -> "< " + first;
+            case GREATER_OR_EQUAL -> "≥ " + first;
+            case LESS_OR_EQUAL -> "≤ " + first;
+            case RANGE -> first + " > x > " + second;
+            case RANGE_EQUAL -> first + " ≥ x ≥ " + second;
+            case RANGE_EQUAL_FIRST -> first + " ≥ x > " + second;
+            case RANGE_EQUAL_SECOND -> first + " > x ≥ " + second;
+        };
     }
 
     @Environment(EnvType.CLIENT)

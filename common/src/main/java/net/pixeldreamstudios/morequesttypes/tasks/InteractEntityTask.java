@@ -48,7 +48,9 @@ import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.event.InteractEventBuffer;
 import net.pixeldreamstudios.morequesttypes.event.InteractEventBuffer.Interaction;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
+import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Unique;
 
 import java.util.*;
 
@@ -377,19 +379,64 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         } else {
             itemDesc = heldItemFilter.getHoverName();
         }
+
+        MutableComponent baseTitle;
         if (handMode == HandMode.ANY) {
-            return Component.translatable("morequesttypes.task.interact_entity.title", max, entityName)
+            baseTitle = Component.translatable("morequesttypes.task.interact_entity.title", max, entityName)
                     .append(Component.literal(" "))
                     .append(Component.translatable("morequesttypes.task.interact_entity.with_item", itemDesc));
         } else {
             String handKey = (handMode == HandMode.MAIN_HAND)
                     ? "morequesttypes.task.interact_entity.main_hand"
                     : "morequesttypes.task.interact_entity.off_hand";
-            return Component.translatable("morequesttypes.task.interact_entity.title_with_hand",
+            baseTitle = Component.translatable("morequesttypes.task.interact_entity.title_with_hand",
                             max, entityName, Component.translatable(handKey))
                     .append(Component.literal(" "))
                     .append(Component.translatable("morequesttypes.task.interact_entity.with_item", itemDesc));
         }
+
+        if (DynamicDifficultyCompat.isLoaded()) {
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            if (ext.shouldCheckDynamicDifficultyLevel()) {
+                String levelReq = mqt$formatLevelRequirement(
+                        ext.getDynamicDifficultyComparison(),
+                        ext.getDynamicDifficultyFirst(),
+                        ext.getDynamicDifficultySecond()
+                );
+                baseTitle = Component.translatable("morequesttypes.task.interact_entity.title_with_dynamic_difficulty",
+                        baseTitle, levelReq);
+            }
+        }
+
+        if (DungeonDifficultyCompat.isLoaded()) {
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            if (dungeonExt.shouldCheckDungeonDifficultyLevel()) {
+                String difficultyReq = mqt$formatLevelRequirement(
+                        dungeonExt.getDungeonDifficultyComparison(),
+                        dungeonExt.getDungeonDifficultyFirst(),
+                        dungeonExt.getDungeonDifficultySecond()
+                );
+                baseTitle = Component.translatable("morequesttypes.task.interact_entity.title_with_dungeon_difficulty",
+                        baseTitle, difficultyReq);
+            }
+        }
+
+        return baseTitle;
+    }
+
+    @Unique
+    private String mqt$formatLevelRequirement(ComparisonMode mode, int first, int second) {
+        return switch (mode) {
+            case EQUALS -> "= " + first;
+            case GREATER_THAN -> "> " + first;
+            case LESS_THAN -> "< " + first;
+            case GREATER_OR_EQUAL -> "≥ " + first;
+            case LESS_OR_EQUAL -> "≤ " + first;
+            case RANGE -> first + " > x > " + second;
+            case RANGE_EQUAL -> first + " ≥ x ≥ " + second;
+            case RANGE_EQUAL_FIRST -> first + " ≥ x > " + second;
+            case RANGE_EQUAL_SECOND -> first + " > x ≥ " + second;
+        };
     }
 
     @Environment(EnvType.CLIENT)

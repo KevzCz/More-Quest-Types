@@ -7,11 +7,18 @@
     "QuestExtensions",
     "RewardExtensions",
     "TaskExtensions",
+    "TaskExtensionsOrigins",
+    "TeamDataOriginMixin",
+    "ItemTaskSubmitMixin",
+    "AbstractBooleanTaskExtensionMixin",
+    "TaskExtensionsPlayerLeveling",
+    "TeamDataPlayerLevelingMixin",
     "MerchantResultSlotMixin",
     "accessor.SkillsClientModAccessor",
     "accessor.ClientSkillScreenDataAccessor",
     "accessor.MobAccessor",
     "QuestSummonedEntityMixin"
+
   ],
   "injectors": {
     "defaultRequire": 0

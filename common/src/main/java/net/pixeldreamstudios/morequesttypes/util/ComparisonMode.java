@@ -39,4 +39,8 @@ public enum ComparisonMode {
     public String getTranslationKey() {
         return "morequesttypes.comparison." + name().toLowerCase();
     }
+
+    public boolean compare(int value, int first, int second) {
+        return ComparisonManager.compare(value, this, first, second);
+    }
 }

@@ -323,6 +323,41 @@
   "morequesttypes.task.dungeon_difficulty.check_level": "Check level",
   "morequesttypes.task.dungeon_difficulty.comparison": "Mode",
   "morequesttypes.task.dungeon_difficulty.level_first": "First Number",
-  "morequesttypes.task.dungeon_difficulty.level_second": "Second Number"
+  "morequesttypes.task.dungeon_difficulty.level_second": "Second Number",
 
+  "morequesttypes.quest.requirement.origin": "Required Origin: %s",
+  "morequesttypes.quest.requirement.skills.total": "Required Total Level: %s",
+  "morequesttypes.quest.requirement.skills.category": "Required %s Level: %s",
+  "morequesttypes.quest.requirement.levelz.total": "Required Total Skill Level: %s",
+  "morequesttypes.quest.requirement.levelz.player": "Required Player Level: %s",
+  "morequesttypes.quest.requirement.levelz.skill": "Required %s Level: %s",
+  "morequesttypes.quest. requirement.reskillable.total": "Required Total Level: %s",
+  "morequesttypes.quest.requirement.reskillable.skill": "Required %s Level: %s",
+
+  "ftbquests.task.ftbquests.origin": "Origin",
+  "morequesttypes.task.origins.layer": "Origin Layer",
+  "morequesttypes.task.origins.origin":  "Origin",
+  "morequesttypes.task.origins.title": "Be %s origin: %s",
+  "morequesttypes.task.origins.check_origin": "Check Origin",
+  "morequesttypes.config.group.origins": "Origins",
+
+  "morequesttypes.task.kill_advanced.title_with_dynamic_difficulty": "%s (Level %s)",
+  "morequesttypes.task.kill_advanced.title_with_dungeon_difficulty": "%s (Difficulty %s)",
+
+  "morequesttypes.task.find_entity.title_with_dynamic_difficulty": "%s (Level %s)",
+  "morequesttypes.task.find_entity.title_with_dungeon_difficulty": "%s (Difficulty %s)",
+
+  "morequesttypes.task.damage.title_with_dynamic_difficulty": "%s (Level %s)",
+  "morequesttypes.task.damage.title_with_dungeon_difficulty": "%s (Difficulty %s)",
+
+  "morequesttypes.task.interact_entity.title_with_dynamic_difficulty": "%s (Level %s)",
+  "morequesttypes.task.interact_entity.title_with_dungeon_difficulty": "%s (Difficulty %s)",
+
+  "morequesttypes.config.group.skills_level": "Pufferfish's Skills",
+  "morequesttypes.config.group.levelz": "LevelZ",
+  "morequesttypes.config.group.reskillable": "Reskillable",
+
+  "morequesttypes.task.skills_level.check": "Enabled",
+  "morequesttypes.task.levelz.check": "Enabled",
+  "morequesttypes.task.reskillable.check": "Enabled"
 }

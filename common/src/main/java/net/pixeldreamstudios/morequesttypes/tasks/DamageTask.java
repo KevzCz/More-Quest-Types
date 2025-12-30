@@ -43,6 +43,8 @@ import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
+import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
+import org.spongepowered.asm.mixin.Unique;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -63,7 +65,6 @@ public final class DamageTask extends Task {
     private transient TagKey<net.minecraft.world.item.Item> heldItemTag;
     private Mode mode = Mode.TOTAL;
     private long value = 100L;
-    private transient long lastProcessedTick = Long.MIN_VALUE;
     private static final ResourceLocation DEFAULT_STRUCTURE = ResourceLocation.withDefaultNamespace("mineshaft");
     private static final List<String> KNOWN_STRUCTURES = new ArrayList<>();
     private Either<ResourceKey<Structure>, TagKey<Structure>> structure = null;
@@ -92,8 +93,52 @@ public final class DamageTask extends Task {
         String who = (entityTypeTag == null)
                 ? Component.translatable("entity." + entityTypeId.toLanguageKey()).getString()
                 : "#" + entityTypeTag.location();
-        String how = mode == Mode.TOTAL ? "total" : "highest";
-        return Component.translatable("morequesttypes.task.damage.title", formatMaxProgress(), who, how);
+        String how = mode == Mode.TOTAL ?  "total" : "highest";
+
+        MutableComponent baseTitle = Component.translatable("morequesttypes.task.damage.title", formatMaxProgress(), who, how);
+
+        if (DynamicDifficultyCompat.isLoaded()) {
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            if (ext.shouldCheckDynamicDifficultyLevel()) {
+                String levelReq = mqt$formatLevelRequirement(
+                        ext.getDynamicDifficultyComparison(),
+                        ext.getDynamicDifficultyFirst(),
+                        ext.getDynamicDifficultySecond()
+                );
+                baseTitle = Component.translatable("morequesttypes.task.damage.title_with_dynamic_difficulty",
+                        baseTitle, levelReq);
+            }
+        }
+
+        if (DungeonDifficultyCompat.isLoaded()) {
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            if (dungeonExt.shouldCheckDungeonDifficultyLevel()) {
+                String difficultyReq = mqt$formatLevelRequirement(
+                        dungeonExt.getDungeonDifficultyComparison(),
+                        dungeonExt.getDungeonDifficultyFirst(),
+                        dungeonExt.getDungeonDifficultySecond()
+                );
+                baseTitle = Component.translatable("morequesttypes.task.damage.title_with_dungeon_difficulty",
+                        baseTitle, difficultyReq);
+            }
+        }
+
+        return baseTitle;
+    }
+
+    @Unique
+    private String mqt$formatLevelRequirement(ComparisonMode mode, int first, int second) {
+        return switch (mode) {
+            case EQUALS -> "= " + first;
+            case GREATER_THAN -> "> " + first;
+            case LESS_THAN -> "< " + first;
+            case GREATER_OR_EQUAL -> "≥ " + first;
+            case LESS_OR_EQUAL -> "≤ " + first;
+            case RANGE -> first + " > x > " + second;
+            case RANGE_EQUAL -> first + " ≥ x ≥ " + second;
+            case RANGE_EQUAL_FIRST -> first + " ≥ x > " + second;
+            case RANGE_EQUAL_SECOND -> first + " > x ≥ " + second;
+        };
     }
     @Environment(EnvType.CLIENT)
     @Override
@@ -107,7 +152,7 @@ public final class DamageTask extends Task {
     @Override
     public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
-        if (!checkTaskSequence(teamData))  return;
+        if (!checkTaskSequence(teamData)) return;
 
         var online = teamData.getOnlineMembers();
         if (online == null || online.isEmpty()) return;
@@ -119,45 +164,45 @@ public final class DamageTask extends Task {
 
         if (!player.getUUID().equals(leaderId)) return;
 
-        var hits = DamageEventBuffer.snapshotLatest(player.getUUID());
+        var hits = DamageEventBuffer.snapshotUnprocessed(player.getUUID(), this.id);
         if (hits.isEmpty()) return;
-        long tick = hits.get(hits.size() - 1).gameTime();
-        long now  = player.level().getGameTime();
 
-        if (tick <= lastProcessedTick) return;
+        long tick = hits.get(hits.size() - 1).gameTime();
+        long now = player.level().getGameTime();
 
         if (now - tick > 1) {
-            DamageEventBuffer.clear(player.getUUID());
-            lastProcessedTick = now - 1;
             return;
         }
 
         long sum = 0L;
         long best = 0L;
+        List<DamageEventBuffer.Hit> matchedHits = new ArrayList<>();
 
         for (var h : hits) {
             Entity e = h.victim();
             if (!(e instanceof LivingEntity le)) continue;
-            if (!entityMatches(le)) continue;
-            if (!heldItemMatches(h.stack())) continue;
+            if (! entityMatches(le)) continue;
+            if (! heldItemMatches(h.stack())) continue;
 
             long amt = Math.max(0L, h.amountBaselineRounded());
-            sum  += amt;
+            sum += amt;
             best = Math.max(best, amt);
+            matchedHits.add(h);
         }
 
         if (sum > 0 || best > 0) {
             long cur = teamData.getProgress(this);
             long next = switch (mode) {
-                case TOTAL   -> Math.min(getMaxProgress(), cur + sum);
+                case TOTAL -> Math.min(getMaxProgress(), cur + sum);
                 case HIGHEST -> Math.min(getMaxProgress(), Math.max(cur, best));
             };
-            if (next != cur) teamData.setProgress(this, next);
+            if (next != cur) {
+                teamData.setProgress(this, next);
+            }
+
+            // Mark these hits as processed by THIS task
+            DamageEventBuffer.markProcessed(this.id, matchedHits);
         }
-
-        lastProcessedTick = tick;
-
-        DamageEventBuffer.clear(player.getUUID());
     }
 
     private boolean entityMatches(LivingEntity e) {
