@@ -102,7 +102,7 @@ public class QuestSearchKeybind {
     private static List<Quest> findQuestsWithLinkedItem(ItemStack heldItem) {
         List<Quest> linkedQuests = new ArrayList<>();
 
-        for (QuestObjectBase obj : ClientQuestFile.INSTANCE.getAllObjects()) {
+        for (QuestObjectBase obj :  ClientQuestFile.INSTANCE.getAllObjects()) {
             if (obj instanceof Quest quest) {
                 if (ClientQuestFile.INSTANCE.selfTeamData.isCompleted(quest)) {
                     continue;
@@ -117,7 +117,8 @@ public class QuestSearchKeybind {
 
                 if (!linkedItem.isEmpty()) {
                     if (ItemMatchingSystem.INSTANCE.doesItemMatch(linkedItem, heldItem,
-                            ItemMatchingSystem.ComponentMatchType.STRICT)) {
+                            ItemMatchingSystem.ComponentMatchType.STRICT,
+                            ClientQuestFile.INSTANCE.holderLookup())) {
                         linkedQuests.add(quest);
                     }
                 }
@@ -130,7 +131,7 @@ public class QuestSearchKeybind {
     private static List<Quest> findQuestsWithItem(ItemStack stack) {
         List<Quest> matchingQuests = new ArrayList<>();
 
-        for (QuestObjectBase obj : ClientQuestFile.INSTANCE.getAllObjects()) {
+        for (QuestObjectBase obj :  ClientQuestFile.INSTANCE.getAllObjects()) {
             if (obj instanceof Quest quest) {
                 if (ClientQuestFile.INSTANCE.selfTeamData.isCompleted(quest)) {
                     continue;
