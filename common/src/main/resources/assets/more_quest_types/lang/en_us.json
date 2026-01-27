@@ -362,5 +362,15 @@
 
   "morequesttypes.task.skills_level.check": "Enabled",
   "morequesttypes.task.levelz.check": "Enabled",
-  "morequesttypes.task.reskillable.check": "Enabled"
+  "morequesttypes.task.reskillable.check": "Enabled",
+
+  "ftbquests.reward.ftbquests.nbt_path": "NBT Path",
+  "morequesttypes.reward.nbt_path.title": "%s to %s",
+  "morequesttypes.reward.nbt_path.operation": "Operation",
+  "morequesttypes.reward.nbt_path.path": "NBT Path",
+  "morequesttypes.reward.nbt_path.check_exists": "Check Path Exists",
+  "morequesttypes.reward.nbt_path.nbt_entries": "NBT Entries",
+  "morequesttypes.reward.nbt_path.target_slot": "Target Slot",
+  "morequesttypes.reward.nbt_path.target_item": "Target Item (Optional)"
 }
+

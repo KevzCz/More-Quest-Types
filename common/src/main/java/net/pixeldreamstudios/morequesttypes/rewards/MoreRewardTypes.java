@@ -21,6 +21,7 @@ public final class MoreRewardTypes {
     public static RewardType LEVELZ;
     public static RewardType RESKILLABLE;
     public static RewardType SUMMON;
+    public static RewardType NBT_PATH;
     public static void init() {
         if (BlabberCompat.isLoaded()) {
             DIALOGUE = RewardTypes.register(
@@ -77,6 +78,11 @@ public final class MoreRewardTypes {
                 FTBQuestsAPI.rl("summon"),
                 SummonReward::new,
                 () -> Icon.getIcon("minecraft:item/totem_of_undying")
+        );
+        NBT_PATH = RewardTypes.register(
+                FTBQuestsAPI.rl("nbt_path"),
+                NbtPathReward::new,
+                () -> Icon.getIcon("minecraft:item/name_tag")
         );
         if (LevelZCompat.isLoaded()) {
             LEVELZ = RewardTypes.register(
