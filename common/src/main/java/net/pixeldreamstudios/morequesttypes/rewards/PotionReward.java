@@ -191,8 +191,4 @@ public final class PotionReward extends Reward {
         showParticles = buf.readBoolean();
     }
 
-    @Override
-    public boolean getExcludeFromClaimAll() {
-        return false;
-    }
 }

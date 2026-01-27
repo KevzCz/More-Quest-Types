@@ -137,5 +137,4 @@ public final class LootTableReward extends Reward {
         dropIfFull = buf.readBoolean();
     }
 
-    @Override public boolean getExcludeFromClaimAll() { return false; }
 }

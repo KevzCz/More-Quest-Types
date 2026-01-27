@@ -279,7 +279,7 @@ public final class AttributeReward extends Reward {
     }
 
     @Override
-    public boolean getExcludeFromClaimAll() { return false; }
+    public boolean getExcludeFromClaimAll() { return true; }
 
     public ResourceLocation getAttributeId() {
         return attributeId;

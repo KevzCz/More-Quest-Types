@@ -183,4 +183,6 @@ public final class SpellReward extends Reward {
     public boolean isLocked() {
         return locked;
     }
+    @Override
+    public boolean getExcludeFromClaimAll() { return true; }
 }

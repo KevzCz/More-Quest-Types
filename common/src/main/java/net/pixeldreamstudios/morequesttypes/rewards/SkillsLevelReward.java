@@ -64,7 +64,6 @@ public final class SkillsLevelReward extends Reward {
                     case ADD -> SkillsCompat.addCategoryExperience(player, cat, amount);
                     case SET -> SkillsCompat.setCategoryExperience(player, cat, amount);
                     case REDUCE -> {
-                        // FIXED: Get current EXPERIENCE (not level) and subtract
                         int currentXp = SkillsCompat.getCategoryExperience(player, cat);
                         int newXp = Math.max(0, currentXp - amount);
                         SkillsCompat.setCategoryExperience(player, cat, newXp);
@@ -146,21 +145,17 @@ public final class SkillsLevelReward extends Reward {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-        // Kind selector
         var KINDS = NameMap.of(Kind.EXPERIENCE, Kind.values()).create();
         config.addEnum("kind", kind, v -> kind = v, KINDS)
                 .setNameKey("morequesttypes.reward.skills_level.kind");
 
-        // Operation type selector
         var OPERATIONS = NameMap.of(OperationType.ADD, OperationType.values()).create();
         config.addEnum("operation_type", operationType, v -> operationType = v, OPERATIONS)
                 .setNameKey("morequesttypes.reward.skills_level.operation_type");
 
-        // Amount input
         config.addInt("amount", amount, v -> amount = v, 0, 0, 1_000_000)
                 .setNameKey("morequesttypes.reward.skills_level.amount");
 
-        // Category selector
         final ResourceLocation NONE = ResourceLocation.withDefaultNamespace("none");
 
         ArrayList<ResourceLocation> cats = new ArrayList<>();

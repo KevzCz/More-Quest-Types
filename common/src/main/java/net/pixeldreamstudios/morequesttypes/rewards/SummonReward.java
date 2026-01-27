@@ -682,6 +682,6 @@ public final class SummonReward extends Reward {
 
     @Override
     public boolean getExcludeFromClaimAll() {
-        return false;
+        return true;
     }
 }

@@ -2,6 +2,9 @@
   "ftbquests.reward.ftbquests.complete_object": "Complete Quest",
   "morequesttypes.reward.complete_object.targets": "Targets",
 
+  "ftbquests.reward.ftbquests.reset_object": "Reset Quest",
+  "morequesttypes.reward.reset_object.targets": "Targets",
+
   "ftbquests.reward.ftbquests": "More Quest Types Rewards",
   "ftbquests.task.ftbquests": "More Quest Types Tasks",
 

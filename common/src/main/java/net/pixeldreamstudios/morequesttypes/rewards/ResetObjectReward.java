@@ -20,11 +20,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public final class CompleteObjectReward extends Reward {
+public final class ResetObjectReward extends Reward {
     private final List<String> targets = new ArrayList<>();
 
-    public CompleteObjectReward(long id, Quest q) { super(id, q); }
-    @Override public RewardType getType() { return MoreRewardTypes.COMPLETE_OBJECT; }
+    public ResetObjectReward(long id, Quest q) {
+        super(id, q);
+    }
+
+    @Override
+    public RewardType getType() {
+        return MoreRewardTypes.RESET_OBJECT;
+    }
 
     @Override
     public void claim(ServerPlayer player, boolean notify) {
@@ -39,7 +45,7 @@ public final class CompleteObjectReward extends Reward {
                 resolved = List.of(getQuest());
             }
             for (QuestObjectBase obj : resolved) {
-                applyToObject(team, obj);
+                resetObject(team, obj);
             }
         });
     }
@@ -68,13 +74,20 @@ public final class CompleteObjectReward extends Reward {
         return new ArrayList<>(out);
     }
 
-    private static void applyToObject(TeamData team, QuestObjectBase obj) {
+    private static void resetObject(TeamData team, QuestObjectBase obj) {
         if (obj instanceof Task task) {
-            team.setProgress(task, task.getMaxProgress());
+            team.resetProgress(task);
+            team.setCompleted(task.getId(), null);
+            team.setStarted(task.getId(), null);
         } else if (obj instanceof Quest quest) {
             for (Task t : quest.getTasksAsList()) {
-                team.setProgress(t, t.getMaxProgress());
+                team.resetProgress(t);
+                team.setCompleted(t.getId(), null);
+                team.setStarted(t.getId(), null);
             }
+            team.setCompleted(quest.getId(), null);
+            team.setStarted(quest.getId(), null);
+            team.clearRepeatCooldown(quest);
         }
     }
 
@@ -82,7 +95,7 @@ public final class CompleteObjectReward extends Reward {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
         config.addList("targets", targets, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
-                .setNameKey("morequesttypes.reward.complete_object.targets");
+                .setNameKey("morequesttypes.reward.reset_object.targets");
     }
 
     @Override

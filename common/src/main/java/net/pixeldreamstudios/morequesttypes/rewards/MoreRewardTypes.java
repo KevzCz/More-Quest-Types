@@ -12,6 +12,7 @@ public final class MoreRewardTypes {
     public static RewardType DIALOGUE;
     public static RewardType SKILLS_LEVEL;
     public static RewardType COMPLETE_OBJECT;
+    public static RewardType RESET_OBJECT;
     public static RewardType PLAY_SOUND;
     public static RewardType LOOT_TABLE;
     public static RewardType ATTRIBUTE;
@@ -51,6 +52,11 @@ public final class MoreRewardTypes {
                 FTBQuestsAPI.rl("complete_object"),
                 CompleteObjectReward::new,
                 () -> Icon.getIcon("ftbquests:item/book")
+        );
+        RESET_OBJECT = RewardTypes.register(
+                FTBQuestsAPI.rl("reset_object"),
+                ResetObjectReward::new,
+                () -> Icon.getIcon("minecraft:item/barrier")
         );
         PLAY_SOUND = RewardTypes.register(
                 FTBQuestsAPI.rl("play_sound"),

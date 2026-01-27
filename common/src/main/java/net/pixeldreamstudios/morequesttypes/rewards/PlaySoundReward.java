@@ -207,5 +207,5 @@ public final class PlaySoundReward extends Reward {
         pitch    = buffer.readFloat();
     }
 
-    @Override public boolean getExcludeFromClaimAll() { return false; }
+    @Override public boolean getExcludeFromClaimAll() { return true; }
 }
