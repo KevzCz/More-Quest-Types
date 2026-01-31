@@ -8,7 +8,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import dev.architectury.networking.NetworkManager;
 import dev.ftb.mods.ftblibrary.config.Tristate;
 import dev.ftb.mods.ftblibrary.util.NetworkHelper;
 import dev.ftb.mods.ftbquests.net.CreateObjectResponseMessage;
@@ -840,7 +839,7 @@ public final class MoreQuestTypesCommands {
 
         IQuestExtension ext = (IQuestExtension) (Object) quest;
         if (ext.getMaxRepeats() <= 0) {
-            source.sendFailure(Component. literal("This quest has no repeat limit!"));
+            source.sendFailure(Component.literal("This quest has no repeat limit!"));
             return 0;
         }
 
@@ -858,7 +857,7 @@ public final class MoreQuestTypesCommands {
                         "Reset repeat counter for quest '" + quest.getTitle().getString() + "' for player " + player.getName().getString()),
                 true);
 
-        return Command. SINGLE_SUCCESS;
+        return Command.SINGLE_SUCCESS;
     }
 
     private static QuestObjectBase getQuestObjectForString(String idStr) throws CommandSyntaxException {
@@ -896,7 +895,7 @@ public final class MoreQuestTypesCommands {
         ServerQuestFile.INSTANCE.clearCachedData();
         chapter.clearCachedData();
 
-        NetworkManager.sendToPlayer(player, new EditObjectResponseMessage(chapter));
+        net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToPlayer(player, new EditObjectResponseMessage(chapter));
 
         source.sendSuccess(() -> Component.literal(
                         "Refreshed chapter '" + chapter.getTitle().getString() + "' for player " + player.getName().getString()),

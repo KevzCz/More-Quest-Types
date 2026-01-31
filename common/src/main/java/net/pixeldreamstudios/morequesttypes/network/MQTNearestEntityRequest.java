@@ -38,7 +38,7 @@ public record MQTNearestEntityRequest(long taskId) implements CustomPacketPayloa
                 }
 
                 double meters = t.nearestDistanceServer(sp);
-                NetworkManager.sendToPlayer(sp, new MQTNearestEntityResponse(self.taskId(), meters));
+                NetworkHelper.sendToPlayer(sp, new MQTNearestEntityResponse(self.taskId(), meters));
             }
         });
     }

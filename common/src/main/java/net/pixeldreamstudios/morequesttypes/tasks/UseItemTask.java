@@ -148,17 +148,17 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     }
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            dev.architectury.networking.NetworkManager.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest());
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest());
         }
     }
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            dev.architectury.networking.NetworkManager.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest());
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest());
         }
     }
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            dev.architectury.networking.NetworkManager.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest());
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest());
         }
     }
     public static void syncKnownStructureList(List<String> data) { KNOWN_STRUCTURES.clear(); KNOWN_STRUCTURES.addAll(data); }

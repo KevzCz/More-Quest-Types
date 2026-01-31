@@ -1,7 +1,6 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
 import com.mojang.datafixers.util.Either;
-import dev.architectury.networking.NetworkManager;
 import dev.architectury.registry.registries.RegistrarManager;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
@@ -53,15 +52,17 @@ import java.util.UUID;
 
 public final class DamageTask extends Task {
     public enum Mode { TOTAL, HIGHEST }
+
+    private boolean anyEntity = false;
     private ResourceLocation entityTypeId = ResourceLocation.withDefaultNamespace("zombie");
     private TagKey<EntityType<?>> entityTypeTag = null;
     private String customName = "";
     private final List<String> scoreboardTags = new ArrayList<>();
-    private int    minTagsRequired = 0;
+    private int minTagsRequired = 0;
     private String nbtFilterSnbt = "";
     private transient Tag nbtFilterParsed = null;
     private ItemStack heldItemFilter = ItemStack.EMPTY;
-    private String    heldItemTagStr = "";
+    private String heldItemTagStr = "";
     private transient TagKey<net.minecraft.world.item.Item> heldItemTag;
     private Mode mode = Mode.TOTAL;
     private long value = 100L;
@@ -72,28 +73,34 @@ public final class DamageTask extends Task {
     private String dimension = "";
     private static final List<String> KNOWN_BIOMES = new ArrayList<>();
     private String biome = "";
+
     public DamageTask(long id, dev.ftb.mods.ftbquests.quest.Quest quest) {
         super(id, quest);
     }
+
     @Override
     public TaskType getType() {
         return MoreTasksTypes.DAMAGE;
     }
+
     @Override
     public long getMaxProgress() {
         return Math.max(1L, value);
     }
+
     @Override
     public boolean hideProgressNumbers() {
         return false;
     }
+
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getAltTitle() {
-        String who = (entityTypeTag == null)
+        String who = anyEntity ? "any entity"
+                : (entityTypeTag == null)
                 ? Component.translatable("entity." + entityTypeId.toLanguageKey()).getString()
                 : "#" + entityTypeTag.location();
-        String how = mode == Mode.TOTAL ?  "total" : "highest";
+        String how = mode == Mode.TOTAL ? "total" : "highest";
 
         MutableComponent baseTitle = Component.translatable("morequesttypes.task.damage.title", formatMaxProgress(), who, how);
 
@@ -140,15 +147,18 @@ public final class DamageTask extends Task {
             case RANGE_EQUAL_SECOND -> first + " > x ≥ " + second;
         };
     }
+
     @Environment(EnvType.CLIENT)
     @Override
     public Icon getAltIcon() {
         return Icon.getIcon("minecraft:item/wooden_sword");
     }
+
     @Override
     public int autoSubmitOnPlayerTick() {
         return 1;
     }
+
     @Override
     public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
@@ -181,8 +191,8 @@ public final class DamageTask extends Task {
         for (var h : hits) {
             Entity e = h.victim();
             if (!(e instanceof LivingEntity le)) continue;
-            if (! entityMatches(le)) continue;
-            if (! heldItemMatches(h.stack())) continue;
+            if (!entityMatches(le)) continue;
+            if (!heldItemMatches(h.stack())) continue;
 
             long amt = Math.max(0L, h.amountBaselineRounded());
             sum += amt;
@@ -200,15 +210,15 @@ public final class DamageTask extends Task {
                 teamData.setProgress(this, next);
             }
 
-            // Mark these hits as processed by THIS task
             DamageEventBuffer.markProcessed(this.id, matchedHits);
         }
     }
 
     private boolean entityMatches(LivingEntity e) {
-        boolean baseOk = (entityTypeTag == null)
+        boolean baseOk = anyEntity || (entityTypeTag == null
                 ? entityTypeId.equals(RegistrarManager.getId(e.getType(), Registries.ENTITY_TYPE)) && nameMatchOK(e)
-                : e.getType().is(entityTypeTag) && nameMatchOK(e);
+                : e.getType().is(entityTypeTag) && nameMatchOK(e));
+
         if (!baseOk) return false;
 
         if (!scoreboardTags.isEmpty()) {
@@ -233,11 +243,12 @@ public final class DamageTask extends Task {
             if (!isInsideDimension(level)) return false;
             if (!isInsideBiome(level, e.blockPosition())) return false;
         }
+
         if (DynamicDifficultyCompat.isLoaded()) {
             ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
             if (ext.shouldCheckDynamicDifficultyLevel() && DynamicDifficultyCompat.canHaveLevel(e)) {
                 int mobLevel = DynamicDifficultyCompat.getLevel(e);
-                if (! ComparisonManager.compare(mobLevel,
+                if (!ComparisonManager.compare(mobLevel,
                         ext.getDynamicDifficultyComparison(),
                         ext.getDynamicDifficultyFirst(),
                         ext.getDynamicDifficultySecond())) {
@@ -258,6 +269,7 @@ public final class DamageTask extends Task {
                 }
             }
         }
+
         return true;
     }
 
@@ -285,11 +297,13 @@ public final class DamageTask extends Task {
                         .orElse(false)
         );
     }
+
     private boolean isInsideDimension(ServerLevel level) {
         if (dimension == null || dimension.isEmpty()) return true;
         String cur = level.dimension().location().toString();
         return dimension.equals(cur);
     }
+
     private boolean isInsideBiome(ServerLevel level, net.minecraft.core.BlockPos pos) {
         if (biome == null || biome.isEmpty()) return true;
         Holder<Biome> h = level.getBiome(pos);
@@ -362,6 +376,9 @@ public final class DamageTask extends Task {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
+        config.addBool("any_entity", anyEntity, v -> anyEntity = v, false)
+                .setNameKey("morequesttypes.task.damage.any_entity");
+
         var ids = new java.util.ArrayList<ResourceLocation>();
         BuiltInRegistries.ENTITY_TYPE.forEach(type -> {
             if (type.create(FTBQuestsClient.getClientLevel()) instanceof net.minecraft.world.entity.LivingEntity) {
@@ -383,8 +400,10 @@ public final class DamageTask extends Task {
                         .sorted()
                         .toArray(String[]::new)).create();
 
-        config.addEnum("entity", entityTypeId, v -> entityTypeId = v, ENTITY_NAME_MAP, ResourceLocation.withDefaultNamespace("zombie"));
-        config.addEnum("entity_type_tag", getTypeTagStr(), v -> entityTypeTag = parseTypeTag(v), ENTITY_TAG_MAP);
+        config.addEnum("entity", entityTypeId, v -> entityTypeId = v, ENTITY_NAME_MAP, ResourceLocation.withDefaultNamespace("zombie"))
+                .setCanEdit(!anyEntity);
+        config.addEnum("entity_type_tag", getTypeTagStr(), v -> entityTypeTag = parseTypeTag(v), ENTITY_TAG_MAP)
+                .setCanEdit(!anyEntity);
         config.addString("custom_name", customName, v -> customName = v, "");
         config.addList("scoreboard_tags", scoreboardTags, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.tags_csv");
@@ -472,6 +491,7 @@ public final class DamageTask extends Task {
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
+        if (anyEntity) nbt.putBoolean("any_entity", true);
         nbt.putString("entity", entityTypeId.toString());
         if (entityTypeTag != null) nbt.putString("entityTypeTag", entityTypeTag.location().toString());
         if (!customName.isEmpty()) nbt.putString("custom_name", customName);
@@ -499,6 +519,7 @@ public final class DamageTask extends Task {
     @Override
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
+        anyEntity = nbt.getBoolean("any_entity");
         entityTypeId = ResourceLocation.tryParse(nbt.getString("entity"));
         entityTypeTag = parseTypeTag(nbt.getString("entityTypeTag"));
         customName = nbt.getString("custom_name");
@@ -537,6 +558,7 @@ public final class DamageTask extends Task {
     @Override
     public void writeNetData(RegistryFriendlyByteBuf buf) {
         super.writeNetData(buf);
+        buf.writeBoolean(anyEntity);
         buf.writeUtf(entityTypeId.toString());
         buf.writeUtf(entityTypeTag == null ? "" : entityTypeTag.location().toString());
         buf.writeUtf(customName);
@@ -560,6 +582,7 @@ public final class DamageTask extends Task {
     @Override
     public void readNetData(RegistryFriendlyByteBuf buf) {
         super.readNetData(buf);
+        anyEntity = buf.readBoolean();
         entityTypeId = ResourceLocation.tryParse(buf.readUtf());
         entityTypeTag = parseTypeTag(buf.readUtf());
         customName = buf.readUtf();
@@ -632,29 +655,33 @@ public final class DamageTask extends Task {
 
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            NetworkManager.sendToServer(
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
                     new MQTStructuresRequest()
             );
         }
     }
+
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            NetworkManager.sendToServer(
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
                     new MQTWorldsRequest()
             );
         }
     }
+
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            NetworkManager.sendToServer(
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
                     new MQTBiomesRequest()
             );
         }
     }
+
     public static void syncKnownDimensionList(java.util.List<String> data) {
         KNOWN_DIMENSIONS.clear();
         KNOWN_DIMENSIONS.addAll(data);
     }
+
     public static void syncKnownBiomeList(java.util.List<String> data) {
         KNOWN_BIOMES.clear();
         KNOWN_BIOMES.addAll(data);

@@ -6,6 +6,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.pixeldreamstudios.morequesttypes.api.IQuestSummonedEntity;
 import net.pixeldreamstudios.morequesttypes.mixin.accessor.MobAccessor;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import net.pixeldreamstudios.morequesttypes.network.QuestEntityDataSyncPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -351,7 +352,7 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
                     mqt$questTextureOffsetZ
             );
 
-            dev.architectury.networking.NetworkManager.sendToPlayer(player, syncPacket);
+            NetworkHelper.sendToPlayer(player, syncPacket);
         }
     }
 

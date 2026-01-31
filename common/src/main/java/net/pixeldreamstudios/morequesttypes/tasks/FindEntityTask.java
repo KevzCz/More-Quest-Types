@@ -1,7 +1,6 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
 import com.mojang.datafixers.util.Either;
-import dev.architectury.networking.NetworkManager;
 import dev.architectury.registry.registries.RegistrarManager;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
@@ -268,17 +267,17 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
     }
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            NetworkManager.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest());
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest());
         }
     }
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            NetworkManager.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest());
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest());
         }
     }
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            NetworkManager.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest());
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest());
         }
     }
 
@@ -460,7 +459,7 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
             long now = level.getGameTime();
             if (now - CLIENT_LAST_REQ_TICK > 20) {
                 CLIENT_LAST_REQ_TICK = now;
-                NetworkManager.sendToServer(
+                net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
                         new MQTNearestEntityRequest(this.getId())
                 );
             }

@@ -3,13 +3,13 @@ package net.pixeldreamstudios.morequesttypes.mixin.client;
 import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.ContextMenuItem;
 import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
+import dev.ftb.mods.ftbquests.net.EditObjectMessage;
 import dev.ftb.mods.ftbquests.quest.Movable;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.QuestObjectBase;
-import dev.architectury.networking.NetworkManager;
-import dev.ftb.mods.ftbquests.net.EditObjectMessage;
 import net.minecraft.network.chat.Component;
 import net.pixeldreamstudios.morequesttypes.api.IQuestExtension;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import net.pixeldreamstudios.morequesttypes.network.ResetRepeatCounterMessage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -35,7 +35,7 @@ public class QuestScreenMixin {
                     Icons.COLOR_BLANK,
                     (button) -> {
                         ext.setAlwaysInvisible(!currentlyInvisible);
-                        NetworkManager.sendToServer(EditObjectMessage.forQuestObject(quest));
+                        NetworkHelper.sendToServer(EditObjectMessage.forQuestObject(quest));
                         if (gui != null) {
                             gui.run();
                         }
@@ -47,7 +47,7 @@ public class QuestScreenMixin {
                         Component.translatable("morequesttypes.quest.reset_repeat_counter"),
                         Icons.REFRESH,
                         (button) -> {
-                            NetworkManager.sendToServer(new ResetRepeatCounterMessage(quest.id));
+                            NetworkHelper.sendToServer(new ResetRepeatCounterMessage(quest.id));
                         }
                 ).setYesNoText(Component.translatable("morequesttypes.quest.reset_repeat_counter.confirm")));
             }

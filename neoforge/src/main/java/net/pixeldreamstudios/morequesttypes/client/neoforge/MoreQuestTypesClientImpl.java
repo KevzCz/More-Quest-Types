@@ -1,4 +1,4 @@
-package net.pixeldreamstudios.morequesttypes.client. neoforge;
+package net.pixeldreamstudios.morequesttypes.client.neoforge;
 
 import net.pixeldreamstudios.morequesttypes.neoforge.client.SummonedEntityRendererNeoForge;
 

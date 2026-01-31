@@ -1,6 +1,5 @@
 package net.pixeldreamstudios.morequesttypes.rewards;
 
-import dev.architectury.networking.NetworkManager;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.ImageResourceConfig;
 import dev.ftb.mods.ftblibrary.config.NameMap;
@@ -230,7 +229,7 @@ public final class SummonReward extends Reward {
 
                 level.getServer().getPlayerList().getPlayers().forEach(serverPlayer -> {
                     if (serverPlayer.distanceToSqr(entity) < 128 * 128) {
-                        NetworkManager.sendToPlayer(serverPlayer, syncPacket);
+                        net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToPlayer(serverPlayer, syncPacket);
                     }
                 });
             }
@@ -238,7 +237,7 @@ public final class SummonReward extends Reward {
             SummonedEntityTracker.track(player.getUUID(), this.id, entity.getUUID());
         }
 
-        if (!  spawnedEntities.isEmpty()) {
+        if (!spawnedEntities.isEmpty()) {
             scheduleDespawnTracking(level, spawnedEntities, player.getUUID(), level.getServer());
         }
     }
@@ -373,7 +372,7 @@ public final class SummonReward extends Reward {
 
                     server.getPlayerList().getPlayers().forEach(serverPlayer -> {
                         if (serverPlayer.distanceToSqr(entity) < 128 * 128) {
-                            NetworkManager.sendToPlayer(serverPlayer, despawnPacket);
+                            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToPlayer(serverPlayer, despawnPacket);
                         }
                     });
                 }

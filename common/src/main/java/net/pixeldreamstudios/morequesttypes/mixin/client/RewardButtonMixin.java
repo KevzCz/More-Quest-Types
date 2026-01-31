@@ -1,11 +1,11 @@
 package net.pixeldreamstudios.morequesttypes.mixin.client;
 
-import dev.architectury.networking.NetworkManager;
-import dev.ftb.mods.ftbquests.client.gui.quests.RewardButton;
-import dev.ftb.mods.ftbquests.quest.reward.Reward;
-import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
+import dev.ftb.mods.ftbquests.client.gui.quests.RewardButton;
+import dev.ftb.mods.ftbquests.quest.TeamData;
+import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import net.minecraft.client.Minecraft;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import net.pixeldreamstudios.morequesttypes.network.button.ToggleRewardRequest;
 import net.pixeldreamstudios.morequesttypes.rewards.AttributeReward;
 import net.pixeldreamstudios.morequesttypes.rewards.SpellReward;
@@ -46,7 +46,7 @@ public abstract class RewardButtonMixin {
                             }
                         }
 
-                        NetworkManager.sendToServer(new ToggleRewardRequest(reward.getId()));
+                        NetworkHelper.sendToServer(new ToggleRewardRequest(reward.getId()));
                         ci.cancel();
                     }
                 }

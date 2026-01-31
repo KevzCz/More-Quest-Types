@@ -20,6 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -126,7 +127,7 @@ public final class PlaySoundReward extends Reward {
         super.fillConfigGroup(config);
 
         if (SERVER_SOUNDS.isEmpty() || (System.currentTimeMillis() - lastSyncTime) > SYNC_COOLDOWN_MS) {
-            dev.architectury.networking.NetworkManager
+            NetworkHelper
                     .sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTSoundsRequest());
         }
 

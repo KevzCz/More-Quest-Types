@@ -17,7 +17,7 @@ public record MQTSoundsRequest() implements CustomPacketPayload {
     public static void handle(MQTSoundsRequest self, NetworkManager.PacketContext ctx) {
         ctx.queue(() -> {
             if (ctx.getPlayer() instanceof ServerPlayer sp && sp.getServer() != null) {
-                NetworkManager.sendToPlayer(sp, MQTSoundsResponse.create(sp.getServer()));
+                NetworkHelper.sendToPlayer(sp, MQTSoundsResponse.create(sp.getServer()));
             }
         });
     }

@@ -1,7 +1,6 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
 import com.mojang.datafixers.util.Either;
-import dev.architectury.networking.NetworkManager;
 import dev.architectury.registry.registries.RegistrarManager;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
@@ -636,19 +635,19 @@ public class TradingTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            NetworkManager.sendToServer(new MQTStructuresRequest());
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new MQTStructuresRequest());
         }
     }
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            NetworkManager.sendToServer(new MQTWorldsRequest());
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new MQTWorldsRequest());
         }
     }
 
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            NetworkManager.sendToServer(new MQTBiomesRequest());
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new MQTBiomesRequest());
         }
     }
 }

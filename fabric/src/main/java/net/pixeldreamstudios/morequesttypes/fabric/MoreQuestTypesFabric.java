@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
 import net.pixeldreamstudios.morequesttypes.commands.MoreQuestTypesCommands;
+import net.pixeldreamstudios.morequesttypes.fabric.network.FabricMQTNetwork;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.AttributeRewardManager;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.SpellRewardManager;
 
@@ -14,6 +15,7 @@ public final class MoreQuestTypesFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         MoreQuestTypes.init();
+        FabricMQTNetwork.init();
         InteractEntityHooksFabric.register();
         UseItemHooksFabric.register();
         BreakBlockHooksFabric.register();

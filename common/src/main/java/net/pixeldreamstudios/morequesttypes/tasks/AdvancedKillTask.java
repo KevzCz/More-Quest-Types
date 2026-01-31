@@ -1,7 +1,6 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
 import com.mojang.datafixers.util.Either;
-import dev.architectury.networking.NetworkManager;
 import dev.architectury.registry.registries.RegistrarManager;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
@@ -216,7 +215,7 @@ public class AdvancedKillTask extends KillTask {
 
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            NetworkManager.sendToServer(
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
                     new MQTStructuresRequest()
             );
         }
@@ -224,7 +223,7 @@ public class AdvancedKillTask extends KillTask {
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            NetworkManager.sendToServer(
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
                     new MQTWorldsRequest()
             );
         }
@@ -232,7 +231,7 @@ public class AdvancedKillTask extends KillTask {
 
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            NetworkManager.sendToServer(
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
                     new MQTBiomesRequest()
             );
         }

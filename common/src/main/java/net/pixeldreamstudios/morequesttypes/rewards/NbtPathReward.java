@@ -14,14 +14,24 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
+import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public final class NbtPathReward extends Reward {
     public enum Operation { ADD, REMOVE, SET }
-    public enum TargetSlot {
-        MAINHAND, OFFHAND, HEAD, CHEST, LEGS, FEET
+    public enum TargetSlot { MAINHAND, OFFHAND, HEAD, CHEST, LEGS, FEET }
+    public enum ConditionType {
+        NONE,
+        PATH_EXISTS,
+        PATH_NOT_EXISTS,
+        ENTRY_EXISTS,
+        ENTRY_NOT_EXISTS,
+        VALUE_EQUALS,
+        VALUE_NOT_EQUALS,
+        VALUE_COMPARE
     }
 
     private Operation operation = Operation.ADD;
@@ -30,6 +40,15 @@ public final class NbtPathReward extends Reward {
     private final List<String> nbtEntries = new ArrayList<>();
     private TargetSlot targetSlot = TargetSlot.MAINHAND;
     private ItemStack targetItem = ItemStack.EMPTY;
+    private boolean isValue = false;
+
+    private ConditionType conditionType = ConditionType.NONE;
+    private String conditionPath = "";
+    private final List<String> conditionEntries = new ArrayList<>();
+    private int conditionsMatchNumber = -1;
+    private ComparisonMode comparisonMode = ComparisonMode.EQUALS;
+    private int comparisonFirst = 0;
+    private int comparisonSecond = 0;
 
     public NbtPathReward(long id, Quest q) {
         super(id, q);
@@ -48,6 +67,8 @@ public final class NbtPathReward extends Reward {
 
     private void applyToItems(ServerPlayer player) {
         List<ItemStack> targets = getTargetStacks(player);
+        UUID claimerUuid = player.getUUID();
+        String claimerName = player.getGameProfile().getName();
 
         for (ItemStack stack : targets) {
             if (stack.isEmpty()) continue;
@@ -55,15 +76,26 @@ public final class NbtPathReward extends Reward {
 
             try {
                 CompoundTag fullTag = (CompoundTag) stack.save(player.registryAccess());
-
                 CompoundTag components = fullTag.getCompound("components");
 
                 if (checkExists && !pathExists(components, path)) continue;
 
-                switch (operation) {
-                    case ADD -> addToPath(components, path, nbtEntries);
-                    case REMOVE -> removeFromPath(components, path, nbtEntries);
-                    case SET -> setAtPath(components, path, nbtEntries);
+                if (!checkCondition(components, player, claimerUuid, claimerName)) continue;
+
+                List<String> processedEntries = processPlaceholders(nbtEntries, claimerUuid, claimerName, isTeamReward());
+
+                if (isValue) {
+                    switch (operation) {
+                        case ADD -> addValue(components, path, processedEntries);
+                        case REMOVE -> subtractValue(components, path, processedEntries);
+                        case SET -> setValue(components, path, processedEntries);
+                    }
+                } else {
+                    switch (operation) {
+                        case ADD -> addToPath(components, path, processedEntries);
+                        case REMOVE -> removeFromPath(components, path, processedEntries);
+                        case SET -> setAtPath(components, path, processedEntries);
+                    }
                 }
 
                 fullTag.put("components", components);
@@ -74,6 +106,256 @@ public final class NbtPathReward extends Reward {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void addValue(CompoundTag root, String path, List<String> entries) {
+        if (entries.isEmpty()) return;
+
+        String[] parts = path.split("\\.");
+        CompoundTag current = root;
+
+        for (int i = 0; i < parts.length - 1; i++) {
+            String part = parts[i];
+            if (!current.contains(part)) {
+                current.put(part, new CompoundTag());
+            }
+            Tag tag = current.get(part);
+            if (tag instanceof CompoundTag compound) {
+                current = compound;
+            } else {
+                return;
+            }
+        }
+
+        String lastPart = parts[parts.length - 1];
+        Tag existing = current.get(lastPart);
+        Tag addTag = parseNbtEntry(entries.get(0));
+
+        if (addTag instanceof NumericTag addNum) {
+            if (existing instanceof NumericTag existingNum) {
+                double newValue = existingNum.getAsDouble() + addNum.getAsDouble();
+                current.put(lastPart, createNumericTag(newValue, existing));
+            } else {
+                current.put(lastPart, addTag);
+            }
+        }
+    }
+
+    private void subtractValue(CompoundTag root, String path, List<String> entries) {
+        if (entries.isEmpty()) return;
+
+        String[] parts = path.split("\\.");
+        Tag current = root;
+
+        for (int i = 0; i < parts.length - 1; i++) {
+            if (current instanceof CompoundTag compound) {
+                current = compound.get(parts[i]);
+                if (current == null) return;
+            } else {
+                return;
+            }
+        }
+
+        if (!(current instanceof CompoundTag compound)) return;
+
+        String lastPart = parts[parts.length - 1];
+        Tag existing = compound.get(lastPart);
+        Tag subtractTag = parseNbtEntry(entries.get(0));
+
+        if (subtractTag instanceof NumericTag subNum && existing instanceof NumericTag existingNum) {
+            double newValue = existingNum.getAsDouble() - subNum.getAsDouble();
+            compound.put(lastPart, createNumericTag(newValue, existing));
+        }
+    }
+
+    private void setValue(CompoundTag root, String path, List<String> entries) {
+        if (entries.isEmpty()) return;
+
+        String[] parts = path.split("\\.");
+        CompoundTag current = root;
+
+        for (int i = 0; i < parts.length - 1; i++) {
+            String part = parts[i];
+            if (!current.contains(part)) {
+                current.put(part, new CompoundTag());
+            }
+            Tag tag = current.get(part);
+            if (tag instanceof CompoundTag compound) {
+                current = compound;
+            } else {
+                return;
+            }
+        }
+
+        String lastPart = parts[parts.length - 1];
+        Tag valueTag = parseNbtEntry(entries.get(0));
+        current.put(lastPart, valueTag);
+    }
+
+    private Tag createNumericTag(double value, Tag originalType) {
+        if (originalType instanceof ByteTag) {
+            return ByteTag.valueOf((byte) value);
+        } else if (originalType instanceof ShortTag) {
+            return ShortTag.valueOf((short) value);
+        } else if (originalType instanceof IntTag) {
+            return IntTag.valueOf((int) value);
+        } else if (originalType instanceof LongTag) {
+            return LongTag.valueOf((long) value);
+        } else if (originalType instanceof FloatTag) {
+            return FloatTag.valueOf((float) value);
+        } else if (originalType instanceof DoubleTag) {
+            return DoubleTag.valueOf(value);
+        }
+        return IntTag.valueOf((int) value);
+    }
+
+    private List<String> processPlaceholders(List<String> entries, UUID claimerUuid, String claimerName, boolean isTeamReward) {
+        if (!isTeamReward) return entries;
+
+        List<String> processed = new ArrayList<>();
+        for (String entry : entries) {
+            String result = entry
+                    .replace("{claimer_uuid}", claimerUuid.toString())
+                    .replace("{claimer_name}", claimerName)
+                    .replace("{claimer_uuid_array}", uuidToIntArray(claimerUuid));
+            processed.add(result);
+        }
+        return processed;
+    }
+
+    private String uuidToIntArray(UUID uuid) {
+        long mostSigBits = uuid.getMostSignificantBits();
+        long leastSigBits = uuid.getLeastSignificantBits();
+
+        int[] ints = new int[4];
+        ints[0] = (int) (mostSigBits >> 32);
+        ints[1] = (int) mostSigBits;
+        ints[2] = (int) (leastSigBits >> 32);
+        ints[3] = (int) leastSigBits;
+
+        return "[I;" + ints[0] + "," + ints[1] + "," + ints[2] + "," + ints[3] + "]";
+    }
+
+    private boolean checkCondition(CompoundTag components, ServerPlayer player, UUID claimerUuid, String claimerName) {
+        List<String> processedConditionEntries = processPlaceholders(conditionEntries, claimerUuid, claimerName, isTeamReward());
+
+        return switch (conditionType) {
+            case NONE -> true;
+            case PATH_EXISTS -> pathExists(components, conditionPath);
+            case PATH_NOT_EXISTS -> !pathExists(components, conditionPath);
+            case ENTRY_EXISTS -> checkEntriesMatch(components, processedConditionEntries, true);
+            case ENTRY_NOT_EXISTS -> checkEntriesMatch(components, processedConditionEntries, false);
+            case VALUE_EQUALS -> checkValuesMatch(components, processedConditionEntries, true);
+            case VALUE_NOT_EQUALS -> checkValuesMatch(components, processedConditionEntries, false);
+            case VALUE_COMPARE -> checkValueCompare(components);
+        };
+    }
+
+    private boolean checkValueCompare(CompoundTag components) {
+        Tag actual = navigateToPath(components, conditionPath);
+        if (actual == null) return false;
+
+        if (actual instanceof NumericTag numTag) {
+            int value = numTag.getAsInt();
+            return comparisonMode.compare(value, comparisonFirst, comparisonSecond);
+        }
+
+        return false;
+    }
+
+    private boolean checkEntriesMatch(CompoundTag components, List<String> processedEntries, boolean shouldExist) {
+        if (processedEntries.isEmpty()) return true;
+
+        int matchCount = 0;
+        int requiredMatches = (conditionsMatchNumber == -1) ? processedEntries.size() : conditionsMatchNumber;
+
+        for (String entrySnbt : processedEntries) {
+            boolean exists = entryExists(components, conditionPath, entrySnbt);
+            if (shouldExist && exists) matchCount++;
+            if (!shouldExist && !exists) matchCount++;
+        }
+
+        return matchCount >= requiredMatches;
+    }
+
+    private boolean checkValuesMatch(CompoundTag components, List<String> processedEntries, boolean shouldEqual) {
+        if (processedEntries.isEmpty()) return true;
+
+        int matchCount = 0;
+        int requiredMatches = (conditionsMatchNumber == -1) ? processedEntries.size() : conditionsMatchNumber;
+
+        for (String expectedSnbt : processedEntries) {
+            boolean equals = valueEquals(components, conditionPath, expectedSnbt);
+            if (shouldEqual && equals) matchCount++;
+            if (!shouldEqual && !equals) matchCount++;
+        }
+
+        return matchCount >= requiredMatches;
+    }
+
+    private boolean entryExists(CompoundTag root, String path, String entrySnbt) {
+        if (path.isEmpty() || entrySnbt.isEmpty()) return false;
+
+        Tag target = navigateToPath(root, path);
+        if (target == null) return false;
+
+        Tag searchTag = parseNbtEntry(entrySnbt);
+        if (searchTag == null) return false;
+
+        if (target instanceof ListTag list) {
+            return containsTag(list, searchTag);
+        } else if (target instanceof CompoundTag compound) {
+            if (searchTag instanceof CompoundTag searchCompound) {
+                for (String key : searchCompound.getAllKeys()) {
+                    Tag value = compound.get(key);
+                    if (value == null || !tagsEqual(value, searchCompound.get(key))) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean valueEquals(CompoundTag root, String path, String expectedSnbt) {
+        if (path.isEmpty() || expectedSnbt.isEmpty()) return false;
+
+        Tag actual = navigateToPath(root, path);
+        if (actual == null) return false;
+
+        Tag expected = parseNbtEntry(expectedSnbt);
+        if (expected == null) return false;
+
+        if (actual instanceof NumericTag actualNum && expected instanceof NumericTag expectedNum) {
+            return Math.abs(actualNum.getAsDouble() - expectedNum.getAsDouble()) < 0.0001;
+        }
+
+        return tagsEqual(actual, expected);
+    }
+
+    private Tag navigateToPath(CompoundTag root, String path) {
+        if (path.isEmpty()) return root;
+
+        String[] parts = path.split("\\.");
+        Tag current = root;
+
+        for (String part : parts) {
+            if (current instanceof CompoundTag compound) {
+                if (compound.contains(part)) {
+                    current = compound.get(part);
+                } else {
+                    return null;
+                }
+
+                if (current == null) return null;
+            } else {
+                return null;
+            }
+        }
+
+        return current;
     }
 
     private List<ItemStack> getTargetStacks(ServerPlayer player) {
@@ -92,19 +374,7 @@ public final class NbtPathReward extends Reward {
     }
 
     private boolean pathExists(CompoundTag root, String path) {
-        String[] parts = path.split("\\.");
-        Tag current = root;
-
-        for (String part : parts) {
-            if (current instanceof CompoundTag compound) {
-                if (!compound.contains(part)) return false;
-                current = compound.get(part);
-            } else {
-                return false;
-            }
-        }
-
-        return true;
+        return navigateToPath(root, path) != null;
     }
 
     private void addToPath(CompoundTag root, String path, List<String> entries) {
@@ -213,7 +483,44 @@ public final class NbtPathReward extends Reward {
     private Tag parseNbtEntry(String entry) {
         if (entry == null || entry.isEmpty()) return null;
 
+        entry = entry.trim();
+
         try {
+            if (entry.equalsIgnoreCase("true")) {
+                return ByteTag.valueOf(true);
+            }
+            if (entry.equalsIgnoreCase("false")) {
+                return ByteTag.valueOf(false);
+            }
+
+            if (entry.matches("-?\\d+")) {
+                return IntTag.valueOf(Integer.parseInt(entry));
+            }
+
+            if (entry.matches("-?\\d+b") || entry.matches("-?\\d+B")) {
+                return ByteTag.valueOf(Byte.parseByte(entry.substring(0, entry.length() - 1)));
+            }
+
+            if (entry.matches("-?\\d+s") || entry.matches("-?\\d+S")) {
+                return ShortTag.valueOf(Short.parseShort(entry.substring(0, entry.length() - 1)));
+            }
+
+            if (entry.matches("-?\\d+L") || entry.matches("-?\\d+l")) {
+                return LongTag.valueOf(Long.parseLong(entry.substring(0, entry.length() - 1)));
+            }
+
+            if (entry.matches("-?\\d*\\.\\d+f") || entry.matches("-?\\d*\\.\\d+F")) {
+                return FloatTag.valueOf(Float.parseFloat(entry.substring(0, entry.length() - 1)));
+            }
+
+            if (entry.matches("-?\\d*\\.\\d+d") || entry.matches("-?\\d*\\.\\d+D") || entry.matches("-?\\d*\\.\\d+")) {
+                String numberPart = entry;
+                if (entry.toLowerCase().endsWith("d")) {
+                    numberPart = entry.substring(0, entry.length() - 1);
+                }
+                return DoubleTag.valueOf(Double.parseDouble(numberPart));
+            }
+
             return TagParser.parseTag(entry);
         } catch (Exception e) {
             return StringTag.valueOf(entry);
@@ -259,6 +566,9 @@ public final class NbtPathReward extends Reward {
         config.addList("nbt_entries", nbtEntries, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
                 .setNameKey("morequesttypes.reward.nbt_path.nbt_entries");
 
+        config.addBool("is_value", isValue, v -> isValue = v, false)
+                .setNameKey("morequesttypes.reward.nbt_path.is_value");
+
         var SLOTS = NameMap.of(TargetSlot.MAINHAND, TargetSlot.values()).create();
         config.addEnum("target_slot", targetSlot, v -> targetSlot = v, SLOTS)
                 .setNameKey("morequesttypes.reward.nbt_path.target_slot");
@@ -268,6 +578,34 @@ public final class NbtPathReward extends Reward {
             targetItem = v.copy();
             if (!targetItem.isEmpty()) targetItem.setCount(1);
         }, ItemStack.EMPTY).setNameKey("morequesttypes.reward.nbt_path.target_item");
+
+        ConfigGroup condGroup = config.getOrCreateSubgroup("conditions");
+        condGroup.setNameKey("morequesttypes.reward.nbt_path.conditions");
+
+        var COND_TYPES = NameMap.of(ConditionType.NONE, ConditionType.values()).create();
+        condGroup.addEnum("condition_type", conditionType, v -> conditionType = v, COND_TYPES)
+                .setNameKey("morequesttypes.reward.nbt_path.condition_type");
+
+        condGroup.addString("condition_path", conditionPath, v -> conditionPath = v, "")
+                .setNameKey("morequesttypes.reward.nbt_path.condition_path");
+
+        condGroup.addList("condition_entries", conditionEntries, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
+                .setNameKey("morequesttypes.reward.nbt_path.condition_entries");
+
+        condGroup.addInt("conditions_match_number", conditionsMatchNumber, v -> conditionsMatchNumber = v, -1, -1, 999)
+                .setNameKey("morequesttypes.reward.nbt_path.conditions_match_number");
+
+        var COMP_MODES = NameMap.of(ComparisonMode.EQUALS, ComparisonMode.values())
+                .name(mode -> Component.translatable(mode.getTranslationKey()))
+                .create();
+        condGroup.addEnum("comparison_mode", comparisonMode, v -> comparisonMode = v, COMP_MODES)
+                .setNameKey("morequesttypes.task.comparison_mode");
+
+        condGroup.addInt("comparison_first", comparisonFirst, v -> comparisonFirst = v, 0, Integer.MIN_VALUE, Integer.MAX_VALUE)
+                .setNameKey("morequesttypes.task.first_number");
+
+        condGroup.addInt("comparison_second", comparisonSecond, v -> comparisonSecond = v, 0, Integer.MIN_VALUE, Integer.MAX_VALUE)
+                .setNameKey("morequesttypes.task.second_number");
     }
 
     @Override
@@ -283,8 +621,23 @@ public final class NbtPathReward extends Reward {
             nbt.put("nbt_entries", list);
         }
 
+        nbt.putBoolean("is_value", isValue);
         nbt.putString("target_slot", targetSlot.name());
         if (!targetItem.isEmpty()) nbt.put("target_item", targetItem.save(provider));
+
+        nbt.putString("condition_type", conditionType.name());
+        nbt.putString("condition_path", conditionPath);
+
+        if (!conditionEntries.isEmpty()) {
+            ListTag ceList = new ListTag();
+            for (String s : conditionEntries) ceList.add(StringTag.valueOf(s));
+            nbt.put("condition_entries", ceList);
+        }
+
+        nbt.putInt("conditions_match_number", conditionsMatchNumber);
+        nbt.putString("comparison_mode", comparisonMode.name());
+        nbt.putInt("comparison_first", comparisonFirst);
+        nbt.putInt("comparison_second", comparisonSecond);
     }
 
     @Override
@@ -306,6 +659,8 @@ public final class NbtPathReward extends Reward {
             nbtEntries.add(list.getString(i));
         }
 
+        isValue = nbt.getBoolean("is_value");
+
         try {
             targetSlot = TargetSlot.valueOf(nbt.getString("target_slot"));
         } catch (Throwable ignored) {
@@ -317,6 +672,31 @@ public final class NbtPathReward extends Reward {
                 : ItemStack.EMPTY;
 
         if (!targetItem.isEmpty()) targetItem.setCount(1);
+
+        try {
+            conditionType = ConditionType.valueOf(nbt.getString("condition_type"));
+        } catch (Throwable ignored) {
+            conditionType = ConditionType.NONE;
+        }
+
+        conditionPath = nbt.getString("condition_path");
+
+        conditionEntries.clear();
+        ListTag ceList = nbt.getList("condition_entries", Tag.TAG_STRING);
+        for (int i = 0; i < ceList.size(); i++) {
+            conditionEntries.add(ceList.getString(i));
+        }
+
+        conditionsMatchNumber = nbt.contains("conditions_match_number") ? nbt.getInt("conditions_match_number") : -1;
+
+        try {
+            comparisonMode = ComparisonMode.valueOf(nbt.getString("comparison_mode"));
+        } catch (Throwable ignored) {
+            comparisonMode = ComparisonMode.EQUALS;
+        }
+
+        comparisonFirst = nbt.getInt("comparison_first");
+        comparisonSecond = nbt.getInt("comparison_second");
     }
 
     @Override
@@ -327,8 +707,18 @@ public final class NbtPathReward extends Reward {
         buf.writeBoolean(checkExists);
         buf.writeVarInt(nbtEntries.size());
         for (String s : nbtEntries) buf.writeUtf(s);
+        buf.writeBoolean(isValue);
         buf.writeEnum(targetSlot);
         ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, targetItem);
+
+        buf.writeEnum(conditionType);
+        buf.writeUtf(conditionPath);
+        buf.writeVarInt(conditionEntries.size());
+        for (String s : conditionEntries) buf.writeUtf(s);
+        buf.writeVarInt(conditionsMatchNumber);
+        buf.writeEnum(comparisonMode);
+        buf.writeVarInt(comparisonFirst);
+        buf.writeVarInt(comparisonSecond);
     }
 
     @Override
@@ -340,8 +730,29 @@ public final class NbtPathReward extends Reward {
         nbtEntries.clear();
         int n = buf.readVarInt();
         for (int i = 0; i < n; i++) nbtEntries.add(buf.readUtf());
+        isValue = buf.readBoolean();
         targetSlot = buf.readEnum(TargetSlot.class);
         targetItem = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
         if (!targetItem.isEmpty()) targetItem.setCount(1);
+
+        conditionType = buf.readEnum(ConditionType.class);
+        conditionPath = buf.readUtf();
+        conditionEntries.clear();
+        int ceSize = buf.readVarInt();
+        for (int i = 0; i < ceSize; i++) conditionEntries.add(buf.readUtf());
+        conditionsMatchNumber = buf.readVarInt();
+        comparisonMode = buf.readEnum(ComparisonMode.class);
+        comparisonFirst = buf.readVarInt();
+        comparisonSecond = buf.readVarInt();
+    }
+
+    @Override
+    public boolean getExcludeFromClaimAll() {
+        return true;
+    }
+
+    @Override
+    public boolean isClaimAllHardcoded() {
+        return true;
     }
 }

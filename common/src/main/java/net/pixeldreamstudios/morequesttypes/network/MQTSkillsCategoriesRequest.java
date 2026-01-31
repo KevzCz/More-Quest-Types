@@ -26,7 +26,7 @@ public record MQTSkillsCategoriesRequest() implements CustomPacketPayload {
             }
 
             if (ctx.getPlayer() instanceof ServerPlayer sp) {
-                NetworkManager.sendToPlayer(sp, MQTSkillsCategoriesResponse.create(sp));
+                NetworkHelper.sendToPlayer(sp, MQTSkillsCategoriesResponse.create(sp));
             }
         });
     }

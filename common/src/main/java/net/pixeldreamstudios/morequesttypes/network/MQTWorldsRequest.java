@@ -18,7 +18,7 @@ public record MQTWorldsRequest() implements CustomPacketPayload {
     public static void handle(MQTWorldsRequest self, NetworkManager.PacketContext ctx) {
         ctx.queue(() -> {
             if (ctx.getPlayer() instanceof ServerPlayer sp && sp.getServer() != null) {
-                NetworkManager.sendToPlayer(sp, MQTWorldsResponse.create(sp.getServer()));
+                NetworkHelper.sendToPlayer(sp, MQTWorldsResponse.create(sp.getServer()));
             }
         });
     }

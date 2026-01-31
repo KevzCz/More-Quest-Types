@@ -502,7 +502,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            dev.architectury.networking.NetworkManager.sendToServer(
+           net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
                     new net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest()
             );
         }
@@ -510,14 +510,14 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            dev.architectury.networking.NetworkManager.sendToServer(
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
                     new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest()
             );
         }
     }
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            dev.architectury.networking.NetworkManager.sendToServer(
+            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
                     new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest()
             );
         }

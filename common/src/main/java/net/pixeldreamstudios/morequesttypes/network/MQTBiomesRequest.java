@@ -16,7 +16,7 @@ public record MQTBiomesRequest() implements CustomPacketPayload {
     public static void handle(MQTBiomesRequest self, NetworkManager.PacketContext ctx) {
         ctx.queue(() -> {
             if (ctx.getPlayer() instanceof ServerPlayer sp && sp.getServer() != null) {
-                NetworkManager.sendToPlayer(sp, MQTBiomesResponse.create(sp.getServer()));
+                NetworkHelper.sendToPlayer(sp, MQTBiomesResponse.create(sp.getServer()));
             }
         });
     }

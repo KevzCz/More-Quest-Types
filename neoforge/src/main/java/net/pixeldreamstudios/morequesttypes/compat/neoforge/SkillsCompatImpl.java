@@ -8,7 +8,7 @@ import net.puffish.skillsmod.SkillsMod;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream. Collectors;
+import java.util.stream.Collectors;
 
 public final class SkillsCompatImpl {
     private static final String MOD_ID = "puffish_skills";
@@ -23,7 +23,7 @@ public final class SkillsCompatImpl {
         if (!isLoaded()) return 0;
         var api = SkillsMod.getInstance();
         return api.getCategories(true).stream()
-                . map(id -> api.getCurrentLevel(player, id).orElse(0))
+                .map(id -> api.getCurrentLevel(player, id).orElse(0))
                 .reduce(0, Integer::sum);
     }
 
@@ -34,7 +34,7 @@ public final class SkillsCompatImpl {
 
     public static int getCategoryExperience(ServerPlayer player, ResourceLocation categoryId) {
         if (!isLoaded()) return 0;
-        return SkillsMod.getInstance(). getExperience(player, categoryId).orElse(0);
+        return SkillsMod.getInstance().getExperience(player, categoryId).orElse(0);
     }
 
     public static int getCategoryPoints(ServerPlayer player, ResourceLocation categoryId, ResourceLocation source) {
@@ -54,7 +54,7 @@ public final class SkillsCompatImpl {
 
     public static void addCategoryPoints(ServerPlayer player, ResourceLocation categoryId, ResourceLocation source, int amount) {
         if (!isLoaded()) return;
-        SkillsMod. getInstance().addPoints(player, categoryId, source, amount, false);
+        SkillsMod.getInstance().addPoints(player, categoryId, source, amount, false);
     }
 
     public static void setCategoryPoints(ServerPlayer player, ResourceLocation categoryId, ResourceLocation source, int amount) {
@@ -64,9 +64,9 @@ public final class SkillsCompatImpl {
 
     public static Collection<ResourceLocation> getCategories(boolean onlyWithExperience) {
         if (!isLoaded()) return List.of();
-        return SkillsMod.getInstance(). getCategories(onlyWithExperience)
+        return SkillsMod.getInstance().getCategories(onlyWithExperience)
                 .stream()
-                .collect(Collectors. toUnmodifiableList());
+                .collect(Collectors.toUnmodifiableList());
     }
 
     public static Map<String, String> getCategoryIconData(ServerPlayer player) {

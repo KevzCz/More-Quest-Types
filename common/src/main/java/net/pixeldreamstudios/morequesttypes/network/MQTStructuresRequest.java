@@ -18,7 +18,7 @@ public record MQTStructuresRequest() implements CustomPacketPayload {
     public static void handle(MQTStructuresRequest self, NetworkManager.PacketContext ctx) {
         ctx.queue(() -> {
             if (ctx.getPlayer() instanceof ServerPlayer sp && sp.getServer() != null) {
-                NetworkManager.sendToPlayer(sp, MQTStructuresResponse.create(sp.getServer()));
+                NetworkHelper.sendToPlayer(sp, MQTStructuresResponse.create(sp.getServer()));
             }
         });
     }
