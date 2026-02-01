@@ -48,7 +48,11 @@ public record ResetRepeatCounterMessage(long questId) implements CustomPacketPay
                         teamData.clearRepeatCooldown(quest);
 
                         teamData.markDirty();
-                        NetworkHelper.sendToPlayer(player, new SyncTeamDataMessage(teamData));
+
+                        dev.ftb.mods.ftblibrary.util.NetworkHelper.sendTo(
+                                player,
+                                new SyncTeamDataMessage(teamData)
+                        );
                     });
                 }
             }

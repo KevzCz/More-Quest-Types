@@ -11,7 +11,6 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.ftb.mods.ftblibrary.config.Tristate;
 import dev.ftb.mods.ftblibrary.util.NetworkHelper;
 import dev.ftb.mods.ftbquests.net.CreateObjectResponseMessage;
-import dev.ftb.mods.ftbquests.net.EditObjectResponseMessage;
 import dev.ftb.mods.ftbquests.quest.*;
 import dev.ftb.mods.ftbquests.quest.task.KillTask;
 import dev.ftb.mods.ftbquests.quest.task.Task;
@@ -893,10 +892,12 @@ public final class MoreQuestTypesCommands {
             throw NO_OBJECT.create(chapterId);
         }
 
-        ServerQuestFile.INSTANCE.clearCachedData();
-        chapter.clearCachedData();
+        ServerQuestFile file = ServerQuestFile.INSTANCE;
 
-        net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToPlayer(player, new EditObjectResponseMessage(chapter));
+        dev.ftb.mods.ftblibrary.util.NetworkHelper.sendTo(
+                player,
+                new dev.ftb.mods.ftbquests.net.EditObjectResponseMessage(chapter)
+        );
 
         source.sendSuccess(() -> Component.literal(
                         "Refreshed chapter '" + chapter.getTitle().getString() + "' for player " + player.getName().getString()),
