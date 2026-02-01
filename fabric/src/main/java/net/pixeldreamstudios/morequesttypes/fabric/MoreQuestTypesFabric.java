@@ -9,17 +9,22 @@ import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
 import net.pixeldreamstudios.morequesttypes.commands.MoreQuestTypesCommands;
 import net.pixeldreamstudios.morequesttypes.fabric.network.FabricMQTNetwork;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.AttributeRewardManager;
+import net.pixeldreamstudios.morequesttypes.rewards.manager.EquipmentBonusManager;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.SpellRewardManager;
 
 public final class MoreQuestTypesFabric implements ModInitializer {
     @Override
     public void onInitialize() {
+        MQTDataComponents.init();
+        EquipmentBonusManager.init(() -> MQTDataComponents.EQUIPMENT_BONUSES);
         MoreQuestTypes.init();
         FabricMQTNetwork.init();
         InteractEntityHooksFabric.register();
         UseItemHooksFabric.register();
         BreakBlockHooksFabric.register();
         TradingHooksFabric.register();
+        PlaceBlockHooksFabric.register();
+
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             MoreQuestTypesCommands.register(dispatcher);
         });

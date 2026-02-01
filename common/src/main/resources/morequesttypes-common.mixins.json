@@ -17,7 +17,8 @@
     "accessor.SkillsClientModAccessor",
     "accessor.ClientSkillScreenDataAccessor",
     "accessor.MobAccessor",
-    "QuestSummonedEntityMixin"
+    "QuestSummonedEntityMixin",
+    "ItemStackAttributeMixin"
 
   ],
   "injectors": {

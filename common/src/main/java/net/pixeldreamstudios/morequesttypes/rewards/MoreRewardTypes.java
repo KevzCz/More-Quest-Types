@@ -22,6 +22,7 @@ public final class MoreRewardTypes {
     public static RewardType RESKILLABLE;
     public static RewardType SUMMON;
     public static RewardType NBT_PATH;
+    public static RewardType EQUIPMENT_ATTRIBUTE;
     public static void init() {
         if (BlabberCompat.isLoaded()) {
             DIALOGUE = RewardTypes.register(
@@ -44,6 +45,11 @@ public final class MoreRewardTypes {
                     () -> Icon.getIcon("minecraft:item/lapis_lazuli")
             );
         }
+        EQUIPMENT_ATTRIBUTE = RewardTypes.register(
+                FTBQuestsAPI.rl("equipment_attribute"),
+                EquipmentAttributeReward::new,
+                () -> Icon.getIcon("minecraft:item/diamond_chestplate")
+        );
         ATTRIBUTE = RewardTypes.register(
                 FTBQuestsAPI.rl("attribute"),
                 AttributeReward::new,

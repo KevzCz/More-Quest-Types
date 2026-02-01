@@ -35,7 +35,7 @@ public class QuestScreenMixin {
                     Icons.COLOR_BLANK,
                     (button) -> {
                         ext.setAlwaysInvisible(!currentlyInvisible);
-                        NetworkHelper.sendToServer(EditObjectMessage.forQuestObject(quest));
+                        EditObjectMessage.sendToServer(quest);
                         if (gui != null) {
                             gui.run();
                         }

@@ -24,8 +24,8 @@ public final class MoreTasksTypes {
     public static TaskType TRADING;
     public static TaskType LEVELZ;
     public static TaskType RESKILLABLE;
-
     public static TaskType ORIGIN;
+    public static TaskType PLACE_BLOCK;
     public static void init() {
         TIMER = TaskTypes.register(
                 FTBQuestsAPI.rl("timer"),
@@ -53,6 +53,11 @@ public final class MoreTasksTypes {
                     () -> Icon.getIcon("origins:icon.png")
             );
         }
+        PLACE_BLOCK = TaskTypes.register(
+                FTBQuestsAPI.rl("place_block"),
+                PlaceBlockTask::new,
+                () -> Icon.getIcon("minecraft:block/grass_block_side")
+        );
         KILL_ADVANCED = TaskTypes.register(
                 FTBQuestsAPI.rl("kill_advanced"),
                 AdvancedKillTask::new,

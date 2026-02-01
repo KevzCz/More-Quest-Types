@@ -13,13 +13,18 @@ import net.pixeldreamstudios.morequesttypes.client.MoreQuestTypesClient;
 import net.pixeldreamstudios.morequesttypes.commands.MoreQuestTypesCommands;
 import net.pixeldreamstudios.morequesttypes.network.MQTNetwork;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.AttributeRewardManager;
+import net.pixeldreamstudios.morequesttypes.rewards.manager.EquipmentBonusManager;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.SpellRewardManager;
 
 @Mod(MoreQuestTypes.MOD_ID)
 public final class MoreQuestTypesNeoForge {
     public MoreQuestTypesNeoForge(IEventBus modBus) {
+        MQTDataComponents.DATA_COMPONENTS.register(modBus);
+        EquipmentBonusManager.init(MQTDataComponents.EQUIPMENT_BONUSES);
+
         MoreQuestTypes.init();
         MQTNetwork.init();
+
         if (FMLEnvironment.dist == Dist.CLIENT) {
             initClient();
         }

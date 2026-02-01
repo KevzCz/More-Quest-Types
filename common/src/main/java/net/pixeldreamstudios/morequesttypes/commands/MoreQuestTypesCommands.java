@@ -88,6 +88,7 @@ public final class MoreQuestTypesCommands {
     };
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        EquipmentAttributeCommand.register(dispatcher);
         dispatcher.register(
                 Commands.literal("morequesttypes")
                         .requires(stack -> stack.hasPermission(2))
