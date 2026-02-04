@@ -67,10 +67,18 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
     private String dimension = "";
     private static final List<String> KNOWN_BIOMES = new ArrayList<>();
     private String biome = "";
+
     @Environment(EnvType.CLIENT)
-    private static final java.util.Map<Long, Double> CLIENT_NEAREST = new java.util.HashMap<>();
+    private static java.util.Map<Long, Double> CLIENT_NEAREST;
     @Environment(EnvType.CLIENT)
-    private static long CLIENT_LAST_REQ_TICK = 0L;
+    private static long CLIENT_LAST_REQ_TICK;
+
+    static {
+        if (dev.architectury.platform.Platform.getEnv() == EnvType.CLIENT) {
+            CLIENT_NEAREST = new java.util.HashMap<>();
+            CLIENT_LAST_REQ_TICK = 0L;
+        }
+    }
     @Environment(EnvType.CLIENT)
     public static void updateClientNearest(long taskId, double meters, long gameTime) {
         CLIENT_NEAREST.put(taskId, meters);

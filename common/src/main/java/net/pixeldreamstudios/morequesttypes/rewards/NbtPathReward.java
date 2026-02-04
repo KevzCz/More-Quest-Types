@@ -76,29 +76,38 @@ public final class NbtPathReward extends Reward {
 
             try {
                 CompoundTag fullTag = (CompoundTag) stack.save(player.registryAccess());
-                CompoundTag components = fullTag.getCompound("components");
 
-                if (checkExists && !pathExists(components, path)) continue;
+                boolean isRootPath = path.startsWith("root.");
+                String actualPath = isRootPath ? path.substring(5) : path;
+                CompoundTag targetTag = isRootPath ? fullTag : fullTag.getCompound("components");
 
-                if (!checkCondition(components, player, claimerUuid, claimerName)) continue;
+                if (checkExists && !pathExists(targetTag, actualPath)) continue;
+
+                boolean isConditionRoot = conditionPath.startsWith("root.");
+                String actualConditionPath = isConditionRoot ? conditionPath.substring(5) : conditionPath;
+                CompoundTag conditionTag = isConditionRoot ? fullTag : fullTag.getCompound("components");
+
+                if (!checkCondition(conditionTag, actualConditionPath, player, claimerUuid, claimerName)) continue;
 
                 List<String> processedEntries = processPlaceholders(nbtEntries, claimerUuid, claimerName, isTeamReward());
 
                 if (isValue) {
                     switch (operation) {
-                        case ADD -> addValue(components, path, processedEntries);
-                        case REMOVE -> subtractValue(components, path, processedEntries);
-                        case SET -> setValue(components, path, processedEntries);
+                        case ADD -> addValue(targetTag, actualPath, processedEntries);
+                        case REMOVE -> subtractValue(targetTag, actualPath, processedEntries);
+                        case SET -> setValue(targetTag, actualPath, processedEntries);
                     }
                 } else {
                     switch (operation) {
-                        case ADD -> addToPath(components, path, processedEntries);
-                        case REMOVE -> removeFromPath(components, path, processedEntries);
-                        case SET -> setAtPath(components, path, processedEntries);
+                        case ADD -> addToPath(targetTag, actualPath, processedEntries);
+                        case REMOVE -> removeFromPath(targetTag, actualPath, processedEntries);
+                        case SET -> setAtPath(targetTag, actualPath, processedEntries);
                     }
                 }
 
-                fullTag.put("components", components);
+                if (!isRootPath) {
+                    fullTag.put("components", targetTag);
+                }
 
                 ItemStack newStack = ItemStack.parseOptional(player.registryAccess(), fullTag);
                 stack.applyComponents(newStack.getComponents());
@@ -236,23 +245,23 @@ public final class NbtPathReward extends Reward {
         return "[I;" + ints[0] + "," + ints[1] + "," + ints[2] + "," + ints[3] + "]";
     }
 
-    private boolean checkCondition(CompoundTag components, ServerPlayer player, UUID claimerUuid, String claimerName) {
+    private boolean checkCondition(CompoundTag conditionTag, String actualConditionPath, ServerPlayer player, UUID claimerUuid, String claimerName) {
         List<String> processedConditionEntries = processPlaceholders(conditionEntries, claimerUuid, claimerName, isTeamReward());
 
         return switch (conditionType) {
             case NONE -> true;
-            case PATH_EXISTS -> pathExists(components, conditionPath);
-            case PATH_NOT_EXISTS -> !pathExists(components, conditionPath);
-            case ENTRY_EXISTS -> checkEntriesMatch(components, processedConditionEntries, true);
-            case ENTRY_NOT_EXISTS -> checkEntriesMatch(components, processedConditionEntries, false);
-            case VALUE_EQUALS -> checkValuesMatch(components, processedConditionEntries, true);
-            case VALUE_NOT_EQUALS -> checkValuesMatch(components, processedConditionEntries, false);
-            case VALUE_COMPARE -> checkValueCompare(components);
+            case PATH_EXISTS -> pathExists(conditionTag, actualConditionPath);
+            case PATH_NOT_EXISTS -> !pathExists(conditionTag, actualConditionPath);
+            case ENTRY_EXISTS -> checkEntriesMatch(conditionTag, actualConditionPath, processedConditionEntries, true);
+            case ENTRY_NOT_EXISTS -> checkEntriesMatch(conditionTag, actualConditionPath, processedConditionEntries, false);
+            case VALUE_EQUALS -> checkValuesMatch(conditionTag, actualConditionPath, processedConditionEntries, true);
+            case VALUE_NOT_EQUALS -> checkValuesMatch(conditionTag, actualConditionPath, processedConditionEntries, false);
+            case VALUE_COMPARE -> checkValueCompare(conditionTag, actualConditionPath);
         };
     }
 
-    private boolean checkValueCompare(CompoundTag components) {
-        Tag actual = navigateToPath(components, conditionPath);
+    private boolean checkValueCompare(CompoundTag components, String condPath) {
+        Tag actual = navigateToPath(components, condPath);
         if (actual == null) return false;
 
         if (actual instanceof NumericTag numTag) {
@@ -263,14 +272,14 @@ public final class NbtPathReward extends Reward {
         return false;
     }
 
-    private boolean checkEntriesMatch(CompoundTag components, List<String> processedEntries, boolean shouldExist) {
+    private boolean checkEntriesMatch(CompoundTag components, String condPath, List<String> processedEntries, boolean shouldExist) {
         if (processedEntries.isEmpty()) return true;
 
         int matchCount = 0;
         int requiredMatches = (conditionsMatchNumber == -1) ? processedEntries.size() : conditionsMatchNumber;
 
         for (String entrySnbt : processedEntries) {
-            boolean exists = entryExists(components, conditionPath, entrySnbt);
+            boolean exists = entryExists(components, condPath, entrySnbt);
             if (shouldExist && exists) matchCount++;
             if (!shouldExist && !exists) matchCount++;
         }
@@ -278,14 +287,14 @@ public final class NbtPathReward extends Reward {
         return matchCount >= requiredMatches;
     }
 
-    private boolean checkValuesMatch(CompoundTag components, List<String> processedEntries, boolean shouldEqual) {
+    private boolean checkValuesMatch(CompoundTag components, String condPath, List<String> processedEntries, boolean shouldEqual) {
         if (processedEntries.isEmpty()) return true;
 
         int matchCount = 0;
         int requiredMatches = (conditionsMatchNumber == -1) ? processedEntries.size() : conditionsMatchNumber;
 
         for (String expectedSnbt : processedEntries) {
-            boolean equals = valueEquals(components, conditionPath, expectedSnbt);
+            boolean equals = valueEquals(components, condPath, expectedSnbt);
             if (shouldEqual && equals) matchCount++;
             if (!shouldEqual && !equals) matchCount++;
         }
