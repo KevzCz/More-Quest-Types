@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -34,28 +35,31 @@ public final class MoreQuestTypesNeoForge {
         MoreQuestTypesClient.init();
     }
 
-    @SubscribeEvent
-    public static void onRegisterCommands(RegisterCommandsEvent event) {
-        MoreQuestTypesCommands.register(event.getDispatcher());
-    }
-
-    @SubscribeEvent
-    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            player.getServer().execute(() -> {
-                AttributeRewardManager.syncForPlayer(player);
-                SpellRewardManager.syncForPlayer(player);
-            });
+    @EventBusSubscriber(modid = MoreQuestTypes.MOD_ID)
+    public static class MQTEvents {
+        @SubscribeEvent
+        public static void onRegisterCommands(RegisterCommandsEvent event) {
+            MoreQuestTypesCommands.register(event.getDispatcher());
         }
-    }
 
-    @SubscribeEvent
-    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            player.getServer().execute(() -> {
-                AttributeRewardManager.syncForPlayer(player);
-                SpellRewardManager.syncForPlayer(player);
-            });
+        @SubscribeEvent
+        public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                player.getServer().execute(() -> {
+                    AttributeRewardManager.syncForPlayer(player);
+                    SpellRewardManager.syncForPlayer(player);
+                });
+            }
+        }
+
+        @SubscribeEvent
+        public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                player.getServer().execute(() -> {
+                    AttributeRewardManager.syncForPlayer(player);
+                    SpellRewardManager.syncForPlayer(player);
+                });
+            }
         }
     }
 }

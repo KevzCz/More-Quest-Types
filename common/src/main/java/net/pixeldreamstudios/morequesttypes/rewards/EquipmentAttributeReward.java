@@ -41,7 +41,8 @@ public final class EquipmentAttributeReward extends Reward {
     private String attributeId = "minecraft:generic.attack_damage";
     private double amount = 1.0;
     private AttributeModifier.Operation operation = AttributeModifier.Operation.ADD_VALUE;
-    private EquipSlot slot = EquipSlot.MAIN_HAND;
+    private EquipSlot targetSlot = EquipSlot.MAIN_HAND; // Which item to modify
+    private EquipSlot attributeSlot = EquipSlot.MAIN_HAND; // Which slot the attribute applies to
     private EquipmentBonusManager.ModifyMode modifyMode = EquipmentBonusManager.ModifyMode.ADD;
     private boolean checkAttributeExists = false;
 
@@ -66,7 +67,7 @@ public final class EquipmentAttributeReward extends Reward {
 
     @Override
     public void claim(ServerPlayer player, boolean notify) {
-        ItemStack stack = switch (slot) {
+        ItemStack stack = switch (targetSlot) {
             case MAIN_HAND -> player.getMainHandItem();
             case OFF_HAND -> player.getOffhandItem();
             case HEAD -> player.getInventory().getArmor(3);
@@ -85,7 +86,7 @@ public final class EquipmentAttributeReward extends Reward {
                 attributeId,
                 amount,
                 operation,
-                slot.slotGroup.getSerializedName(),
+                attributeSlot.slotGroup.getSerializedName(), // Use attributeSlot instead of targetSlot
                 modifyMode,
                 checkAttributeExists,
                 checkConditionAttributeExists,
@@ -105,7 +106,8 @@ public final class EquipmentAttributeReward extends Reward {
                 "morequesttypes.reward.equipment_attribute.title",
                 modifyMode.name().toLowerCase(),
                 attributeId,
-                slot.name().toLowerCase()
+                targetSlot.name().toLowerCase(),
+                attributeSlot.name().toLowerCase()
         );
     }
 
@@ -144,8 +146,11 @@ public final class EquipmentAttributeReward extends Reward {
                 .setNameKey("morequesttypes.reward.equipment_attribute.operation");
 
         var SLOTS = NameMap.of(EquipSlot.MAIN_HAND, EquipSlot.values()).create();
-        basicGroup.addEnum("slot", slot, v -> slot = v, SLOTS)
-                .setNameKey("morequesttypes.reward.equipment_attribute.slot");
+        basicGroup.addEnum("target_slot", targetSlot, v -> targetSlot = v, SLOTS)
+                .setNameKey("morequesttypes.reward.equipment_attribute.target_slot");
+
+        basicGroup.addEnum("attribute_slot", attributeSlot, v -> attributeSlot = v, SLOTS)
+                .setNameKey("morequesttypes.reward.equipment_attribute.attribute_slot");
 
         var MODES = NameMap.of(EquipmentBonusManager.ModifyMode.ADD, EquipmentBonusManager.ModifyMode.values()).create();
         basicGroup.addEnum("modify_mode", modifyMode, v -> modifyMode = v, MODES)
@@ -200,7 +205,8 @@ public final class EquipmentAttributeReward extends Reward {
         nbt.putString("attribute", attributeId);
         nbt.putDouble("amount", amount);
         nbt.putString("operation", operation.name());
-        nbt.putString("slot", slot.name());
+        nbt.putString("target_slot", targetSlot.name());
+        nbt.putString("attribute_slot", attributeSlot.name());
         nbt.putString("modify_mode", modifyMode.name());
         nbt.putBoolean("check_attribute_exists", checkAttributeExists);
         nbt.putBoolean("check_condition_attribute_exists", checkConditionAttributeExists);
@@ -221,8 +227,17 @@ public final class EquipmentAttributeReward extends Reward {
         amount = nbt.getDouble("amount");
         try { operation = AttributeModifier.Operation.valueOf(nbt.getString("operation")); }
         catch (Throwable ignored) { operation = AttributeModifier.Operation.ADD_VALUE; }
-        try { slot = EquipSlot.valueOf(nbt.getString("slot")); }
-        catch (Throwable ignored) { slot = EquipSlot.MAIN_HAND; }
+        try { targetSlot = EquipSlot.valueOf(nbt.getString("target_slot")); }
+        catch (Throwable ignored) {
+            // Backward compatibility: try old "slot" field
+            try { targetSlot = EquipSlot.valueOf(nbt.getString("slot")); }
+            catch (Throwable ignored2) { targetSlot = EquipSlot.MAIN_HAND; }
+        }
+        try { attributeSlot = EquipSlot.valueOf(nbt.getString("attribute_slot")); }
+        catch (Throwable ignored) {
+            // Backward compatibility: default to target slot
+            attributeSlot = targetSlot;
+        }
         try { modifyMode = EquipmentBonusManager.ModifyMode.valueOf(nbt.getString("modify_mode")); }
         catch (Throwable ignored) { modifyMode = EquipmentBonusManager.ModifyMode.ADD; }
         checkAttributeExists = nbt.getBoolean("check_attribute_exists");
@@ -244,7 +259,8 @@ public final class EquipmentAttributeReward extends Reward {
         buffer.writeUtf(attributeId);
         buffer.writeDouble(amount);
         buffer.writeEnum(operation);
-        buffer.writeEnum(slot);
+        buffer.writeEnum(targetSlot);
+        buffer.writeEnum(attributeSlot);
         buffer.writeEnum(modifyMode);
         buffer.writeBoolean(checkAttributeExists);
         buffer.writeBoolean(checkConditionAttributeExists);
@@ -264,7 +280,8 @@ public final class EquipmentAttributeReward extends Reward {
         attributeId = buffer.readUtf();
         amount = buffer.readDouble();
         operation = buffer.readEnum(AttributeModifier.Operation.class);
-        slot = buffer.readEnum(EquipSlot.class);
+        targetSlot = buffer.readEnum(EquipSlot.class);
+        attributeSlot = buffer.readEnum(EquipSlot.class);
         modifyMode = buffer.readEnum(EquipmentBonusManager.ModifyMode.class);
         checkAttributeExists = buffer.readBoolean();
         checkConditionAttributeExists = buffer.readBoolean();

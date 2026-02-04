@@ -547,7 +547,7 @@
   "morequesttypes.reward.nbt_path.conditions_match_number.tooltip": "How many condition entries must match. -1 = all entries must match. Set to 1 to require at least one match, 2 for at least two, etc.",
 
   "ftbquests.reward.ftbquests.equipment_attribute": "Equipment Attribute",
-  "morequesttypes.reward.equipment_attribute.title": "%s %s to %s",
+  "morequesttypes.reward.equipment_attribute.title": "%s %s to item in %s (applies in %s)",
   "morequesttypes.reward.equipment_attribute.basic": "Basic Settings",
   "morequesttypes.reward.equipment_attribute.advanced": "Advanced Settings",
   "morequesttypes.reward.equipment_attribute.modifier_id": "Modifier ID",
@@ -580,6 +580,10 @@
   "morequesttypes.reward.equipment_attribute.check_attribute_exists.tooltip": "Only apply if the target attribute already exists on the item.",
   "morequesttypes.reward.equipment_attribute.check_condition_attribute_exists": "Check Condition Attribute Exists",
   "morequesttypes.reward.equipment_attribute.check_condition_attribute_exists.tooltip": "If enabled and condition attribute doesn't exist, uses the middle value between first and second for comparison. If disabled, missing attribute defaults to 0.",
+  "morequesttypes.reward.equipment_attribute.target_slot": "Target Item Slot",
+  "morequesttypes.reward.equipment_attribute.target_slot.tooltip": "Which equipment slot contains the item to modify (MAIN_HAND, OFF_HAND, HEAD, CHEST, LEGS, FEET).",
+  "morequesttypes.reward.equipment_attribute.attribute_slot": "Attribute Applies In Slot",
+  "morequesttypes.reward.equipment_attribute.attribute_slot.tooltip": "Which slot the attribute bonus applies to. This can be different from the target item slot.\n\nExample: Modify chest item (target_slot = CHEST) but make the bonus only work when equipped in legs slot (attribute_slot = LEGS).",
 
   "ftbquests.task.ftbquests.place_block": "Place Block",
   "morequesttypes.task.place_block.block": "Block",
