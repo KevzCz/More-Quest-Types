@@ -590,5 +590,17 @@
   "morequesttypes.task.place_block.block.tooltip": "The block type that must be placed. Leave empty for any block.",
   "morequesttypes.task.place_block.block_tag": "Block Tag",
   "morequesttypes.task.place_block.block_tag.tooltip": "Match blocks in this tag instead of a specific block type.",
-  "morequesttypes.task.place_block.title": "Place %s × %s"
+  "morequesttypes.task.place_block.title": "Place %s × %s",
+
+  "morequesttypes.task.match_components": "Match Components",
+  "morequesttypes.task.match_components.tooltip": "How strictly to match item components:\n\nNONE: Only check item type (minecraft:diamond_sword)\nFUZZY: Match common components (enchantments, damage, etc.)\nSTRICT: Match all components exactly",
+
+  "morequesttypes.task.nbt_filters": "NBT Filters",
+  "morequesttypes.task.nbt_filters.tooltip": "List of NBT patterns that the item must match. All filters must pass for the item to be valid.\n\nEach entry is a partial NBT match - the item must contain at least the specified NBT structure.\n\nExamples:\n• {components:{\"minecraft:unbreakable\":{}}} - Item must have unbreakable component\n• {components:{\"minecraft:custom_name\":'\"Epic Sword\"'}} - Must have specific custom name\n• {components:{\"minecraft:enchantments\":{levels:{\"minecraft:sharpness\":5}}}} - Must have Sharpness 5\n\nEmpty compound tags {} check if the key exists (any value accepted).\nNon-empty values must match exactly.\n\nPlaceholders:\n• {player_uuid} - Player's UUID as string\n• {player_name} - Player's username\n• {player_uuid_array} - UUID as int array [I;...]",
+
+  "morequesttypes.task.use_item.any_item": "Any Item",
+  "morequesttypes.task.use_item.any_item.tooltip": "If enabled, any item will count (item and tag filters are ignored). Use NBT filters to specify requirements.",
+
+  "morequesttypes.task.hold_item.any_item": "Any Item",
+  "morequesttypes.task.hold_item.any_item.tooltip": "If enabled, any item will count (item and tag filters are ignored). Use NBT filters to specify requirements."
 }
