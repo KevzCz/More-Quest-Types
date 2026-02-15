@@ -55,6 +55,9 @@ dependencies {
         transitive = false
     }
     modCompileOnly files("libs/Calio-1.14.0-alpha.9+mc.1.21.x.jar")
+
+    modCompileOnly "curse.maven:easy-npc-core-1308987:7619174"
+    modCompileOnly "curse.maven:easy-npc-config-ui-1214728:7618692"
 }
 
 processResources {

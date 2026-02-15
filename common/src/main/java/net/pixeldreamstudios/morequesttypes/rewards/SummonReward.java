@@ -30,6 +30,8 @@ import net.minecraft.world.phys.Vec3;
 import net.pixeldreamstudios.morequesttypes.api.IQuestSummonedEntity;
 import net.pixeldreamstudios.morequesttypes.api.IRewardDynamicDifficultyExtension;
 import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
+import net.pixeldreamstudios.morequesttypes.config.ItemWithDropRateConfig;
+import net.pixeldreamstudios.morequesttypes.config.RewardTableDropConfig;
 import net.pixeldreamstudios.morequesttypes.mixin.accessor.MobAccessor;
 import net.pixeldreamstudios.morequesttypes.network.QuestEntityDataSyncPacket;
 import net.pixeldreamstudios.morequesttypes.rewards.summon.SummonedEntityTracker;
@@ -47,6 +49,15 @@ public final class SummonReward extends Reward {
 
         private final String id;
         AggroType(String id) { this.id = id; }
+        public String getId() { return id; }
+    }
+
+    public enum RewardKillerType {
+        OWNER("owner"),
+        ANYONE("anyone");
+
+        private final String id;
+        RewardKillerType(String id) { this.id = id; }
         public String getId() { return id; }
     }
 
@@ -76,6 +87,13 @@ public final class SummonReward extends Reward {
     private ItemStack mainhand = ItemStack.EMPTY;
     private ItemStack offhand = ItemStack.EMPTY;
 
+    private double helmetDropRate = 1.0;
+    private double chestplateDropRate = 1.0;
+    private double leggingsDropRate = 1.0;
+    private double bootsDropRate = 1.0;
+    private double mainhandDropRate = 1.0;
+    private double offhandDropRate = 1.0;
+
     private String textureAboveMob = "";
     private float textureScale = 1.0f;
     private double textureOffsetX = 0.0;
@@ -83,6 +101,10 @@ public final class SummonReward extends Reward {
     private double textureOffsetZ = 0.0;
     private String scoreboardTags = "";
     private String customNbtSnbt = "";
+    private String customName = "";
+    private String customDrops = "";
+    private String rewardTables = "";
+    private RewardKillerType rewardKillerType = RewardKillerType.OWNER;
 
     public SummonReward(long id, dev.ftb.mods.ftbquests.quest.Quest q) {
         super(id, q);
@@ -149,22 +171,33 @@ public final class SummonReward extends Reward {
                 questEntity.setQuestTextureOffsetX(textureOffsetX);
                 questEntity.setQuestTextureOffsetY(textureOffsetY);
                 questEntity.setQuestTextureOffsetZ(textureOffsetZ);
+                questEntity.setQuestCustomName(customName);
+                questEntity.setQuestCustomDrops(customDrops);
+                questEntity.setQuestRewardTables(rewardTables);
+
+                String equipmentDropRates = helmetDropRate + "," + chestplateDropRate + "," +
+                        leggingsDropRate + "," + bootsDropRate + "," + mainhandDropRate + "," + offhandDropRate;
+                questEntity.setQuestEquipmentDropRates(equipmentDropRates);
             }
 
-            if (!  customNbtSnbt.isEmpty()) {
+            if (!customName.isEmpty()) {
+                entity.setCustomName(Component.literal(customName));
+                entity.setCustomNameVisible(true);
+            }
+
+            if (!customNbtSnbt.isEmpty()) {
                 try {
                     CompoundTag parsedNbt = TagParser.parseTag(customNbtSnbt);
                     entity.load(parsedNbt);
                 } catch (Exception e) {
-
                 }
             }
 
             if (entity instanceof LivingEntity living) {
-                if (!  helmet.isEmpty()) living.setItemSlot(EquipmentSlot.HEAD, helmet.copy());
-                if (! chestplate.isEmpty()) living.setItemSlot(EquipmentSlot.CHEST, chestplate.copy());
+                if (!helmet.isEmpty()) living.setItemSlot(EquipmentSlot.HEAD, helmet.copy());
+                if (!chestplate.isEmpty()) living.setItemSlot(EquipmentSlot.CHEST, chestplate.copy());
                 if (!leggings.isEmpty()) living.setItemSlot(EquipmentSlot.LEGS, leggings.copy());
-                if (! boots.isEmpty()) living.setItemSlot(EquipmentSlot.FEET, boots.copy());
+                if (!boots.isEmpty()) living.setItemSlot(EquipmentSlot.FEET, boots.copy());
                 if (!mainhand.isEmpty()) living.setItemSlot(EquipmentSlot.MAINHAND, mainhand.copy());
                 if (!offhand.isEmpty()) living.setItemSlot(EquipmentSlot.OFFHAND, offhand.copy());
             }
@@ -175,7 +208,6 @@ public final class SummonReward extends Reward {
                     try {
                         DynamicDifficultyCompat.setAndUpdateLevel(living, ext.getMobLevel());
                     } catch (Exception e) {
-
                     }
                 }
             }
@@ -188,7 +220,7 @@ public final class SummonReward extends Reward {
                 mob.finalizeSpawn(level, level.getCurrentDifficultyAt(entity.blockPosition()),
                         MobSpawnType.COMMAND, null);
 
-                if (setOwner && entity instanceof net.minecraft.world.entity.TamableAnimal tamable) {
+                if (setOwner && entity instanceof TamableAnimal tamable) {
                     tamable.tame(player);
                 }
 
@@ -203,10 +235,14 @@ public final class SummonReward extends Reward {
                 applyAggro(mob, player, level, spawnPos);
             }
 
-            if (!  scoreboardTags.isEmpty()) {
+            if (!scoreboardTags.isEmpty()) {
                 for (String tag : scoreboardTags.split(",")) {
                     entity.addTag(tag.trim());
                 }
+            }
+
+            if (rewardKillerType == RewardKillerType.ANYONE) {
+                entity.addTag("mqt_reward_anyone");
             }
 
             level.addFreshEntity(entity);
@@ -289,7 +325,7 @@ public final class SummonReward extends Reward {
             Vec3 checkPos = new Vec3(pos.x, pos.y - y, pos.z);
             var blockPos = net.minecraft.core.BlockPos.containing(checkPos);
             if (level.getBlockState(blockPos.below()).isSolid() &&
-                    !  level.getBlockState(blockPos).isSolid()) {
+                    !level.getBlockState(blockPos).isSolid()) {
                 return checkPos;
             }
         }
@@ -297,7 +333,7 @@ public final class SummonReward extends Reward {
             Vec3 checkPos = new Vec3(pos.x, pos.y + y, pos.z);
             var blockPos = net.minecraft.core.BlockPos.containing(checkPos);
             if (level.getBlockState(blockPos.below()).isSolid() &&
-                    ! level.getBlockState(blockPos).isSolid()) {
+                    !level.getBlockState(blockPos).isSolid()) {
                 return checkPos;
             }
         }
@@ -341,7 +377,7 @@ public final class SummonReward extends Reward {
         boolean finalShouldDespawnAll = shouldDespawnAll;
         entityUUIDs.removeIf(uuid -> {
             Entity entity = level.getEntity(uuid);
-            if (entity == null || ! entity.isAlive()) {
+            if (entity == null || !entity.isAlive()) {
                 SummonedEntityTracker.untrack(playerUUID, this.id, uuid);
                 return true;
             }
@@ -397,7 +433,7 @@ public final class SummonReward extends Reward {
                 .sorted()
                 .forEach(entityChoices::add);
 
-        if (!  entityId.isEmpty() && ! entityChoices.contains(entityId)) {
+        if (!entityId.isEmpty() && !entityChoices.contains(entityId)) {
             entityChoices.add(entityId);
             entityChoices.sort(String::compareTo);
         }
@@ -471,21 +507,33 @@ public final class SummonReward extends Reward {
 
         equipment.addItemStack("helmet", helmet, v -> helmet = v, ItemStack.EMPTY, true, true)
                 .setNameKey("morequesttypes.reward.summon.helmet");
+        equipment.addDouble("helmet_drop_rate", helmetDropRate, v -> helmetDropRate = Math.max(0.0, Math.min(1.0, v)), 1.0, 0.0, 1.0)
+                .setNameKey("morequesttypes.reward.summon.helmet_drop_rate");
 
         equipment.addItemStack("chestplate", chestplate, v -> chestplate = v, ItemStack.EMPTY, true, true)
                 .setNameKey("morequesttypes.reward.summon.chestplate");
+        equipment.addDouble("chestplate_drop_rate", chestplateDropRate, v -> chestplateDropRate = Math.max(0.0, Math.min(1.0, v)), 1.0, 0.0, 1.0)
+                .setNameKey("morequesttypes.reward.summon.chestplate_drop_rate");
 
         equipment.addItemStack("leggings", leggings, v -> leggings = v, ItemStack.EMPTY, true, true)
                 .setNameKey("morequesttypes.reward.summon.leggings");
+        equipment.addDouble("leggings_drop_rate", leggingsDropRate, v -> leggingsDropRate = Math.max(0.0, Math.min(1.0, v)), 1.0, 0.0, 1.0)
+                .setNameKey("morequesttypes.reward.summon.leggings_drop_rate");
 
         equipment.addItemStack("boots", boots, v -> boots = v, ItemStack.EMPTY, true, true)
                 .setNameKey("morequesttypes.reward.summon.boots");
+        equipment.addDouble("boots_drop_rate", bootsDropRate, v -> bootsDropRate = Math.max(0.0, Math.min(1.0, v)), 1.0, 0.0, 1.0)
+                .setNameKey("morequesttypes.reward.summon.boots_drop_rate");
 
         equipment.addItemStack("mainhand", mainhand, v -> mainhand = v, ItemStack.EMPTY, true, true)
                 .setNameKey("morequesttypes.reward.summon.mainhand");
+        equipment.addDouble("mainhand_drop_rate", mainhandDropRate, v -> mainhandDropRate = Math.max(0.0, Math.min(1.0, v)), 1.0, 0.0, 1.0)
+                .setNameKey("morequesttypes.reward.summon.mainhand_drop_rate");
 
         equipment.addItemStack("offhand", offhand, v -> offhand = v, ItemStack.EMPTY, true, true)
                 .setNameKey("morequesttypes.reward.summon.offhand");
+        equipment.addDouble("offhand_drop_rate", offhandDropRate, v -> offhandDropRate = Math.max(0.0, Math.min(1.0, v)), 1.0, 0.0, 1.0)
+                .setNameKey("morequesttypes.reward.summon.offhand_drop_rate");
 
         ConfigGroup visual = config.getOrCreateSubgroup("visual");
 
@@ -494,7 +542,7 @@ public final class SummonReward extends Reward {
                 : ResourceLocation.tryParse(textureAboveMob);
 
         visual.add("texture_above_mob", new ImageResourceConfig(), currentTexture, v -> {
-            textureAboveMob = v != null && ! v.equals(ImageResourceConfig.NONE) ? v.toString() : "";
+            textureAboveMob = v != null && !v.equals(ImageResourceConfig.NONE) ? v.toString() : "";
         }, ImageResourceConfig.NONE).setNameKey("morequesttypes.reward.summon.texture_above_mob");
 
         visual.addDouble("texture_scale", textureScale, v -> textureScale = (float) Math.max(0.1f, v), 1.0f, 0.1f, 10.0f)
@@ -509,6 +557,9 @@ public final class SummonReward extends Reward {
         visual.addDouble("texture_offset_z", textureOffsetZ, v -> textureOffsetZ = v, 0.0, -10.0, 10.0)
                 .setNameKey("morequesttypes.reward.summon.texture_offset_z");
 
+        visual.addString("custom_name", customName, v -> customName = v, "")
+                .setNameKey("morequesttypes.reward.summon.custom_name");
+
         ConfigGroup advanced = config.getOrCreateSubgroup("advanced");
 
         advanced.addString("scoreboard_tags", scoreboardTags, v -> scoreboardTags = v, "")
@@ -516,6 +567,53 @@ public final class SummonReward extends Reward {
 
         advanced.addString("custom_nbt", customNbtSnbt, v -> customNbtSnbt = v, "")
                 .setNameKey("morequesttypes.reward.summon.custom_nbt");
+
+        List<ItemWithDropRateConfig.ItemDrop> dropsList = new ArrayList<>();
+        if (!customDrops.isEmpty()) {
+            for (String dropStr : customDrops.split(";")) {
+                dropStr = dropStr.trim();
+                if (!dropStr.isEmpty()) {
+                    dropsList.add(ItemWithDropRateConfig.ItemDrop.deserialize(dropStr));
+                }
+            }
+        }
+
+        advanced.addList("custom_drops", dropsList, new ItemWithDropRateConfig(),
+                        modifiedList -> {
+                            customDrops = modifiedList.stream()
+                                    .filter(drop -> !drop.stack.isEmpty())
+                                    .map(ItemWithDropRateConfig.ItemDrop::serialize)
+                                    .collect(java.util.stream.Collectors.joining(";"));
+                        },
+                        new ItemWithDropRateConfig.ItemDrop())
+                .setNameKey("morequesttypes.reward.summon.custom_drops");
+
+        List<RewardTableDropConfig.RewardTableDrop> tablesList = new ArrayList<>();
+        if (!rewardTables.isEmpty()) {
+            for (String tableStr : rewardTables.split(";")) {
+                tableStr = tableStr.trim();
+                if (!tableStr.isEmpty()) {
+                    tablesList.add(RewardTableDropConfig.RewardTableDrop.deserialize(tableStr));
+                }
+            }
+        }
+
+        advanced.addList("reward_tables", tablesList, new RewardTableDropConfig(),
+                        modifiedList -> {
+                            rewardTables = modifiedList.stream()
+                                    .filter(table -> !table.rewardTableId.isEmpty())
+                                    .map(RewardTableDropConfig.RewardTableDrop::serialize)
+                                    .collect(java.util.stream.Collectors.joining(";"));
+                        },
+                        new RewardTableDropConfig.RewardTableDrop())
+                .setNameKey("morequesttypes.reward.summon.reward_tables");
+
+        var REWARD_KILLER = NameMap.of(rewardKillerType, RewardKillerType.values())
+                .name(e -> Component.translatable("morequesttypes.reward.summon.reward_killer." + e.getId()))
+                .create();
+
+        advanced.addEnum("reward_killer_type", rewardKillerType, v -> rewardKillerType = v, REWARD_KILLER)
+                .setNameKey("morequesttypes.reward.summon.reward_killer_type");
     }
 
     @Environment(EnvType.CLIENT)
@@ -555,12 +653,18 @@ public final class SummonReward extends Reward {
         nbt.putDouble("spawn_y", spawnY);
         nbt.putDouble("spawn_z", spawnZ);
         nbt.putBoolean("use_absolute_coords", useAbsoluteCoords);
-        if (!  helmet.isEmpty()) nbt.put("helmet", helmet.save(provider));
+        if (!helmet.isEmpty()) nbt.put("helmet", helmet.save(provider));
         if (!chestplate.isEmpty()) nbt.put("chestplate", chestplate.save(provider));
         if (!leggings.isEmpty()) nbt.put("leggings", leggings.save(provider));
         if (!boots.isEmpty()) nbt.put("boots", boots.save(provider));
         if (!mainhand.isEmpty()) nbt.put("mainhand", mainhand.save(provider));
         if (!offhand.isEmpty()) nbt.put("offhand", offhand.save(provider));
+        nbt.putDouble("helmet_drop_rate", helmetDropRate);
+        nbt.putDouble("chestplate_drop_rate", chestplateDropRate);
+        nbt.putDouble("leggings_drop_rate", leggingsDropRate);
+        nbt.putDouble("boots_drop_rate", bootsDropRate);
+        nbt.putDouble("mainhand_drop_rate", mainhandDropRate);
+        nbt.putDouble("offhand_drop_rate", offhandDropRate);
         nbt.putString("texture_above_mob", textureAboveMob);
         nbt.putFloat("texture_scale", textureScale);
         nbt.putDouble("texture_offset_x", textureOffsetX);
@@ -568,6 +672,10 @@ public final class SummonReward extends Reward {
         nbt.putDouble("texture_offset_z", textureOffsetZ);
         nbt.putString("scoreboard_tags", scoreboardTags);
         if (!customNbtSnbt.isEmpty()) nbt.putString("custom_nbt_snbt", customNbtSnbt);
+        nbt.putString("custom_name", customName);
+        nbt.putString("custom_drops", customDrops);
+        nbt.putString("reward_tables", rewardTables);
+        nbt.putString("reward_killer_type", rewardKillerType.getId());
     }
 
     @Override
@@ -584,7 +692,7 @@ public final class SummonReward extends Reward {
         persistent = nbt.getBoolean("persistent");
         setOwner = nbt.getBoolean("set_owner");
         follow = nbt.getBoolean("follow");
-        smartSpawn = !  nbt.contains("smart_spawn") || nbt.getBoolean("smart_spawn");
+        smartSpawn = !nbt.contains("smart_spawn") || nbt.getBoolean("smart_spawn");
         try {
             aggro = AggroType.valueOf(nbt.getString("aggro").toUpperCase());
         } catch (Exception e) {
@@ -600,6 +708,12 @@ public final class SummonReward extends Reward {
         boots = nbt.contains("boots") ? ItemStack.parseOptional(provider, nbt.getCompound("boots")) : ItemStack.EMPTY;
         mainhand = nbt.contains("mainhand") ? ItemStack.parseOptional(provider, nbt.getCompound("mainhand")) : ItemStack.EMPTY;
         offhand = nbt.contains("offhand") ? ItemStack.parseOptional(provider, nbt.getCompound("offhand")) : ItemStack.EMPTY;
+        helmetDropRate = nbt.contains("helmet_drop_rate") ? nbt.getDouble("helmet_drop_rate") : 1.0;
+        chestplateDropRate = nbt.contains("chestplate_drop_rate") ? nbt.getDouble("chestplate_drop_rate") : 1.0;
+        leggingsDropRate = nbt.contains("leggings_drop_rate") ? nbt.getDouble("leggings_drop_rate") : 1.0;
+        bootsDropRate = nbt.contains("boots_drop_rate") ? nbt.getDouble("boots_drop_rate") : 1.0;
+        mainhandDropRate = nbt.contains("mainhand_drop_rate") ? nbt.getDouble("mainhand_drop_rate") : 1.0;
+        offhandDropRate = nbt.contains("offhand_drop_rate") ? nbt.getDouble("offhand_drop_rate") : 1.0;
         textureAboveMob = nbt.getString("texture_above_mob");
         textureScale = nbt.contains("texture_scale") ? nbt.getFloat("texture_scale") : 1.0f;
         textureOffsetX = nbt.getDouble("texture_offset_x");
@@ -607,6 +721,14 @@ public final class SummonReward extends Reward {
         textureOffsetZ = nbt.getDouble("texture_offset_z");
         scoreboardTags = nbt.getString("scoreboard_tags");
         customNbtSnbt = nbt.getString("custom_nbt_snbt");
+        customName = nbt.getString("custom_name");
+        customDrops = nbt.getString("custom_drops");
+        rewardTables = nbt.getString("reward_tables");
+        try {
+            rewardKillerType = RewardKillerType.valueOf(nbt.getString("reward_killer_type").toUpperCase());
+        } catch (Exception e) {
+            rewardKillerType = RewardKillerType.OWNER;
+        }
     }
 
     @Override
@@ -635,6 +757,12 @@ public final class SummonReward extends Reward {
         ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, boots);
         ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, mainhand);
         ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, offhand);
+        buffer.writeDouble(helmetDropRate);
+        buffer.writeDouble(chestplateDropRate);
+        buffer.writeDouble(leggingsDropRate);
+        buffer.writeDouble(bootsDropRate);
+        buffer.writeDouble(mainhandDropRate);
+        buffer.writeDouble(offhandDropRate);
         buffer.writeUtf(textureAboveMob);
         buffer.writeFloat(textureScale);
         buffer.writeDouble(textureOffsetX);
@@ -642,6 +770,10 @@ public final class SummonReward extends Reward {
         buffer.writeDouble(textureOffsetZ);
         buffer.writeUtf(scoreboardTags);
         buffer.writeUtf(customNbtSnbt);
+        buffer.writeUtf(customName);
+        buffer.writeUtf(customDrops);
+        buffer.writeUtf(rewardTables);
+        buffer.writeEnum(rewardKillerType);
     }
 
     @Override
@@ -670,6 +802,12 @@ public final class SummonReward extends Reward {
         boots = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
         mainhand = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
         offhand = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
+        helmetDropRate = buffer.readDouble();
+        chestplateDropRate = buffer.readDouble();
+        leggingsDropRate = buffer.readDouble();
+        bootsDropRate = buffer.readDouble();
+        mainhandDropRate = buffer.readDouble();
+        offhandDropRate = buffer.readDouble();
         textureAboveMob = buffer.readUtf();
         textureScale = buffer.readFloat();
         textureOffsetX = buffer.readDouble();
@@ -677,6 +815,10 @@ public final class SummonReward extends Reward {
         textureOffsetZ = buffer.readDouble();
         scoreboardTags = buffer.readUtf();
         customNbtSnbt = buffer.readUtf();
+        customName = buffer.readUtf();
+        customDrops = buffer.readUtf();
+        rewardTables = buffer.readUtf();
+        rewardKillerType = buffer.readEnum(RewardKillerType.class);
     }
 
     @Override

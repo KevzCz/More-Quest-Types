@@ -25,7 +25,7 @@ import org.joml.Matrix4f;
 
 import java.util.List;
 
-public final class SummonedEntityRenderer {
+public final class  SummonedEntityRenderer {
     private static final float BASE_SIZE = 1.0f;
     private static final float Y_OFFSET = 0.5f;
     private static final double RENDER_DISTANCE = 128.0;

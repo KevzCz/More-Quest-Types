@@ -44,4 +44,16 @@ public interface IQuestSummonedEntity {
 
     double getQuestTextureOffsetZ();
     void setQuestTextureOffsetZ(double offset);
+
+    String getQuestCustomName();
+    void setQuestCustomName(String name);
+
+    String getQuestCustomDrops();
+    void setQuestCustomDrops(String drops);
+
+    String getQuestEquipmentDropRates();
+    void setQuestEquipmentDropRates(String rates);
+
+    String getQuestRewardTables();
+    void setQuestRewardTables(String rewardTables);
 }

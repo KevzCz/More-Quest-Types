@@ -22,6 +22,8 @@ dependencies {
     modCompileOnly("maven.modrinth:spell-engine:1.8.9+1.21.1-fabric")
     modCompileOnly("dev.muon.dynamic_difficulty:dynamic_difficulty-fabric:${dynamic_difficulty_version}")
     modCompileOnly "curse.maven:dungeon-difficulty-645559:7310940"
+    modCompileOnly "curse.maven:easy-npc-core-1308987:7619174"
+    modCompileOnly "curse.maven:easy-npc-config-ui-1214728:7618692"
     modCompileOnly ("curse.maven:origins-391943:6112839"){
         transitive = false
     }

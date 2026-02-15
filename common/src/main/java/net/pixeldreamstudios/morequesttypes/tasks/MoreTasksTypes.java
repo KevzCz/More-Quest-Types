@@ -26,6 +26,8 @@ public final class MoreTasksTypes {
     public static TaskType RESKILLABLE;
     public static TaskType ORIGIN;
     public static TaskType PLACE_BLOCK;
+    public static TaskType EASY_NPC_DIALOGUE;
+
     public static void init() {
         TIMER = TaskTypes.register(
                 FTBQuestsAPI.rl("timer"),
@@ -125,6 +127,13 @@ public final class MoreTasksTypes {
                     FTBQuestsAPI.rl("reskillable"),
                     ReskillableTask::new,
                     () -> Icon.getIcon("minecraft:item/experience_bottle")
+            );
+        }
+        if (EasyNPCCompat.isLoaded()){
+            EASY_NPC_DIALOGUE = TaskTypes.register(
+                    FTBQuestsAPI.rl("easynpc_dialogue"),
+                    EasyNPCDialogueTask::new,
+                    () -> Icon.getIcon("easy_npc:block/easy_npc_spawner/boss_spawner")
             );
         }
     }

@@ -65,6 +65,18 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
     @Unique
     private double mqt$questTextureOffsetZ = 0.0;
 
+    @Unique
+    private String mqt$questCustomName = "";
+
+    @Unique
+    private String mqt$questCustomDrops = "";
+
+    @Unique
+    private String mqt$questEquipmentDropRates = "";
+
+    @Unique
+    private String mqt$questRewardTables = "";
+
     @Override
     public UUID getQuestOwnerUuid() {
         return mqt$questOwnerUuid;
@@ -206,6 +218,46 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
         this.mqt$questTextureOffsetZ = offset;
     }
 
+    @Override
+    public String getQuestCustomName() {
+        return mqt$questCustomName;
+    }
+
+    @Override
+    public void setQuestCustomName(String name) {
+        this.mqt$questCustomName = name;
+    }
+
+    @Override
+    public String getQuestCustomDrops() {
+        return mqt$questCustomDrops;
+    }
+
+    @Override
+    public void setQuestCustomDrops(String drops) {
+        this.mqt$questCustomDrops = drops;
+    }
+
+    @Override
+    public String getQuestEquipmentDropRates() {
+        return mqt$questEquipmentDropRates;
+    }
+
+    @Override
+    public void setQuestEquipmentDropRates(String rates) {
+        this.mqt$questEquipmentDropRates = rates;
+    }
+
+    @Override
+    public String getQuestRewardTables() {
+        return mqt$questRewardTables;
+    }
+
+    @Override
+    public void setQuestRewardTables(String rewardTables) {
+        this.mqt$questRewardTables = rewardTables;
+    }
+
     @Inject(method = "saveWithoutId", at = @At("RETURN"))
     private void mqt$saveQuestData(CompoundTag nbt, CallbackInfoReturnable<CompoundTag> cir) {
         if (mqt$questSummoned) {
@@ -233,6 +285,22 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
             questData.putDouble("QuestTextureOffsetY", mqt$questTextureOffsetY);
             questData.putDouble("QuestTextureOffsetZ", mqt$questTextureOffsetZ);
 
+            if (!mqt$questCustomName.isEmpty()) {
+                questData.putString("QuestCustomName", mqt$questCustomName);
+            }
+
+            if (!mqt$questCustomDrops.isEmpty()) {
+                questData.putString("QuestCustomDrops", mqt$questCustomDrops);
+            }
+
+            if (!mqt$questEquipmentDropRates.isEmpty()) {
+                questData.putString("QuestEquipmentDropRates", mqt$questEquipmentDropRates);
+            }
+
+            if (!mqt$questRewardTables.isEmpty()) {
+                questData.putString("QuestRewardTables", mqt$questRewardTables);
+            }
+
             nbt.put("MQTData", questData);
         }
     }
@@ -252,17 +320,22 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
                 mqt$questTexture = questData.getString("QuestTexture");
             }
 
-            mqt$questTextureScale = questData.contains("QuestTextureScale") ?  questData.getFloat("QuestTextureScale") : 1.0f;
+            mqt$questTextureScale = questData.contains("QuestTextureScale") ? questData.getFloat("QuestTextureScale") : 1.0f;
             mqt$questRewardId = questData.contains("QuestRewardId") ? questData.getLong("QuestRewardId") : -1L;
             mqt$questDurationTicks = questData.contains("QuestDurationTicks") ? questData.getInt("QuestDurationTicks") : -1;
             mqt$questDespawnDistance = questData.contains("QuestDespawnDistance") ? questData.getDouble("QuestDespawnDistance") : 64.0;
-            mqt$questDespawnIfOffline = !  questData.contains("QuestDespawnIfOffline") || questData.getBoolean("QuestDespawnIfOffline");
-            mqt$questDespawnIfDead = ! questData.contains("QuestDespawnIfDead") || questData.getBoolean("QuestDespawnIfDead");
+            mqt$questDespawnIfOffline = !questData.contains("QuestDespawnIfOffline") || questData.getBoolean("QuestDespawnIfOffline");
+            mqt$questDespawnIfDead = !questData.contains("QuestDespawnIfDead") || questData.getBoolean("QuestDespawnIfDead");
             mqt$questFollow = questData.contains("QuestFollow") && questData.getBoolean("QuestFollow");
             mqt$questSpawnTime = questData.contains("QuestSpawnTime") ? questData.getLong("QuestSpawnTime") : 0L;
             mqt$questTextureOffsetX = questData.contains("QuestTextureOffsetX") ? questData.getDouble("QuestTextureOffsetX") : 0.0;
             mqt$questTextureOffsetY = questData.contains("QuestTextureOffsetY") ? questData.getDouble("QuestTextureOffsetY") : 0.0;
             mqt$questTextureOffsetZ = questData.contains("QuestTextureOffsetZ") ? questData.getDouble("QuestTextureOffsetZ") : 0.0;
+
+            mqt$questCustomName = questData.contains("QuestCustomName") ? questData.getString("QuestCustomName") : "";
+            mqt$questCustomDrops = questData.contains("QuestCustomDrops") ? questData.getString("QuestCustomDrops") : "";
+            mqt$questEquipmentDropRates = questData.contains("QuestEquipmentDropRates") ? questData.getString("QuestEquipmentDropRates") : "";
+            mqt$questRewardTables = questData.contains("QuestRewardTables") ? questData.getString("QuestRewardTables") : "";
 
             mqt$followGoalInitialized = false;
         }
@@ -278,7 +351,7 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
                 questData.putUUID("QuestOwner", mqt$questOwnerUuid);
             }
 
-            if (mqt$questTexture != null && !  mqt$questTexture.isEmpty()) {
+            if (mqt$questTexture != null && !mqt$questTexture.isEmpty()) {
                 questData.putString("QuestTexture", mqt$questTexture);
             }
 
@@ -293,6 +366,22 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
             questData.putDouble("QuestTextureOffsetX", mqt$questTextureOffsetX);
             questData.putDouble("QuestTextureOffsetY", mqt$questTextureOffsetY);
             questData.putDouble("QuestTextureOffsetZ", mqt$questTextureOffsetZ);
+
+            if (!mqt$questCustomName.isEmpty()) {
+                questData.putString("QuestCustomName", mqt$questCustomName);
+            }
+
+            if (!mqt$questCustomDrops.isEmpty()) {
+                questData.putString("QuestCustomDrops", mqt$questCustomDrops);
+            }
+
+            if (!mqt$questEquipmentDropRates.isEmpty()) {
+                questData.putString("QuestEquipmentDropRates", mqt$questEquipmentDropRates);
+            }
+
+            if (!mqt$questRewardTables.isEmpty()) {
+                questData.putString("QuestRewardTables", mqt$questRewardTables);
+            }
 
             nbt.put("MQTData", questData);
         }
@@ -316,14 +405,19 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
             mqt$questTextureScale = questData.contains("QuestTextureScale") ? questData.getFloat("QuestTextureScale") : 1.0f;
             mqt$questRewardId = questData.contains("QuestRewardId") ? questData.getLong("QuestRewardId") : -1L;
             mqt$questDurationTicks = questData.contains("QuestDurationTicks") ? questData.getInt("QuestDurationTicks") : -1;
-            mqt$questDespawnDistance = questData.contains("QuestDespawnDistance") ?  questData.getDouble("QuestDespawnDistance") : 64.0;
-            mqt$questDespawnIfOffline = ! questData.contains("QuestDespawnIfOffline") || questData.getBoolean("QuestDespawnIfOffline");
-            mqt$questDespawnIfDead = ! questData.contains("QuestDespawnIfDead") || questData.getBoolean("QuestDespawnIfDead");
+            mqt$questDespawnDistance = questData.contains("QuestDespawnDistance") ? questData.getDouble("QuestDespawnDistance") : 64.0;
+            mqt$questDespawnIfOffline = !questData.contains("QuestDespawnIfOffline") || questData.getBoolean("QuestDespawnIfOffline");
+            mqt$questDespawnIfDead = !questData.contains("QuestDespawnIfDead") || questData.getBoolean("QuestDespawnIfDead");
             mqt$questFollow = questData.contains("QuestFollow") && questData.getBoolean("QuestFollow");
-            mqt$questSpawnTime = questData.contains("QuestSpawnTime") ?  questData.getLong("QuestSpawnTime") : 0L;
+            mqt$questSpawnTime = questData.contains("QuestSpawnTime") ? questData.getLong("QuestSpawnTime") : 0L;
             mqt$questTextureOffsetX = questData.contains("QuestTextureOffsetX") ? questData.getDouble("QuestTextureOffsetX") : 0.0;
             mqt$questTextureOffsetY = questData.contains("QuestTextureOffsetY") ? questData.getDouble("QuestTextureOffsetY") : 0.0;
             mqt$questTextureOffsetZ = questData.contains("QuestTextureOffsetZ") ? questData.getDouble("QuestTextureOffsetZ") : 0.0;
+
+            mqt$questCustomName = questData.contains("QuestCustomName") ? questData.getString("QuestCustomName") : "";
+            mqt$questCustomDrops = questData.contains("QuestCustomDrops") ? questData.getString("QuestCustomDrops") : "";
+            mqt$questEquipmentDropRates = questData.contains("QuestEquipmentDropRates") ? questData.getString("QuestEquipmentDropRates") : "";
+            mqt$questRewardTables = questData.contains("QuestRewardTables") ? questData.getString("QuestRewardTables") : "";
 
             mqt$followGoalInitialized = false;
         }
@@ -334,7 +428,7 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
         if (mqt$questSummoned) {
             Entity self = (Entity) (Object) this;
 
-            if (mqt$questFollow && ! mqt$followGoalInitialized && self instanceof Mob mob) {
+            if (mqt$questFollow && !mqt$followGoalInitialized && self instanceof Mob mob) {
                 mqt$ensureFollowGoal(mob);
             }
 
@@ -358,9 +452,8 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void mqt$tickFollowGoal(CallbackInfo ci) {
-
         Entity self = (Entity) (Object) this;
-        if (!  self.level().isClientSide && mqt$questSummoned && mqt$questFollow && ! mqt$followGoalInitialized) {
+        if (!self.level().isClientSide && mqt$questSummoned && mqt$questFollow && !mqt$followGoalInitialized) {
             if (self instanceof Mob mob) {
                 mqt$ensureFollowGoal(mob);
             }
@@ -378,7 +471,6 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
                     goal.getGoal() instanceof net.pixeldreamstudios.morequesttypes.rewards.summon.FollowPlayerGoal
             );
 
-
             ((MobAccessor) mob).getGoalSelector().addGoal(2,
                     new net.pixeldreamstudios.morequesttypes.rewards.summon.FollowPlayerGoal(
                             mob, mqt$questOwnerUuid, 1.0, 2.0f, 10.0f
@@ -387,7 +479,6 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
 
             mqt$followGoalInitialized = true;
         } catch (Exception e) {
-
             mqt$followGoalInitialized = false;
         }
     }

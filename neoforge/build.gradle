@@ -48,6 +48,8 @@ dependencies {
     modCompileOnly "curse.maven:reskillable-reimagined-1170464:7262614"
     modCompileOnly("dev.muon.dynamic_difficulty:dynamic_difficulty-neoforge:${dynamic_difficulty_version}")
     modCompileOnly "curse.maven:dungeon-difficulty-645559:7310937"
+    modCompileOnly "curse.maven:easy-npc-core-1308987:7619172"
+    modCompileOnly "curse.maven:easy-npc-config-ui-1214728:7618667"
 }
 
 processResources {

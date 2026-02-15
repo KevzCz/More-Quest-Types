@@ -23,6 +23,7 @@ public final class MoreRewardTypes {
     public static RewardType SUMMON;
     public static RewardType NBT_PATH;
     public static RewardType EQUIPMENT_ATTRIBUTE;
+    public static RewardType EASY_NPC_DIALOGUE;
     public static void init() {
         if (BlabberCompat.isLoaded()) {
             DIALOGUE = RewardTypes.register(
@@ -102,6 +103,13 @@ public final class MoreRewardTypes {
                     FTBQuestsAPI.rl("reskillable"),
                     ReskillableReward::new,
                     () -> Icon.getIcon("minecraft:item/experience_bottle")
+            );
+        }
+        if (EasyNPCCompat.isLoaded()) {
+            EASY_NPC_DIALOGUE = RewardTypes.register(
+                    FTBQuestsAPI.rl("easynpc_dialogue"),
+                    EasyNPCDialogueReward::new,
+                    () -> Icon.getIcon("easy_npc:block/easy_npc_spawner/boss_spawner")
             );
         }
     }

@@ -18,7 +18,9 @@
     "accessor.ClientSkillScreenDataAccessor",
     "accessor.MobAccessor",
     "QuestSummonedEntityMixin",
-    "ItemStackAttributeMixin"
+    "ItemStackAttributeMixin",
+    "LivingEntityDropMixin",
+    "easynpc.DialogDataCapableMixin"
 
   ],
   "injectors": {
