@@ -1,7 +1,7 @@
 package net.pixeldreamstudios.morequesttypes.compat.neoforge;
 
 import net.bandit.reskillable.common.capabilities.SkillModel;
-import net.bandit.reskillable.common.commands.skills.Skill;
+import net.bandit.reskillable.common.skills.Skill;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
 

@@ -1,25 +1,20 @@
 package net.pixeldreamstudios.morequesttypes.rewards;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
+import net.pixeldreamstudios.morequesttypes.config.EquipmentAttributeRewardConfig;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.EquipmentBonusManager;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public final class EquipmentAttributeReward extends Reward {
     public enum EquipSlot {
@@ -41,8 +36,8 @@ public final class EquipmentAttributeReward extends Reward {
     private String attributeId = "minecraft:generic.attack_damage";
     private double amount = 1.0;
     private AttributeModifier.Operation operation = AttributeModifier.Operation.ADD_VALUE;
-    private EquipSlot targetSlot = EquipSlot.MAIN_HAND; // Which item to modify
-    private EquipSlot attributeSlot = EquipSlot.MAIN_HAND; // Which slot the attribute applies to
+    private EquipSlot targetSlot = EquipSlot.MAIN_HAND;
+    private EquipSlot attributeSlot = EquipSlot.MAIN_HAND;
     private EquipmentBonusManager.ModifyMode modifyMode = EquipmentBonusManager.ModifyMode.ADD;
     private boolean checkAttributeExists = false;
 
@@ -86,7 +81,7 @@ public final class EquipmentAttributeReward extends Reward {
                 attributeId,
                 amount,
                 operation,
-                attributeSlot.slotGroup.getSerializedName(), // Use attributeSlot instead of targetSlot
+                attributeSlot.slotGroup.getSerializedName(),
                 modifyMode,
                 checkAttributeExists,
                 checkConditionAttributeExists,
@@ -116,86 +111,43 @@ public final class EquipmentAttributeReward extends Reward {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-        List<String> attributeList = new ArrayList<>();
-        attributeList.add("");
-        attributeList.addAll(
-                BuiltInRegistries.ATTRIBUTE.keySet().stream()
-                        .map(ResourceLocation::toString)
-                        .sorted()
-                        .toList()
-        );
+        EquipmentAttributeRewardConfig.AttributeData data = new EquipmentAttributeRewardConfig.AttributeData();
+        data.modifierId = this.modifierId;
+        data.attributeId = this.attributeId;
+        data.amount = this.amount;
+        data.operation = this.operation;
+        data.targetSlot = this.targetSlot;
+        data.attributeSlot = this.attributeSlot;
+        data.modifyMode = this.modifyMode;
+        data.checkAttributeExists = this.checkAttributeExists;
+        data.checkConditionAttributeExists = this.checkConditionAttributeExists;
+        data.conditionAttribute = this.conditionAttribute;
+        data.comparisonMode = this.comparisonMode;
+        data.conditionFirst = this.conditionFirst;
+        data.conditionSecond = this.conditionSecond;
+        data.replaceWithAttribute = this.replaceWithAttribute;
+        data.replaceWithValue = this.replaceWithValue;
+        data.useReplaceWithValue = this.useReplaceWithValue;
 
-        ConfigGroup basicGroup = config.getOrCreateSubgroup("basic");
-        basicGroup.setNameKey("morequesttypes.reward.equipment_attribute.basic");
-
-        basicGroup.addString("modifier_id", modifierId, v -> modifierId = v, "")
-                .setNameKey("morequesttypes.reward.equipment_attribute.modifier_id");
-
-        var ATTRS = NameMap.of(attributeId, attributeList)
-                .name(s -> Component.literal(s == null || s.isEmpty() ? "(None)" : s))
-                .create();
-
-        basicGroup.addEnum("attribute", attributeId, v -> attributeId = v, ATTRS)
-                .setNameKey("morequesttypes.reward.equipment_attribute.attribute");
-
-        basicGroup.addDouble("amount", amount, v -> amount = v, 1.0, -1024.0, 1024.0)
-                .setNameKey("morequesttypes.reward.equipment_attribute.amount");
-
-        var OPS = NameMap.of(AttributeModifier.Operation.ADD_VALUE, AttributeModifier.Operation.values()).create();
-        basicGroup.addEnum("operation", operation, v -> operation = v, OPS)
-                .setNameKey("morequesttypes.reward.equipment_attribute.operation");
-
-        var SLOTS = NameMap.of(EquipSlot.MAIN_HAND, EquipSlot.values()).create();
-        basicGroup.addEnum("target_slot", targetSlot, v -> targetSlot = v, SLOTS)
-                .setNameKey("morequesttypes.reward.equipment_attribute.target_slot");
-
-        basicGroup.addEnum("attribute_slot", attributeSlot, v -> attributeSlot = v, SLOTS)
-                .setNameKey("morequesttypes.reward.equipment_attribute.attribute_slot");
-
-        var MODES = NameMap.of(EquipmentBonusManager.ModifyMode.ADD, EquipmentBonusManager.ModifyMode.values()).create();
-        basicGroup.addEnum("modify_mode", modifyMode, v -> modifyMode = v, MODES)
-                .setNameKey("morequesttypes.reward.equipment_attribute.modify_mode");
-
-        basicGroup.addBool("check_attribute_exists", checkAttributeExists, v -> checkAttributeExists = v, false)
-                .setNameKey("morequesttypes.reward.equipment_attribute.check_attribute_exists");
-
-        ConfigGroup advancedGroup = config.getOrCreateSubgroup("advanced");
-        advancedGroup.setNameKey("morequesttypes.reward.equipment_attribute.advanced");
-
-        advancedGroup.addBool("check_condition_attribute_exists", checkConditionAttributeExists, v -> checkConditionAttributeExists = v, false)
-                .setNameKey("morequesttypes.reward.equipment_attribute.check_condition_attribute_exists");
-
-        var CONDITION_ATTRS = NameMap.of(conditionAttribute, attributeList)
-                .name(s -> Component.literal(s == null || s.isEmpty() ? "(None)" : s))
-                .create();
-
-        advancedGroup.addEnum("condition_attribute", conditionAttribute, v -> conditionAttribute = v, CONDITION_ATTRS)
-                .setNameKey("morequesttypes.reward.equipment_attribute.condition_attribute");
-
-        var COMPARISONS = NameMap.of(ComparisonMode.GREATER_OR_EQUAL, ComparisonMode.values())
-                .name(mode -> Component.translatable(mode.getTranslationKey()))
-                .create();
-        advancedGroup.addEnum("comparison_mode", comparisonMode, v -> comparisonMode = v, COMPARISONS)
-                .setNameKey("morequesttypes.reward.equipment_attribute.comparison_mode");
-
-        advancedGroup.addDouble("condition_first", conditionFirst, v -> conditionFirst = v, 0, -1024.0, 1024.0)
-                .setNameKey("morequesttypes.reward.equipment_attribute.condition_first");
-
-        advancedGroup.addDouble("condition_second", conditionSecond, v -> conditionSecond = v, 0, -1024.0, 1024.0)
-                .setNameKey("morequesttypes.reward.equipment_attribute.condition_second");
-
-        var REPLACE_ATTRS = NameMap.of(replaceWithAttribute, attributeList)
-                .name(s -> Component.literal(s == null || s.isEmpty() ? "(None)" : s))
-                .create();
-
-        advancedGroup.addEnum("replace_with_attribute", replaceWithAttribute, v -> replaceWithAttribute = v, REPLACE_ATTRS)
-                .setNameKey("morequesttypes.reward.equipment_attribute.replace_with_attribute");
-
-        advancedGroup.addBool("use_replace_with_value", useReplaceWithValue, v -> useReplaceWithValue = v, false)
-                .setNameKey("morequesttypes.reward.equipment_attribute.use_replace_with_value");
-
-        advancedGroup.addDouble("replace_with_value", replaceWithValue, v -> replaceWithValue = v, 0, -1024.0, 1024.0)
-                .setNameKey("morequesttypes.reward.equipment_attribute.replace_with_value");
+        EquipmentAttributeRewardConfig configValue = new EquipmentAttributeRewardConfig();
+        config.add("config", configValue, data, newData -> {
+            this.modifierId = newData.modifierId;
+            this.attributeId = newData.attributeId;
+            this.amount = newData.amount;
+            this.operation = newData.operation;
+            this.targetSlot = newData.targetSlot;
+            this.attributeSlot = newData.attributeSlot;
+            this.modifyMode = newData.modifyMode;
+            this.checkAttributeExists = newData.checkAttributeExists;
+            this.checkConditionAttributeExists = newData.checkConditionAttributeExists;
+            this.conditionAttribute = newData.conditionAttribute;
+            this.comparisonMode = newData.comparisonMode;
+            this.conditionFirst = newData.conditionFirst;
+            this.conditionSecond = newData.conditionSecond;
+            this.replaceWithAttribute = newData.replaceWithAttribute;
+            this.replaceWithValue = newData.replaceWithValue;
+            this.useReplaceWithValue = newData.useReplaceWithValue;
+        }, data).setNameKey("morequesttypes.reward.equipment_attribute.config");
     }
 
     @Override
@@ -229,13 +181,11 @@ public final class EquipmentAttributeReward extends Reward {
         catch (Throwable ignored) { operation = AttributeModifier.Operation.ADD_VALUE; }
         try { targetSlot = EquipSlot.valueOf(nbt.getString("target_slot")); }
         catch (Throwable ignored) {
-            // Backward compatibility: try old "slot" field
             try { targetSlot = EquipSlot.valueOf(nbt.getString("slot")); }
             catch (Throwable ignored2) { targetSlot = EquipSlot.MAIN_HAND; }
         }
         try { attributeSlot = EquipSlot.valueOf(nbt.getString("attribute_slot")); }
         catch (Throwable ignored) {
-            // Backward compatibility: default to target slot
             attributeSlot = targetSlot;
         }
         try { modifyMode = EquipmentBonusManager.ModifyMode.valueOf(nbt.getString("modify_mode")); }

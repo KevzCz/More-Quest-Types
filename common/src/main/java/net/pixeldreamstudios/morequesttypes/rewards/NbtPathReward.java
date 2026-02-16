@@ -1,7 +1,6 @@
 package net.pixeldreamstudios.morequesttypes.rewards;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
@@ -14,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
+import net.pixeldreamstudios.morequesttypes.config.NbtPathRewardConfig;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 
 import java.util.ArrayList;
@@ -66,57 +66,87 @@ public final class NbtPathReward extends Reward {
     }
 
     private void applyToItems(ServerPlayer player) {
-        List<ItemStack> targets = getTargetStacks(player);
+
+
         UUID claimerUuid = player.getUUID();
         String claimerName = player.getGameProfile().getName();
 
-        for (ItemStack stack : targets) {
-            if (stack.isEmpty()) continue;
-            if (!targetItem.isEmpty() && !ItemStack.isSameItemSameComponents(stack, targetItem)) continue;
+        ItemStack stack = switch (targetSlot) {
+            case MAINHAND -> player.getMainHandItem();
+            case OFFHAND -> player.getOffhandItem();
+            case HEAD -> player.getItemBySlot(EquipmentSlot.HEAD);
+            case CHEST -> player.getItemBySlot(EquipmentSlot.CHEST);
+            case LEGS -> player.getItemBySlot(EquipmentSlot.LEGS);
+            case FEET -> player.getItemBySlot(EquipmentSlot.FEET);
+        };
 
-            try {
-                CompoundTag fullTag = (CompoundTag) stack.save(player.registryAccess());
-
-                boolean isRootPath = path.startsWith("root.");
-                String actualPath = isRootPath ? path.substring(5) : path;
-                CompoundTag targetTag = isRootPath ? fullTag : fullTag.getCompound("components");
-
-                if (checkExists && !pathExists(targetTag, actualPath)) continue;
-
-                boolean isConditionRoot = conditionPath.startsWith("root.");
-                String actualConditionPath = isConditionRoot ? conditionPath.substring(5) : conditionPath;
-                CompoundTag conditionTag = isConditionRoot ? fullTag : fullTag.getCompound("components");
-
-                if (!checkCondition(conditionTag, actualConditionPath, player, claimerUuid, claimerName)) continue;
-
-                List<String> processedEntries = processPlaceholders(nbtEntries, claimerUuid, claimerName, isTeamReward());
-
-                if (isValue) {
-                    switch (operation) {
-                        case ADD -> addValue(targetTag, actualPath, processedEntries);
-                        case REMOVE -> subtractValue(targetTag, actualPath, processedEntries);
-                        case SET -> setValue(targetTag, actualPath, processedEntries);
-                    }
-                } else {
-                    switch (operation) {
-                        case ADD -> addToPath(targetTag, actualPath, processedEntries);
-                        case REMOVE -> removeFromPath(targetTag, actualPath, processedEntries);
-                        case SET -> setAtPath(targetTag, actualPath, processedEntries);
-                    }
-                }
-
-                if (!isRootPath) {
-                    fullTag.put("components", targetTag);
-                }
-
-                ItemStack newStack = ItemStack.parseOptional(player.registryAccess(), fullTag);
-                stack.applyComponents(newStack.getComponents());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (stack.isEmpty()) {
+            return;
         }
-    }
 
+
+        if (!targetItem.isEmpty() && !ItemStack.isSameItemSameComponents(stack, targetItem)) {
+            return;
+        }
+
+        try {
+            CompoundTag fullTag = (CompoundTag) stack.save(player.registryAccess());
+
+            boolean isRootPath = path.startsWith("root.");
+            String actualPath = isRootPath ? path.substring(5) : path;
+            CompoundTag targetTag = isRootPath ? fullTag : fullTag.getCompound("components");
+
+
+            if (checkExists && !pathExists(targetTag, actualPath)) {
+                return;
+            }
+
+            boolean isConditionRoot = conditionPath.startsWith("root.");
+            String actualConditionPath = isConditionRoot ? conditionPath.substring(5) : conditionPath;
+            CompoundTag conditionTag = isConditionRoot ? fullTag : fullTag.getCompound("components");
+
+            if (!checkCondition(conditionTag, actualConditionPath, player, claimerUuid, claimerName)) {
+                return;
+            }
+
+            List<String> processedEntries = processPlaceholders(nbtEntries, claimerUuid, claimerName, isTeamReward());
+
+            if (isValue) {
+                switch (operation) {
+                    case ADD -> addValue(targetTag, actualPath, processedEntries);
+                    case REMOVE -> subtractValue(targetTag, actualPath, processedEntries);
+                    case SET -> setValue(targetTag, actualPath, processedEntries);
+                }
+            } else {
+                switch (operation) {
+                    case ADD -> addToPath(targetTag, actualPath, processedEntries);
+                    case REMOVE -> removeFromPath(targetTag, actualPath, processedEntries);
+                    case SET -> setAtPath(targetTag, actualPath, processedEntries);
+                }
+            }
+
+            if (!isRootPath) {
+                fullTag.put("components", targetTag);
+            }
+
+
+            ItemStack newStack = ItemStack.parseOptional(player.registryAccess(), fullTag);
+
+            switch (targetSlot) {
+                case MAINHAND -> player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, newStack);
+                case OFFHAND -> player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, newStack);
+                case HEAD -> player.setItemSlot(EquipmentSlot.HEAD, newStack);
+                case CHEST -> player.setItemSlot(EquipmentSlot.CHEST, newStack);
+                case LEGS -> player.setItemSlot(EquipmentSlot.LEGS, newStack);
+                case FEET -> player.setItemSlot(EquipmentSlot.FEET, newStack);
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
     private void addValue(CompoundTag root, String path, List<String> entries) {
         if (entries.isEmpty()) return;
 
@@ -178,7 +208,10 @@ public final class NbtPathReward extends Reward {
     }
 
     private void setValue(CompoundTag root, String path, List<String> entries) {
-        if (entries.isEmpty()) return;
+        if (entries.isEmpty()) {
+            return;
+        }
+
 
         String[] parts = path.split("\\.");
         CompoundTag current = root;
@@ -197,7 +230,25 @@ public final class NbtPathReward extends Reward {
         }
 
         String lastPart = parts[parts.length - 1];
-        Tag valueTag = parseNbtEntry(entries.get(0));
+        String entry = entries.get(0).trim();
+
+        Tag existing = current.get(lastPart);
+
+        if (existing instanceof StringTag) {
+            // If entry doesn't look like complex NBT (no braces, brackets), treat as plain string
+            if (!entry.startsWith("{") && !entry.startsWith("[")) {
+                // Remove surrounding quotes if present
+                if (entry.startsWith("\"") && entry.endsWith("\"") && entry.length() > 1) {
+                    entry = entry.substring(1, entry.length() - 1);
+                }
+                current.putString(lastPart, entry);
+
+                return;
+            }
+        }
+
+        Tag valueTag = parseNbtEntry(entry);
+
         current.put(lastPart, valueTag);
     }
 
@@ -562,59 +613,41 @@ public final class NbtPathReward extends Reward {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-        var OPS = NameMap.of(Operation.ADD, Operation.values()).create();
-        config.addEnum("operation", operation, v -> operation = v, OPS)
-                .setNameKey("morequesttypes.reward.nbt_path.operation");
+        NbtPathRewardConfig.NbtPathData data = new NbtPathRewardConfig.NbtPathData();
+        data.operation = this.operation;
+        data.path = this.path;
+        data.checkExists = this.checkExists;
+        data.nbtEntries = new ArrayList<>(this.nbtEntries);
+        data.targetSlot = this.targetSlot;
+        data.targetItem = this.targetItem.copy();
+        data.isValue = this.isValue;
+        data.conditionType = this.conditionType;
+        data.conditionPath = this.conditionPath;
+        data.conditionEntries = new ArrayList<>(this.conditionEntries);
+        data.conditionsMatchNumber = this.conditionsMatchNumber;
+        data.comparisonMode = this.comparisonMode;
+        data.comparisonFirst = this.comparisonFirst;
+        data.comparisonSecond = this.comparisonSecond;
 
-        config.addString("path", path, v -> path = v, "")
-                .setNameKey("morequesttypes.reward.nbt_path.path");
-
-        config.addBool("check_exists", checkExists, v -> checkExists = v, false)
-                .setNameKey("morequesttypes.reward.nbt_path.check_exists");
-
-        config.addList("nbt_entries", nbtEntries, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
-                .setNameKey("morequesttypes.reward.nbt_path.nbt_entries");
-
-        config.addBool("is_value", isValue, v -> isValue = v, false)
-                .setNameKey("morequesttypes.reward.nbt_path.is_value");
-
-        var SLOTS = NameMap.of(TargetSlot.MAINHAND, TargetSlot.values()).create();
-        config.addEnum("target_slot", targetSlot, v -> targetSlot = v, SLOTS)
-                .setNameKey("morequesttypes.reward.nbt_path.target_slot");
-
-        dev.ftb.mods.ftbquests.client.ConfigIconItemStack cis = new dev.ftb.mods.ftbquests.client.ConfigIconItemStack();
-        config.add("target_item", cis, targetItem, v -> {
-            targetItem = v.copy();
-            if (!targetItem.isEmpty()) targetItem.setCount(1);
-        }, ItemStack.EMPTY).setNameKey("morequesttypes.reward.nbt_path.target_item");
-
-        ConfigGroup condGroup = config.getOrCreateSubgroup("conditions");
-        condGroup.setNameKey("morequesttypes.reward.nbt_path.conditions");
-
-        var COND_TYPES = NameMap.of(ConditionType.NONE, ConditionType.values()).create();
-        condGroup.addEnum("condition_type", conditionType, v -> conditionType = v, COND_TYPES)
-                .setNameKey("morequesttypes.reward.nbt_path.condition_type");
-
-        condGroup.addString("condition_path", conditionPath, v -> conditionPath = v, "")
-                .setNameKey("morequesttypes.reward.nbt_path.condition_path");
-
-        condGroup.addList("condition_entries", conditionEntries, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
-                .setNameKey("morequesttypes.reward.nbt_path.condition_entries");
-
-        condGroup.addInt("conditions_match_number", conditionsMatchNumber, v -> conditionsMatchNumber = v, -1, -1, 999)
-                .setNameKey("morequesttypes.reward.nbt_path.conditions_match_number");
-
-        var COMP_MODES = NameMap.of(ComparisonMode.EQUALS, ComparisonMode.values())
-                .name(mode -> Component.translatable(mode.getTranslationKey()))
-                .create();
-        condGroup.addEnum("comparison_mode", comparisonMode, v -> comparisonMode = v, COMP_MODES)
-                .setNameKey("morequesttypes.task.comparison_mode");
-
-        condGroup.addInt("comparison_first", comparisonFirst, v -> comparisonFirst = v, 0, Integer.MIN_VALUE, Integer.MAX_VALUE)
-                .setNameKey("morequesttypes.task.first_number");
-
-        condGroup.addInt("comparison_second", comparisonSecond, v -> comparisonSecond = v, 0, Integer.MIN_VALUE, Integer.MAX_VALUE)
-                .setNameKey("morequesttypes.task.second_number");
+        NbtPathRewardConfig configValue = new NbtPathRewardConfig();
+        config.add("config", configValue, data, newData -> {
+            this.operation = newData.operation;
+            this.path = newData.path;
+            this.checkExists = newData.checkExists;
+            this.nbtEntries.clear();
+            this.nbtEntries.addAll(newData.nbtEntries);
+            this.targetSlot = newData.targetSlot;
+            this.targetItem = newData.targetItem.copy();
+            this.isValue = newData.isValue;
+            this.conditionType = newData.conditionType;
+            this.conditionPath = newData.conditionPath;
+            this.conditionEntries.clear();
+            this.conditionEntries.addAll(newData.conditionEntries);
+            this.conditionsMatchNumber = newData.conditionsMatchNumber;
+            this.comparisonMode = newData.comparisonMode;
+            this.comparisonFirst = newData.comparisonFirst;
+            this.comparisonSecond = newData.comparisonSecond;
+        }, data).setNameKey("morequesttypes.reward.nbt_path.config");
     }
 
     @Override

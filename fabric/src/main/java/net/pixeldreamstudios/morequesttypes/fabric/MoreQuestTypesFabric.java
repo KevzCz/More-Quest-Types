@@ -24,6 +24,7 @@ public final class MoreQuestTypesFabric implements ModInitializer {
         BreakBlockHooksFabric.register();
         TradingHooksFabric.register();
         PlaceBlockHooksFabric.register();
+        UseBlockHooksFabric.register();
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             MoreQuestTypesCommands.register(dispatcher);

@@ -27,6 +27,8 @@ public final class MoreTasksTypes {
     public static TaskType ORIGIN;
     public static TaskType PLACE_BLOCK;
     public static TaskType EASY_NPC_DIALOGUE;
+    public static TaskType USE_BLOCK;
+    public static TaskType FISHING_CATCH;
 
     public static void init() {
         TIMER = TaskTypes.register(
@@ -136,5 +138,15 @@ public final class MoreTasksTypes {
                     () -> Icon.getIcon("easy_npc:block/easy_npc_spawner/boss_spawner")
             );
         }
+        USE_BLOCK = TaskTypes.register(
+                FTBQuestsAPI.rl("use_block"),
+                UseBlockTask::new,
+                () -> Icon.getIcon("minecraft:item/oak_door")
+        );
+        FISHING_CATCH = TaskTypes.register(
+                FTBQuestsAPI.rl("fishing_catch"),
+                FishingCatchTask::new,
+                () -> Icon.getIcon("minecraft:item/fishing_rod")
+        );
     }
 }
