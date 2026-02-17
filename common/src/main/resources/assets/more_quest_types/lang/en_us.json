@@ -177,6 +177,12 @@
   "morequesttypes.task.check_quest.targets": "Targets",
   "morequesttypes.task.check_quest.targets.tooltip": "Quest or task IDs to check. Use # for tags (e.g., #sometag) or hex IDs for specific quests/tasks.",
   "morequesttypes.task.check_quest.title": "Check Quest",
+  "morequesttypes.task.check_quest.mode.all": "ALL",
+  "morequesttypes.task.check_quest.mode.required": "ANY, need %s",
+  "morequesttypes.task.check_quest.complete_all": "Complete all quest(s):",
+  "morequesttypes.task.check_quest.complete_any": "Complete any quest(s):",
+  "morequesttypes.task.check_quest.complete_required": "Complete %s quest(s):",
+  "morequesttypes.task.check_quest.and_more": "   …and %s more",
 
   "ftbquests.task.ftbquests.skills_level": "Level",
   "morequesttypes.task.skills_level.category": "Category",

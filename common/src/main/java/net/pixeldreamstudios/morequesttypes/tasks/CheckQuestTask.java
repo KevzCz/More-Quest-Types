@@ -3,8 +3,8 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.ftb.mods.ftbquests.quest.BaseQuestFile;
 import dev.ftb.mods.ftblibrary.icon.Icon;
+import dev.ftb.mods.ftbquests.quest.BaseQuestFile;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.QuestObjectBase;
 import dev.ftb.mods.ftbquests.quest.TeamData;
@@ -97,8 +97,10 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getAltTitle() {
-        String suffix = (mode == Mode.ALL || requiredCount == 0) ? "ALL" : "ANY, need " + requiredCount;
-        return Component.translatable("morequesttypes.task.check_quest.title", suffix);
+        String modeText = (mode == Mode.ALL || requiredCount == 0)
+                ? Component.translatable("morequesttypes.task.check_quest.mode.all").getString()
+                : Component.translatable("morequesttypes.task.check_quest.mode.required", requiredCount).getString();
+        return Component.translatable("morequesttypes.task.check_quest.title", modeText);
     }
 
     @Environment(EnvType.CLIENT)
@@ -110,16 +112,24 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
     @Environment(EnvType.CLIENT)
     @Override
     public void addMouseOverText(TooltipList list, TeamData teamData) {
+        if (!getQuestFile().canEdit()) return;
+
         if (cachedTargetIds == null || cachedTargetIds.isEmpty()) {
             cachedTargetIds = resolveTargets(getQuestFile());
         }
-        String reqWord;
+
+        Component reqText;
         if (requiredCount > 0) {
-            reqWord = (mode == Mode.ALL) ? "all" : String.valueOf(requiredCount);
+            reqText = (mode == Mode.ALL)
+                    ? Component.translatable("morequesttypes.task.check_quest.complete_all")
+                    : Component.translatable("morequesttypes.task.check_quest.complete_required", requiredCount);
         } else {
-            reqWord = (mode == Mode.ALL) ? "all" : "any";
+            reqText = (mode == Mode.ALL)
+                    ? Component.translatable("morequesttypes.task.check_quest.complete_all")
+                    : Component.translatable("morequesttypes.task.check_quest.complete_any");
         }
-        list.add(Component.literal("Complete " + reqWord + " quest(s):").withStyle(ChatFormatting.YELLOW));
+
+        list.add(reqText.copy().withStyle(ChatFormatting.YELLOW));
 
         BaseQuestFile file = getQuestFile();
         int shown = 0;
@@ -140,7 +150,7 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
             if (shown >= 30) {
                 int remaining = cachedTargetIds.size() - shown;
                 if (remaining > 0) {
-                    list.add(Component.literal("   …and " + remaining + " more"));
+                    list.add(Component.translatable("morequesttypes.task.check_quest.and_more", remaining));
                 }
                 break;
             }

@@ -66,6 +66,7 @@ public final class DialogueTask extends Task {
     @Environment(EnvType.CLIENT)
     @Override
     public void addMouseOverText(TooltipList list, TeamData teamData) {
+        if (!getQuestFile().canEdit()) return;
         list.add(Component.translatable("morequesttypes.task.dialogue.id_tooltip", dialogueId.isBlank() ? "?" : dialogueId));
         if (!endStates.isEmpty()) {
             list.add(Component.translatable("morequesttypes.task.dialogue.ends", String.join(", ", endStates)));

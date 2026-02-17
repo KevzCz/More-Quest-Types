@@ -113,5 +113,11 @@ public class MQTNetwork {
                 QuestEntityDataSyncPacket.STREAM_CODEC,
                 QuestEntityDataSyncPacket::handle
         );
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.S2C,
+                LookAtMessage.TYPE,
+                LookAtMessage.STREAM_CODEC,
+                LookAtMessage::handle
+        );
     }
 }

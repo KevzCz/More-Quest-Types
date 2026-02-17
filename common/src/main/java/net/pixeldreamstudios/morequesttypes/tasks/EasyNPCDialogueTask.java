@@ -51,6 +51,7 @@ public final class EasyNPCDialogueTask extends Task {
     @Environment(EnvType.CLIENT)
     @Override
     public void addMouseOverText(TooltipList list, TeamData teamData) {
+        if (!getQuestFile().canEdit()) return;
         list.add(Component.translatable("morequesttypes.task.easynpc_dialogue.label_tooltip", dialogueLabel.isBlank() ? "?" : dialogueLabel));
     }
 

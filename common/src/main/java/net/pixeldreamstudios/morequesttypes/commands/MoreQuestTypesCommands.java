@@ -2,6 +2,7 @@ package net.pixeldreamstudios.morequesttypes.commands;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -37,6 +38,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.pixeldreamstudios.morequesttypes.api.IQuestExtension;
+import net.pixeldreamstudios.morequesttypes.network.LookAtMessage;
 import net.pixeldreamstudios.morequesttypes.tasks.*;
 
 import java.util.*;
@@ -134,8 +136,83 @@ public final class MoreQuestTypesCommands {
                                                 StringArgumentType.getString(ctx, "quest_id")))
                                 )
                         )
+                        .then(buildLookAtCommand())
                         .then(buildGenerateChapterCommand())
         );
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildLookAtCommand() {
+        return Commands.literal("look_at")
+                .then(Commands.literal("quest")
+                        .then(Commands.argument("quest_id", StringArgumentType.string())
+                                .executes(ctx -> lookAtQuest(
+                                        ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "quest_id")))
+                        )
+                )
+                .then(Commands.literal("pos")
+                        .then(Commands.argument("chapter_id", StringArgumentType.string())
+                                .then(Commands.argument("x", DoubleArgumentType.doubleArg())
+                                        .then(Commands.argument("y", DoubleArgumentType.doubleArg())
+                                                .executes(ctx -> lookAtPosition(
+                                                        ctx.getSource(),
+                                                        StringArgumentType.getString(ctx, "chapter_id"),
+                                                        DoubleArgumentType.getDouble(ctx, "x"),
+                                                        DoubleArgumentType.getDouble(ctx, "y")))
+                                        )
+                                )
+                        )
+                );
+    }
+
+    private static int lookAtQuest(CommandSourceStack source, String questId) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+
+        QuestObjectBase object = getQuestObjectForString(questId);
+        if (!(object instanceof Quest quest)) {
+            throw NO_OBJECT.create(questId);
+        }
+
+        CompoundTag nbt = new CompoundTag();
+        nbt.putLong("ChapterId", quest.getChapter().id);
+        nbt.putDouble("QuestX", quest.getX());
+        nbt.putDouble("QuestY", quest.getY());
+
+        dev.ftb.mods.ftblibrary.util.NetworkHelper.sendTo(
+                player,
+                new LookAtMessage(nbt)
+        );
+
+        source.sendSuccess(() -> Component.literal("Moved view to quest: " + quest.getTitle().getString())
+                        .withStyle(ChatFormatting.GREEN),
+                false);
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int lookAtPosition(CommandSourceStack source, String chapterId, double x, double y) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+
+        QuestObjectBase object = getQuestObjectForString(chapterId);
+        if (!(object instanceof Chapter chapter)) {
+            throw NO_OBJECT.create(chapterId);
+        }
+
+        CompoundTag nbt = new CompoundTag();
+        nbt.putLong("ChapterId", chapter.id);
+        nbt.putDouble("QuestX", x);
+        nbt.putDouble("QuestY", y);
+
+        dev.ftb.mods.ftblibrary.util.NetworkHelper.sendTo(
+                player,
+                new LookAtMessage(nbt)
+        );
+
+        source.sendSuccess(() -> Component.literal("Moved view to position (" + x + ", " + y + ") in chapter: " + chapter.getTitle().getString())
+                        .withStyle(ChatFormatting.GREEN),
+                false);
+
+        return Command.SINGLE_SUCCESS;
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildGenerateChapterCommand() {
