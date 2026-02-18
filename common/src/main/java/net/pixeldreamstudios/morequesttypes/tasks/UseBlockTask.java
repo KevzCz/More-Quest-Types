@@ -2,7 +2,6 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
@@ -21,6 +20,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.pixeldreamstudios.morequesttypes.config.BlockStackConfig;
 import net.pixeldreamstudios.morequesttypes.event.UseBlockEventBuffer;
 
 import java.util.ArrayList;
@@ -158,10 +158,10 @@ public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-        config.addLong("value", value, v -> value = Math.max(1L, v), 1L, 1L, Long.MAX_VALUE);
+        config.addLong("value", value, v -> value = Math.max(1L, v), 1L, 1L, Long.MAX_VALUE)
+                .setNameKey("morequesttypes.task.use_block.value");
 
-        ConfigIconItemStack cis = new ConfigIconItemStack();
-        config.add("block", cis, blockFilter, v -> {
+        config.add("block", new BlockStackConfig(), blockFilter, v -> {
             blockFilter = v.copy();
             if (!blockFilter.isEmpty()) blockFilter.setCount(1);
         }, ItemStack.EMPTY).setNameKey("morequesttypes.task.use_block.block");

@@ -1,11 +1,7 @@
 package net.pixeldreamstudios.morequesttypes.network;
 
 import dev.architectury.networking.NetworkManager;
-import dev.ftb.mods.ftbquests.client.ClientQuestFile;
-import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
-import dev.ftb.mods.ftbquests.quest.Chapter;
 import net.fabricmc.api.EnvType;
-import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -34,33 +30,8 @@ public record LookAtMessage(CompoundTag data) implements CustomPacketPayload {
     }
 
     public static void handle(LookAtMessage msg, NetworkManager.PacketContext context) {
-        context.queue(() -> {
-            if (context.getEnv() == EnvType.CLIENT) {
-                handleClient(msg);
-            }
-        });
-    }
-
-    private static void handleClient(LookAtMessage msg) {
-        if (!ClientQuestFile.exists()) {
-            return;
+        if (context.getEnv() == EnvType.CLIENT) {
+            context.queue(() -> LookAtMessageClient.handleClient(msg));
         }
-
-        long chapterId = msg.data.getLong("ChapterId");
-        double questX = msg.data.getDouble("QuestX");
-        double questY = msg.data.getDouble("QuestY");
-
-        Chapter chapter = ClientQuestFile.INSTANCE.getChapter(chapterId);
-        if (chapter == null) {
-            return;
-        }
-
-        Minecraft.getInstance().tell(() -> {
-            QuestScreen screen = ClientQuestFile.openGui();
-            if (screen != null) {
-                screen.open(chapter, false);
-                screen.questPanel.scrollTo(questX, questY);
-            }
-        });
     }
 }

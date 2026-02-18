@@ -783,5 +783,9 @@
   "morequesttypes.task.use_block.value.tooltip": "Number of times to use/interact with the specified block(s).",
 
   "morequesttypes.chapter_image.flip_horizontal": "Flip Horizontal",
-  "morequesttypes.chapter_image.flip_vertical": "Flip Vertical"
+  "morequesttypes.chapter_image.flip_vertical": "Flip Vertical",
+
+  "morequesttypes.select_block.list_mode.all": "All Blocks",
+  "morequesttypes.select_block.list_mode.inv": "Inventory Blocks",
+  "morequesttypes.config.block_stack.info": "Click to select a block. Only blocks will be shown in the selector."
 }
