@@ -776,7 +776,7 @@
   "ftbquests.task.ftbquests.use_block": "Use Block",
   "morequesttypes.task.use_block.title": "Use %s × %s",
   "morequesttypes.task.use_block.block": "Block",
-  "morequesttypes.task.use_block.block.tooltip": "The block that must be right-clicked/used. Leave empty for any block.",
+  "morequesttypes.task.use_block.block.tooltip": "The block that must be right-clicked/used.",
   "morequesttypes.task.use_block.block_tag": "Block Tag",
   "morequesttypes.task.use_block.block_tag.tooltip": "Match blocks in this tag instead of a specific block. Prefix with # for tags (e.g., #minecraft:logs).",
   "morequesttypes.task.use_block.value": "Number of Uses",
@@ -787,5 +787,7 @@
 
   "morequesttypes.select_block.list_mode.all": "All Blocks",
   "morequesttypes.select_block.list_mode.inv": "Inventory Blocks",
-  "morequesttypes.config.block_stack.info": "Click to select a block. Only blocks will be shown in the selector."
+  "morequesttypes.config.block_stack.info": "Click to select a block. Only blocks will be shown in the selector.",
+  "morequesttypes.config.block_stack.manual_id": "Block ID",
+  "morequesttypes.config.block_stack.manual_hint": "Middle-click to type block ID manually"
 }

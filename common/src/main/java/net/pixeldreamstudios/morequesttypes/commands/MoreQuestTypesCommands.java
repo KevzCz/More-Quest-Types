@@ -183,7 +183,8 @@ public final class MoreQuestTypesCommands {
                 new LookAtMessage(nbt)
         );
 
-        source.sendSuccess(() -> Component.literal("Moved view to quest: " + quest.getTitle().getString())
+        String title = quest.getRawTitle().isEmpty() ? quest.getCodeString() : quest.getRawTitle();
+        source.sendSuccess(() -> Component.literal("Moved view to quest: " + title)
                         .withStyle(ChatFormatting.GREEN),
                 false);
 
@@ -208,7 +209,8 @@ public final class MoreQuestTypesCommands {
                 new LookAtMessage(nbt)
         );
 
-        source.sendSuccess(() -> Component.literal("Moved view to position (" + x + ", " + y + ") in chapter: " + chapter.getTitle().getString())
+        String title = chapter.getRawTitle().isEmpty() ? chapter.getCodeString() : chapter.getRawTitle();
+        source.sendSuccess(() -> Component.literal("Moved view to position (" + x + ", " + y + ") in chapter: " + title)
                         .withStyle(ChatFormatting.GREEN),
                 false);
 
@@ -710,6 +712,16 @@ public final class MoreQuestTypesCommands {
 
         NetworkHelper.sendToAll(source.getServer(), CreateObjectResponseMessage.create(chapter, null));
 
+        String locale = file.getLocale();
+        dev.ftb.mods.ftbquests.net.SyncTranslationMessageToClient syncMsg =
+                dev.ftb.mods.ftbquests.net.SyncTranslationMessageToClient.create(
+                        chapter,
+                        locale,
+                        dev.ftb.mods.ftbquests.quest.translation.TranslationKey.TITLE,
+                        title
+                );
+        NetworkHelper.sendToAll(source.getServer(), syncMsg);
+
         return chapter;
     }
 
@@ -865,8 +877,6 @@ public final class MoreQuestTypesCommands {
     }
 
     private static void finalizeChapter(ServerQuestFile file, CommandSourceStack source) {
-        file.refreshIDMap();
-        file.clearCachedData();
         file.markDirty();
         file.saveNow();
 
@@ -874,8 +884,6 @@ public final class MoreQuestTypesCommands {
             file.getTeamData(player).ifPresent(TeamData::clearCachedProgress);
         }
 
-        dev.ftb.mods.ftbquests.net.SyncQuestsMessage msg = new dev.ftb.mods.ftbquests.net.SyncQuestsMessage(file);
-        NetworkHelper.sendToAll(source.getServer(), msg);
     }
 
     private static int linkQuestToItem(CommandSourceStack source, String questId) throws CommandSyntaxException {
@@ -895,8 +903,9 @@ public final class MoreQuestTypesCommands {
         heldItem.update(DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.EMPTY,
                 data -> data.update(tag -> tag.putLong("LinkedQuestId", quest.id)));
 
+        String title = quest.getRawTitle().isEmpty() ? quest.getCodeString() : quest.getRawTitle();
         source.sendSuccess(() -> Component.translatable("morequesttypes.command.link.success",
-                        quest.getTitle(), heldItem.getHoverName()),
+                        title, heldItem.getHoverName()),
                 false);
 
         return Command.SINGLE_SUCCESS;
@@ -930,8 +939,9 @@ public final class MoreQuestTypesCommands {
             teamData.markDirty();
         });
 
+        String title = quest.getRawTitle().isEmpty() ? quest.getCodeString() : quest.getRawTitle();
         source.sendSuccess(() -> Component.literal(
-                        "Reset repeat counter for quest '" + quest.getTitle().getString() + "' for player " + player.getName().getString()),
+                        "Reset repeat counter for quest '" + title + "' for player " + player.getName().getString()),
                 true);
 
         return Command.SINGLE_SUCCESS;
@@ -969,15 +979,14 @@ public final class MoreQuestTypesCommands {
             throw NO_OBJECT.create(chapterId);
         }
 
-        ServerQuestFile file = ServerQuestFile.INSTANCE;
-
         dev.ftb.mods.ftblibrary.util.NetworkHelper.sendTo(
                 player,
                 new dev.ftb.mods.ftbquests.net.EditObjectResponseMessage(chapter)
         );
 
+        String title = chapter.getRawTitle().isEmpty() ? chapter.getCodeString() : chapter.getRawTitle();
         source.sendSuccess(() -> Component.literal(
-                        "Refreshed chapter '" + chapter.getTitle().getString() + "' for player " + player.getName().getString()),
+                        "Refreshed chapter '" + title + "' for player " + player.getName().getString()),
                 true);
 
         return Command.SINGLE_SUCCESS;

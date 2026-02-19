@@ -1,8 +1,10 @@
 package net.pixeldreamstudios.morequesttypes.config;
 
 import dev.ftb.mods.ftblibrary.config.ConfigCallback;
+import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.ConfigValue;
 import dev.ftb.mods.ftblibrary.config.ResourceConfigValue;
+import dev.ftb.mods.ftblibrary.config.ui.EditConfigScreen;
 import dev.ftb.mods.ftblibrary.config.ui.resource.SelectableResource;
 import dev.ftb.mods.ftblibrary.icon.Color4I;
 import dev.ftb.mods.ftblibrary.icon.Icon;
@@ -11,7 +13,9 @@ import dev.ftb.mods.ftblibrary.ui.Widget;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -104,7 +108,58 @@ public class BlockStackConfig extends ResourceConfigValue<ItemStack> {
             return;
         }
 
-        new SelectBlockItemStackScreen(this, callback).openGui();
+        if (button == MouseButton.LEFT) {
+            new SelectBlockItemStackScreen(this, callback).openGui();
+        } else if (button == MouseButton.MIDDLE) {
+            openManualInput(callback);
+        }
+    }
+
+    private void openManualInput(ConfigCallback callback) {
+        String currentId = "";
+        if (!getValue().isEmpty()) {
+            ResourceLocation id = BuiltInRegistries.ITEM.getKey(getValue().getItem());
+            currentId = id.toString();
+        }
+
+        ConfigGroup manualGroup = new ConfigGroup("manual_block_input", accepted -> {
+            if (accepted) {
+                callback.save(true);
+            } else {
+                callback.save(false);
+            }
+        });
+
+        manualGroup.addString("block_id", currentId, this::trySetBlockFromId, currentId)
+                .setNameKey("morequesttypes.config.block_stack.manual_id");
+
+        new EditConfigScreen(manualGroup).openGui();
+    }
+
+    private void trySetBlockFromId(String blockId) {
+        if (blockId == null || blockId.trim().isEmpty()) {
+            setValue(ItemStack.EMPTY);
+            setResource(SelectableResource.item(ItemStack.EMPTY));
+            return;
+        }
+
+        ResourceLocation resourceLocation = ResourceLocation.tryParse(blockId.trim());
+        if (resourceLocation == null) {
+            return;
+        }
+
+        var item = BuiltInRegistries.ITEM.get(resourceLocation);
+        if (item == null || item == Items.AIR) {
+            return;
+        }
+
+        if (!(item instanceof BlockItem)) {
+            return;
+        }
+
+        ItemStack stack = new ItemStack(item);
+        setValue(stack);
+        setResource(SelectableResource.item(stack));
     }
 
     @Override
@@ -119,6 +174,8 @@ public class BlockStackConfig extends ResourceConfigValue<ItemStack> {
     public void addInfo(dev.ftb.mods.ftblibrary.util.TooltipList list) {
         super.addInfo(list);
         list.add(Component.translatable("morequesttypes.config.block_stack.info"));
+        list.add(Component.translatable("morequesttypes.config.block_stack.manual_hint")
+                .withStyle(net.minecraft.ChatFormatting.GRAY));
     }
 
     @Override
