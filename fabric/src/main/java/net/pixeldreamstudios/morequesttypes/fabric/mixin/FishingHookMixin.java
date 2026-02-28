@@ -1,6 +1,7 @@
 package net.pixeldreamstudios.morequesttypes.fabric.mixin;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.FishingHook;
@@ -24,7 +25,7 @@ public abstract class FishingHookMixin {
                     target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z"
             )
     )
-    private boolean captureItemOnSpawn(Level level, net.minecraft.world.entity.Entity entity) {
+    private boolean captureItemOnSpawn(Level level, Entity entity) {
         if (entity instanceof ItemEntity itemEntity) {
             Player player = getPlayerOwner();
             if (player instanceof ServerPlayer sp) {

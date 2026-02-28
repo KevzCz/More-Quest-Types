@@ -1,6 +1,7 @@
 package net.pixeldreamstudios.morequesttypes.network;
 
 import dev.architectury.networking.NetworkManager;
+import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -27,7 +28,7 @@ public record MQTNearestEntityRequest(long taskId) implements CustomPacketPayloa
         ctx.queue(() -> {
             if (!(ctx.getPlayer() instanceof ServerPlayer sp)) return;
 
-            var file = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE;
+            var file = ServerQuestFile.INSTANCE;
             var obj  = file.get(self.taskId());
             if (obj instanceof FindEntityTask t) {
                 var teamOpt = file.getTeamData(sp);

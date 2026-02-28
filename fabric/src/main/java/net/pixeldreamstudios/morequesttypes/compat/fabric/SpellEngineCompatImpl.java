@@ -11,6 +11,8 @@ import net.spell_engine.internals.container.SpellContainerSource;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class SpellEngineCompatImpl {
@@ -27,7 +29,7 @@ public final class SpellEngineCompatImpl {
         try {
             return SpellRegistry.stream(level)
                     .map(holderRef -> holderRef.unwrapKey().map(k -> k.location()).orElse(null))
-                    .filter(java.util.Objects::nonNull)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toUnmodifiableList());
         } catch (Throwable t) {
             return List.of();
@@ -38,7 +40,7 @@ public final class SpellEngineCompatImpl {
         if (!isLoaded() || player == null) return;
         try {
             @SuppressWarnings("unchecked")
-            java.util.Map<String, SpellContainer> serverSide = ((SpellContainerSource.Owner) player).serverSideSpellContainers();
+            Map<String, SpellContainer> serverSide = ((SpellContainerSource.Owner) player).serverSideSpellContainers();
             // remove existing containers for this base
             serverSide.keySet().removeIf(k -> k.startsWith(baseKey + "/"));
 
@@ -56,21 +58,21 @@ public final class SpellEngineCompatImpl {
     public static void uninstallSpells(ServerPlayer player, String baseKey) {
         if (!isLoaded() || player == null) return;
         try {
-            java.util.Map<String, SpellContainer> serverSide = ((SpellContainerSource.Owner) player).serverSideSpellContainers();
+            Map<String, SpellContainer> serverSide = ((SpellContainerSource.Owner) player).serverSideSpellContainers();
             serverSide.keySet().removeIf(k -> k.startsWith(baseKey + "/"));
             SpellContainerSource.setDirtyServerSide(player);
             SpellContainerSource.syncServerSideContainers(player);
         } catch (Throwable ignored) {}
     }
     public static Collection<String> getInstalledSpellKeys(ServerPlayer player) {
-        if (!isLoaded() || player == null) return java.util.List.of();
+        if (!isLoaded() || player == null) return List.of();
         try {
             @SuppressWarnings("unchecked")
-            java.util.Map<String, SpellContainer> serverSide =
-                    ((net.spell_engine.internals.container.SpellContainerSource.Owner) player).serverSideSpellContainers();
-            return java.util.List.copyOf(serverSide.keySet());
+            Map<String, SpellContainer> serverSide =
+                    ((SpellContainerSource.Owner) player).serverSideSpellContainers();
+            return List.copyOf(serverSide.keySet());
         } catch (Throwable t) {
-            return java.util.List.of();
+            return List.of();
         }
     }
 
@@ -78,11 +80,11 @@ public final class SpellEngineCompatImpl {
         if (!isLoaded() || player == null || keys == null || keys.isEmpty()) return;
         try {
             @SuppressWarnings("unchecked")
-            java.util.Map<String, SpellContainer> serverSide =
-                    ((net.spell_engine.internals.container.SpellContainerSource.Owner) player).serverSideSpellContainers();
+            Map<String, SpellContainer> serverSide =
+                    ((SpellContainerSource.Owner) player).serverSideSpellContainers();
             for (String k : keys) serverSide.remove(k);
-            net.spell_engine.internals.container.SpellContainerSource.setDirtyServerSide(player);
-            net.spell_engine.internals.container.SpellContainerSource.syncServerSideContainers(player);
+            SpellContainerSource.setDirtyServerSide(player);
+            SpellContainerSource.syncServerSideContainers(player);
         } catch (Throwable ignored) {}
     }
 

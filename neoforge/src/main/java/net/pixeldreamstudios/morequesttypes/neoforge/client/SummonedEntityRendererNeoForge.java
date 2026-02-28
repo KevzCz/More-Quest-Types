@@ -3,6 +3,7 @@ package net.pixeldreamstudios.morequesttypes.neoforge.client;
 import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.pixeldreamstudios.morequesttypes.client.summon.SummonedEntityRenderer;
 
 public final class SummonedEntityRendererNeoForge {
@@ -28,6 +29,6 @@ public final class SummonedEntityRendererNeoForge {
     }
 
     public static void init() {
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(SummonedEntityRendererNeoForge::onRenderLevelStage);
+        NeoForge.EVENT_BUS.addListener(SummonedEntityRendererNeoForge::onRenderLevelStage);
     }
 }

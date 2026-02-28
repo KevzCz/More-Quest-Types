@@ -5,10 +5,13 @@ import dev.ftb.mods.ftblibrary.config.ImageResourceConfig;
 import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.ItemIcon;
+import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
@@ -33,12 +36,15 @@ import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.config.ItemWithDropRateConfig;
 import net.pixeldreamstudios.morequesttypes.config.RewardTableDropConfig;
 import net.pixeldreamstudios.morequesttypes.mixin.accessor.MobAccessor;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import net.pixeldreamstudios.morequesttypes.network.QuestEntityDataSyncPacket;
+import net.pixeldreamstudios.morequesttypes.rewards.summon.FollowPlayerGoal;
 import net.pixeldreamstudios.morequesttypes.rewards.summon.SummonedEntityTracker;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public final class SummonReward extends Reward {
     public enum AggroType {
@@ -106,7 +112,7 @@ public final class SummonReward extends Reward {
     private String rewardTables = "";
     private RewardKillerType rewardKillerType = RewardKillerType.OWNER;
 
-    public SummonReward(long id, dev.ftb.mods.ftbquests.quest.Quest q) {
+    public SummonReward(long id, Quest q) {
         super(id, q);
     }
 
@@ -226,7 +232,7 @@ public final class SummonReward extends Reward {
 
                 if (follow) {
                     ((MobAccessor) mob).getGoalSelector().addGoal(2,
-                            new net.pixeldreamstudios.morequesttypes.rewards.summon.FollowPlayerGoal(
+                            new FollowPlayerGoal(
                                     mob, player.getUUID(), 1.0, 2.0f, 10.0f
                             )
                     );
@@ -265,7 +271,7 @@ public final class SummonReward extends Reward {
 
                 level.getServer().getPlayerList().getPlayers().forEach(serverPlayer -> {
                     if (serverPlayer.distanceToSqr(entity) < 128 * 128) {
-                        net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToPlayer(serverPlayer, syncPacket);
+                        NetworkHelper.sendToPlayer(serverPlayer, syncPacket);
                     }
                 });
             }
@@ -323,7 +329,7 @@ public final class SummonReward extends Reward {
     private Vec3 findValidSpawnPos(ServerLevel level, Vec3 pos) {
         for (int y = 0; y < 10; y++) {
             Vec3 checkPos = new Vec3(pos.x, pos.y - y, pos.z);
-            var blockPos = net.minecraft.core.BlockPos.containing(checkPos);
+            var blockPos = BlockPos.containing(checkPos);
             if (level.getBlockState(blockPos.below()).isSolid() &&
                     !level.getBlockState(blockPos).isSolid()) {
                 return checkPos;
@@ -331,7 +337,7 @@ public final class SummonReward extends Reward {
         }
         for (int y = 1; y < 10; y++) {
             Vec3 checkPos = new Vec3(pos.x, pos.y + y, pos.z);
-            var blockPos = net.minecraft.core.BlockPos.containing(checkPos);
+            var blockPos = BlockPos.containing(checkPos);
             if (level.getBlockState(blockPos.below()).isSolid() &&
                     !level.getBlockState(blockPos).isSolid()) {
                 return checkPos;
@@ -368,9 +374,8 @@ public final class SummonReward extends Reward {
                                  UUID playerUUID, int elapsedTicks, MinecraftServer server) {
         ServerPlayer player = server.getPlayerList().getPlayer(playerUUID);
 
-        boolean shouldDespawnAll = false;
+        boolean shouldDespawnAll = despawnIfOffline && player == null;
 
-        if (despawnIfOffline && player == null) shouldDespawnAll = true;
         if (despawnIfDead && player != null && player.isDeadOrDying()) shouldDespawnAll = true;
         if (durationTicks > 0 && elapsedTicks >= durationTicks) shouldDespawnAll = true;
 
@@ -408,7 +413,7 @@ public final class SummonReward extends Reward {
 
                     server.getPlayerList().getPlayers().forEach(serverPlayer -> {
                         if (serverPlayer.distanceToSqr(entity) < 128 * 128) {
-                            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToPlayer(serverPlayer, despawnPacket);
+                            NetworkHelper.sendToPlayer(serverPlayer, despawnPacket);
                         }
                     });
                 }
@@ -583,7 +588,7 @@ public final class SummonReward extends Reward {
                             customDrops = modifiedList.stream()
                                     .filter(drop -> !drop.stack.isEmpty())
                                     .map(ItemWithDropRateConfig.ItemDrop::serialize)
-                                    .collect(java.util.stream.Collectors.joining(";"));
+                                    .collect(Collectors.joining(";"));
                         },
                         new ItemWithDropRateConfig.ItemDrop())
                 .setNameKey("morequesttypes.reward.summon.custom_drops");
@@ -603,7 +608,7 @@ public final class SummonReward extends Reward {
                             rewardTables = modifiedList.stream()
                                     .filter(table -> !table.rewardTableId.isEmpty())
                                     .map(RewardTableDropConfig.RewardTableDrop::serialize)
-                                    .collect(java.util.stream.Collectors.joining(";"));
+                                    .collect(Collectors.joining(";"));
                         },
                         new RewardTableDropConfig.RewardTableDrop())
                 .setNameKey("morequesttypes.reward.summon.reward_tables");
@@ -634,7 +639,7 @@ public final class SummonReward extends Reward {
     }
 
     @Override
-    public void writeData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         nbt.putString("entity", entityId);
         nbt.putDouble("random_spawn_area", randomSpawnArea);
@@ -679,7 +684,7 @@ public final class SummonReward extends Reward {
     }
 
     @Override
-    public void readData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         entityId = nbt.getString("entity");
         randomSpawnArea = nbt.getDouble("random_spawn_area");

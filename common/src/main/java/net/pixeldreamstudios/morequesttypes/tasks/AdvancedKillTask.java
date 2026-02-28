@@ -16,6 +16,7 @@ import dev.ftb.mods.ftbquests.quest.task.KillTask;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -46,6 +47,7 @@ import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 import org.jetbrains.annotations.Nullable;
@@ -215,7 +217,7 @@ public class AdvancedKillTask extends KillTask {
 
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
+            NetworkHelper.sendToServer(
                     new MQTStructuresRequest()
             );
         }
@@ -223,7 +225,7 @@ public class AdvancedKillTask extends KillTask {
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
+            NetworkHelper.sendToServer(
                     new MQTWorldsRequest()
             );
         }
@@ -231,7 +233,7 @@ public class AdvancedKillTask extends KillTask {
 
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
+            NetworkHelper.sendToServer(
                     new MQTBiomesRequest()
             );
         }
@@ -395,7 +397,7 @@ public class AdvancedKillTask extends KillTask {
             if (!isInsideBiome(level, e.blockPosition())) return false;
         }
         if (DynamicDifficultyCompat.isLoaded()) {
-            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension) this;
             if (ext.shouldCheckDynamicDifficultyLevel() && DynamicDifficultyCompat.canHaveLevel(e)) {
                 int mobLevel = DynamicDifficultyCompat.getLevel(e);
                 if (! ComparisonManager.compare(mobLevel,
@@ -408,21 +410,19 @@ public class AdvancedKillTask extends KillTask {
         }
 
         if (DungeonDifficultyCompat.isLoaded()) {
-            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension) this;
             if (dungeonExt.shouldCheckDungeonDifficultyLevel() && DungeonDifficultyCompat.canHaveLevel(e)) {
                 int dungeonLevel = DungeonDifficultyCompat.getLevel(e);
-                if (!ComparisonManager.compare(dungeonLevel,
+                return ComparisonManager.compare(dungeonLevel,
                         dungeonExt.getDungeonDifficultyComparison(),
                         dungeonExt.getDungeonDifficultyFirst(),
-                        dungeonExt.getDungeonDifficultySecond())) {
-                    return false;
-                }
+                        dungeonExt.getDungeonDifficultySecond());
             }
         }
         return true;
     }
 
-    private boolean isInsideStructureOrTag(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean isInsideStructureOrTag(ServerLevel level, BlockPos pos) {
         StructureManager mgr = level.structureManager();
         return structure.map(
                 key -> {
@@ -451,7 +451,7 @@ public class AdvancedKillTask extends KillTask {
         return dimension.equals(cur);
     }
 
-    private boolean isInsideBiome(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean isInsideBiome(ServerLevel level, BlockPos pos) {
         if (biome == null || biome.isEmpty()) return true;
         Holder<Biome> h = level.getBiome(pos);
         if (biome.startsWith("#")) {
@@ -498,7 +498,7 @@ public class AdvancedKillTask extends KillTask {
         }
 
         if (DynamicDifficultyCompat.isLoaded()) {
-            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension) this;
             if (ext.shouldCheckDynamicDifficultyLevel()) {
                 String levelReq = mqt$formatLevelRequirement(
                         ext.getDynamicDifficultyComparison(),
@@ -511,7 +511,7 @@ public class AdvancedKillTask extends KillTask {
         }
 
         if (DungeonDifficultyCompat.isLoaded()) {
-            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension) this;
             if (dungeonExt.shouldCheckDungeonDifficultyLevel()) {
                 String difficultyReq = mqt$formatLevelRequirement(
                         dungeonExt.getDungeonDifficultyComparison(),

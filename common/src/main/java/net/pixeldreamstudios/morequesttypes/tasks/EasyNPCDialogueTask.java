@@ -1,24 +1,22 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
-import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.ftb.mods.ftbquests.quest.TeamData;
-import dev.ftb.mods.ftbquests.quest.task.Task;
-import dev.ftb.mods.ftbquests.quest.task.TaskType;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.server.level.ServerPlayer;
-import net.pixeldreamstudios.morequesttypes.compat.EasyNPCCompat;
+import dev.ftb.mods.ftblibrary.config.*;
+import dev.ftb.mods.ftblibrary.util.*;
+import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.task.*;
+import net.fabricmc.api.*;
+import net.minecraft.core.*;
+import net.minecraft.nbt.*;
+import net.minecraft.network.*;
+import net.minecraft.network.chat.*;
+import net.minecraft.server.level.*;
+import net.minecraft.world.item.*;
+import net.pixeldreamstudios.morequesttypes.compat.*;
 
 public final class EasyNPCDialogueTask extends Task {
     private String dialogueLabel = "";
 
-    public EasyNPCDialogueTask(long id, dev.ftb.mods.ftbquests.quest.Quest quest) {
+    public EasyNPCDialogueTask(long id, Quest quest) {
         super(id, quest);
     }
 
@@ -66,7 +64,7 @@ public final class EasyNPCDialogueTask extends Task {
     }
 
     @Override
-    public void submitTask(TeamData teamData, ServerPlayer player, net.minecraft.world.item.ItemStack craftedItem) {
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
         if (!EasyNPCCompat.isLoaded()) return;

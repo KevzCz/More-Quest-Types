@@ -2,6 +2,7 @@ package net.pixeldreamstudios.morequesttypes.rewards;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import net.fabricmc.api.EnvType;
@@ -35,7 +36,7 @@ public final class LootTableReward extends Reward {
     private int rolls = 1;
     private boolean respectLuck = true;
     private boolean dropIfFull = true;
-    public LootTableReward(long id, dev.ftb.mods.ftbquests.quest.Quest q) { super(id, q); }
+    public LootTableReward(long id, Quest q) { super(id, q); }
     @Override public RewardType getType() { return MoreRewardTypes.LOOT_TABLE; }
     @Override
     public void claim(ServerPlayer player, boolean notify) {

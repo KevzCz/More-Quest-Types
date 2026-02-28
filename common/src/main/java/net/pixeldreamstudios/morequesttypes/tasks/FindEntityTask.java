@@ -1,18 +1,23 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
 import com.mojang.datafixers.util.Either;
+import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.RegistrarManager;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.config.StringConfig;
 import dev.ftb.mods.ftblibrary.icon.Icon;
+import dev.ftb.mods.ftblibrary.icon.IconAnimation;
+import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
 import dev.ftb.mods.ftbquests.client.FTBQuestsClient;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
+import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
@@ -30,6 +35,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.biome.Biome;
@@ -38,16 +44,23 @@ import net.pixeldreamstudios.morequesttypes.api.ITaskDungeonDifficultyExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskDynamicDifficultyExtension;
 import net.pixeldreamstudios.morequesttypes.compat.DungeonDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
+import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTNearestEntityRequest;
+import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
+import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Unique;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
-public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
+public final class FindEntityTask extends Task {
     private static final ResourceLocation DEFAULT_STRUCTURE = ResourceLocation.withDefaultNamespace("mineshaft");
     private static final ResourceLocation ZOMBIE = ResourceLocation.withDefaultNamespace("zombie");
     private static NameMap<ResourceLocation> ENTITY_NAME_MAP;
@@ -69,13 +82,13 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
     private String biome = "";
 
     @Environment(EnvType.CLIENT)
-    private static java.util.Map<Long, Double> CLIENT_NEAREST;
+    private static Map<Long, Double> CLIENT_NEAREST;
     @Environment(EnvType.CLIENT)
     private static long CLIENT_LAST_REQ_TICK;
 
     static {
-        if (dev.architectury.platform.Platform.getEnv() == EnvType.CLIENT) {
-            CLIENT_NEAREST = new java.util.HashMap<>();
+        if (Platform.getEnv() == EnvType.CLIENT) {
+            CLIENT_NEAREST = new HashMap<>();
             CLIENT_LAST_REQ_TICK = 0L;
         }
     }
@@ -161,12 +174,10 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
             ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
             if (dungeonExt.shouldCheckDungeonDifficultyLevel() && DungeonDifficultyCompat.canHaveLevel(e)) {
                 int dungeonLevel = DungeonDifficultyCompat.getLevel(e);
-                if (!ComparisonManager.compare(dungeonLevel,
+                return ComparisonManager.compare(dungeonLevel,
                         dungeonExt.getDungeonDifficultyComparison(),
                         dungeonExt.getDungeonDifficultyFirst(),
-                        dungeonExt.getDungeonDifficultySecond())) {
-                    return false;
-                }
+                        dungeonExt.getDungeonDifficultySecond());
             }
         }
         return true;
@@ -174,7 +185,7 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
 
     private boolean nameMatchOK(LivingEntity e) {
         if (!customName.isEmpty()) {
-            if (e instanceof net.minecraft.world.entity.player.Player p) return p.getGameProfile().getName().equals(customName);
+            if (e instanceof Player p) return p.getGameProfile().getName().equals(customName);
             return e.getName().getString().equals(customName);
         }
         return true;
@@ -267,7 +278,7 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
     }
     private String getStructure() {
         if (structure == null) return "";
-        return structure.map(k -> k.location().toString(), t -> "#" + String.valueOf(t.location()));
+        return structure.map(k -> k.location().toString(), t -> "#" + t.location());
     }
     private ResourceLocation safeStructure(String s) {
         ResourceLocation rl = ResourceLocation.tryParse(s);
@@ -275,17 +286,17 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
     }
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest());
+            NetworkHelper.sendToServer(new MQTStructuresRequest());
         }
     }
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest());
+            NetworkHelper.sendToServer(new MQTWorldsRequest());
         }
     }
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest());
+            NetworkHelper.sendToServer(new MQTBiomesRequest());
         }
     }
 
@@ -439,7 +450,7 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
     private double lastNearestClientMeters() {
         try {
             var client = FTBQuestsClient.getClientPlayer();
-            var level  = net.minecraft.client.Minecraft.getInstance().level;
+            var level  = Minecraft.getInstance().level;
             if (client == null || level == null) return Double.POSITIVE_INFINITY;
 
             var teamData = ClientQuestFile.exists() ? ClientQuestFile.INSTANCE.selfTeamData : null;
@@ -467,7 +478,7 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
             long now = level.getGameTime();
             if (now - CLIENT_LAST_REQ_TICK > 20) {
                 CLIENT_LAST_REQ_TICK = now;
-                net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
+                NetworkHelper.sendToServer(
                         new MQTNearestEntityRequest(this.getId())
                 );
             }
@@ -484,7 +495,7 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
         List<Icon> icons = new ArrayList<>();
         BuiltInRegistries.ENTITY_TYPE.getTag(entityTypeTag).ifPresent(set -> set.forEach(holder ->
                 holder.unwrapKey().map(k -> icons.add(AdvancedKillTask.iconForEntityType(k.location())))));
-        return icons.isEmpty() ? dev.ftb.mods.ftblibrary.icon.Icons.BARRIER : dev.ftb.mods.ftblibrary.icon.IconAnimation.fromList(icons, false);
+        return icons.isEmpty() ? Icons.BARRIER : IconAnimation.fromList(icons, false);
     }
 
     @Override
@@ -588,7 +599,7 @@ public final class FindEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task
         }
         double d = t.lastNearestClientMeters();
         return (d == Double.POSITIVE_INFINITY) ? "?" :
-                String.format(java.util.Locale.ROOT, "%.1fm", d);
+                String.format(Locale.ROOT, "%.1fm", d);
     }
 
 }

@@ -4,12 +4,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -20,12 +22,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.pixeldreamstudios.morequesttypes.network.MQTSoundsRequest;
 import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 
 public final class PlaySoundReward extends Reward {
     private static final List<String> SERVER_SOUNDS = new ArrayList<>();
@@ -43,7 +47,7 @@ public final class PlaySoundReward extends Reward {
     private float volume = 1.0f;
     private float pitch  = 1.0f;
 
-    public PlaySoundReward(long id, dev.ftb.mods.ftbquests.quest.Quest q) { super(id, q); }
+    public PlaySoundReward(long id, Quest q) { super(id, q); }
     @Override public RewardType getType() { return MoreRewardTypes.PLAY_SOUND; }
 
     @Override
@@ -128,7 +132,7 @@ public final class PlaySoundReward extends Reward {
 
         if (SERVER_SOUNDS.isEmpty() || (System.currentTimeMillis() - lastSyncTime) > SYNC_COOLDOWN_MS) {
             NetworkHelper
-                    .sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTSoundsRequest());
+                    .sendToServer(new MQTSoundsRequest());
         }
 
         var choices = collectClientSounds();
@@ -169,7 +173,7 @@ public final class PlaySoundReward extends Reward {
     }
 
     @Override
-    public void writeData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         nbt.putString("sound", soundId);
         nbt.putString("category", category.getName());
@@ -178,11 +182,11 @@ public final class PlaySoundReward extends Reward {
     }
 
     @Override
-    public void readData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         soundId = nbt.getString("sound");
         try {
-            category = SoundSource.valueOf(nbt.getString("category").toUpperCase(java.util.Locale.ROOT));
+            category = SoundSource.valueOf(nbt.getString("category").toUpperCase(Locale.ROOT));
         } catch (Throwable ignored) {
             category = SoundSource.PLAYERS;
         }

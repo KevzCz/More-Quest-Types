@@ -6,12 +6,15 @@ import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.config.StringConfig;
 import dev.ftb.mods.ftblibrary.icon.Icon;
+import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import dev.ftb.mods.ftbquests.client.FTBQuestsClient;
+import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -29,6 +32,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.biome.Biome;
@@ -41,6 +45,7 @@ import net.pixeldreamstudios.morequesttypes.event.DamageEventBuffer;
 import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 import org.spongepowered.asm.mixin.Unique;
@@ -63,7 +68,7 @@ public final class DamageTask extends Task {
     private transient Tag nbtFilterParsed = null;
     private ItemStack heldItemFilter = ItemStack.EMPTY;
     private String heldItemTagStr = "";
-    private transient TagKey<net.minecraft.world.item.Item> heldItemTag;
+    private transient TagKey<Item> heldItemTag;
     private Mode mode = Mode.TOTAL;
     private long value = 100L;
     private static final ResourceLocation DEFAULT_STRUCTURE = ResourceLocation.withDefaultNamespace("mineshaft");
@@ -74,7 +79,7 @@ public final class DamageTask extends Task {
     private static final List<String> KNOWN_BIOMES = new ArrayList<>();
     private String biome = "";
 
-    public DamageTask(long id, dev.ftb.mods.ftbquests.quest.Quest quest) {
+    public DamageTask(long id, Quest quest) {
         super(id, quest);
     }
 
@@ -261,19 +266,17 @@ public final class DamageTask extends Task {
             ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
             if (dungeonExt.shouldCheckDungeonDifficultyLevel() && DungeonDifficultyCompat.canHaveLevel(e)) {
                 int dungeonLevel = DungeonDifficultyCompat.getLevel(e);
-                if (!ComparisonManager.compare(dungeonLevel,
+                return ComparisonManager.compare(dungeonLevel,
                         dungeonExt.getDungeonDifficultyComparison(),
                         dungeonExt.getDungeonDifficultyFirst(),
-                        dungeonExt.getDungeonDifficultySecond())) {
-                    return false;
-                }
+                        dungeonExt.getDungeonDifficultySecond());
             }
         }
 
         return true;
     }
 
-    private boolean isInsideStructureOrTag(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean isInsideStructureOrTag(ServerLevel level, BlockPos pos) {
         StructureManager mgr = level.structureManager();
         return structure.map(
                 key -> {
@@ -304,7 +307,7 @@ public final class DamageTask extends Task {
         return dimension.equals(cur);
     }
 
-    private boolean isInsideBiome(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean isInsideBiome(ServerLevel level, BlockPos pos) {
         if (biome == null || biome.isEmpty()) return true;
         Holder<Biome> h = level.getBiome(pos);
         if (biome.startsWith("#")) {
@@ -379,9 +382,9 @@ public final class DamageTask extends Task {
         config.addBool("any_entity", anyEntity, v -> anyEntity = v, false)
                 .setNameKey("morequesttypes.task.damage.any_entity");
 
-        var ids = new java.util.ArrayList<ResourceLocation>();
+        var ids = new ArrayList<ResourceLocation>();
         BuiltInRegistries.ENTITY_TYPE.forEach(type -> {
-            if (type.create(FTBQuestsClient.getClientLevel()) instanceof net.minecraft.world.entity.LivingEntity) {
+            if (type.create(FTBQuestsClient.getClientLevel()) instanceof LivingEntity) {
                 ids.add(type.arch$registryName());
             }
         });
@@ -420,7 +423,7 @@ public final class DamageTask extends Task {
 
         config.add(
                 "held_item",
-                new dev.ftb.mods.ftbquests.client.ConfigIconItemStack(),
+                new ConfigIconItemStack(),
                 heldItemFilter,
                 v -> { heldItemFilter = v.copy(); if (!heldItemFilter.isEmpty()) heldItemFilter.setCount(1); },
                 ItemStack.EMPTY
@@ -655,7 +658,7 @@ public final class DamageTask extends Task {
 
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
+            NetworkHelper.sendToServer(
                     new MQTStructuresRequest()
             );
         }
@@ -663,7 +666,7 @@ public final class DamageTask extends Task {
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
+            NetworkHelper.sendToServer(
                     new MQTWorldsRequest()
             );
         }
@@ -671,23 +674,23 @@ public final class DamageTask extends Task {
 
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
+            NetworkHelper.sendToServer(
                     new MQTBiomesRequest()
             );
         }
     }
 
-    public static void syncKnownDimensionList(java.util.List<String> data) {
+    public static void syncKnownDimensionList(List<String> data) {
         KNOWN_DIMENSIONS.clear();
         KNOWN_DIMENSIONS.addAll(data);
     }
 
-    public static void syncKnownBiomeList(java.util.List<String> data) {
+    public static void syncKnownBiomeList(List<String> data) {
         KNOWN_BIOMES.clear();
         KNOWN_BIOMES.addAll(data);
     }
 
-    public static void syncKnownStructureList(java.util.List<String> data) {
+    public static void syncKnownStructureList(List<String> data) {
         KNOWN_STRUCTURES.clear();
         KNOWN_STRUCTURES.addAll(data);
     }

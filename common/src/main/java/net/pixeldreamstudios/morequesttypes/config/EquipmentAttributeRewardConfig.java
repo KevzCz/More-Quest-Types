@@ -10,6 +10,7 @@ import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.Widget;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
+import dev.ftb.mods.ftblibrary.util.TooltipList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
@@ -209,7 +210,7 @@ public class EquipmentAttributeRewardConfig extends ConfigValue<EquipmentAttribu
     }
 
     @Override
-    public void addInfo(dev.ftb.mods.ftblibrary.util.TooltipList list) {
+    public void addInfo(TooltipList list) {
         super.addInfo(list);
         list.add(Component.translatable("morequesttypes.config.equipment_attribute.info"));
     }

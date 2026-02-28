@@ -3,6 +3,7 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.util.StringUtils;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
+import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
@@ -19,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
 public class TimerTask extends Task {
     private double durationSeconds = 10.0D;
 
-    public TimerTask(long id, dev.ftb.mods.ftbquests.quest.Quest quest) {
+    public TimerTask(long id, Quest quest) {
         super(id, quest);
     }
 

@@ -27,7 +27,6 @@ public final class DungeonDifficultyCompatImpl {
     }
 
     public static boolean canHaveLevel(LivingEntity entity) {
-        if (!isLoaded()) return false;
-        return true;
+        return isLoaded();
     }
 }

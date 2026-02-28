@@ -8,6 +8,7 @@ import net.pixeldreamstudios.morequesttypes.api.IQuestSummonedEntity;
 import net.pixeldreamstudios.morequesttypes.mixin.accessor.MobAccessor;
 import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import net.pixeldreamstudios.morequesttypes.network.QuestEntityDataSyncPacket;
+import net.pixeldreamstudios.morequesttypes.rewards.summon.FollowPlayerGoal;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -468,11 +469,11 @@ public abstract class QuestSummonedEntityMixin implements IQuestSummonedEntity {
 
         try {
             ((MobAccessor) mob).getGoalSelector().getAvailableGoals().removeIf(goal ->
-                    goal.getGoal() instanceof net.pixeldreamstudios.morequesttypes.rewards.summon.FollowPlayerGoal
+                    goal.getGoal() instanceof FollowPlayerGoal
             );
 
             ((MobAccessor) mob).getGoalSelector().addGoal(2,
-                    new net.pixeldreamstudios.morequesttypes.rewards.summon.FollowPlayerGoal(
+                    new FollowPlayerGoal(
                             mob, mqt$questOwnerUuid, 1.0, 2.0f, 10.0f
                     )
             );

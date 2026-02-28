@@ -1,33 +1,25 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
-import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftblibrary.icon.Icon;
-import dev.ftb.mods.ftblibrary.icon.IconAnimation;
-import dev.ftb.mods.ftblibrary.icon.ItemIcon;
-import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
-import dev.ftb.mods.ftbquests.quest.Quest;
-import dev.ftb.mods.ftbquests.quest.TeamData;
-import dev.ftb.mods.ftbquests.quest.task.Task;
-import dev.ftb.mods.ftbquests.quest.task.TaskType;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
-import net.pixeldreamstudios.morequesttypes.event.BreakBlockEventBuffer;
+import dev.ftb.mods.ftblibrary.config.*;
+import dev.ftb.mods.ftblibrary.icon.*;
+import dev.ftb.mods.ftbquests.client.*;
+import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.task.*;
+import net.fabricmc.api.*;
+import net.minecraft.core.*;
+import net.minecraft.core.registries.*;
+import net.minecraft.nbt.*;
+import net.minecraft.network.*;
+import net.minecraft.network.chat.*;
+import net.minecraft.resources.*;
+import net.minecraft.server.level.*;
+import net.minecraft.tags.*;
+import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.*;
+import net.pixeldreamstudios.morequesttypes.event.*;
 
-import java.util.ArrayList;
+import java.util.*;
 
 public final class BreakBlockTask extends Task {
     private long value = 1;
@@ -37,13 +29,30 @@ public final class BreakBlockTask extends Task {
     private String toolTagStr = "";
     private transient TagKey<Item> toolTag;
     private ItemStack toolItemFilter = ItemStack.EMPTY;
-    public BreakBlockTask(long id, Quest quest) { super(id, quest); }
-    @Override public TaskType getType() { return MoreTasksTypes.BREAK_BLOCK; }
-    @Override public long getMaxProgress() { return Math.max(1L, value); }
-    @Override public int autoSubmitOnPlayerTick() { return 1; }
-    private final transient java.util.Map<java.util.UUID, Long> lastProcessedTick = new java.util.WeakHashMap<>();
+
+    public BreakBlockTask(long id, Quest quest) {
+        super(id, quest);
+    }
+
     @Override
-    public void submitTask(TeamData teamData, net.minecraft.server.level.ServerPlayer player, ItemStack craftedItem) {
+    public TaskType getType() {
+        return MoreTasksTypes.BREAK_BLOCK;
+    }
+
+    @Override
+    public long getMaxProgress() {
+        return Math.max(1L, value);
+    }
+
+    @Override
+    public int autoSubmitOnPlayerTick() {
+        return 1;
+    }
+
+    private final transient Map<UUID, Long> lastProcessedTick = new WeakHashMap<>();
+
+    @Override
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
@@ -63,13 +72,17 @@ public final class BreakBlockTask extends Task {
             if (!matchesTool(ev.tool())) continue;
             inc++;
         }
-        if (inc <= 0) { lastProcessedTick.put(player.getUUID(), latestTick); return; }
+        if (inc <= 0) {
+            lastProcessedTick.put(player.getUUID(), latestTick);
+            return;
+        }
 
         long next = Math.min(getMaxProgress(), cur + inc);
         if (next != cur) teamData.setProgress(this, next);
 
         lastProcessedTick.put(player.getUUID(), latestTick);
     }
+
     private boolean matchesBlock(BlockState state) {
         if (state == null) return false;
         if (blockTag != null) return state.is(blockTag);
@@ -82,7 +95,8 @@ public final class BreakBlockTask extends Task {
 
     private boolean matchesTool(ItemStack tool) {
         if (toolTag != null) return !tool.isEmpty() && tool.is(toolTag);
-        if (!toolItemFilter.isEmpty()) return !tool.isEmpty() && ItemStack.isSameItemSameComponents(tool, toolItemFilter);
+        if (!toolItemFilter.isEmpty())
+            return !tool.isEmpty() && ItemStack.isSameItemSameComponents(tool, toolItemFilter);
         return true;
     }
 
@@ -121,7 +135,8 @@ public final class BreakBlockTask extends Task {
         var icons = new ArrayList<Icon>();
 
         if (!blockItemFilter.isEmpty()) {
-            var copy = blockItemFilter.copy(); copy.setCount(1);
+            var copy = blockItemFilter.copy();
+            copy.setCount(1);
             var icon = ItemIcon.getItemIcon(copy);
             if (!icon.isEmpty()) icons.add(icon);
         } else if (blockTag != null) {
@@ -136,7 +151,7 @@ public final class BreakBlockTask extends Task {
             });
         }
 
-        if (icons.isEmpty()) return ItemIcon.getItemIcon(net.minecraft.world.item.Items.IRON_PICKAXE);
+        if (icons.isEmpty()) return ItemIcon.getItemIcon(Items.IRON_PICKAXE);
         return IconAnimation.fromList(icons, false);
     }
 
@@ -160,7 +175,10 @@ public final class BreakBlockTask extends Task {
                         .map(p -> p.getFirst().location().toString())
                         .sorted().toArray(String[]::new)
         ).create();
-        config.addEnum("block_tag", blockTagStr, v -> { blockTagStr = v; resolveTags(); }, BLOCK_TAGS)
+        config.addEnum("block_tag", blockTagStr, v -> {
+                    blockTagStr = v;
+                    resolveTags();
+                }, BLOCK_TAGS)
                 .setNameKey("morequesttypes.task.break_block.block_tag");
 
         var cisTool = new ConfigIconItemStack();
@@ -176,7 +194,10 @@ public final class BreakBlockTask extends Task {
                         .map(p -> p.getFirst().location().toString())
                         .sorted().toArray(String[]::new)
         ).create();
-        config.addEnum("tool_tag", toolTagStr, v -> { toolTagStr = v; resolveTags(); }, ITEM_TAGS)
+        config.addEnum("tool_tag", toolTagStr, v -> {
+                    toolTagStr = v;
+                    resolveTags();
+                }, ITEM_TAGS)
                 .setNameKey("morequesttypes.task.break_block.tool_tag");
     }
 
@@ -194,11 +215,11 @@ public final class BreakBlockTask extends Task {
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         value = Math.max(1L, nbt.getLong("value"));
-        blockItemFilter = nbt.contains("block_item") ? itemOrMissingFromNBT(nbt.get("block_item"), provider) : ItemStack.EMPTY;
+        blockItemFilter = nbt.contains("block_item") ? QuestObjectBase.itemOrMissingFromNBT(nbt.get("block_item"), provider) : ItemStack.EMPTY;
         if (!blockItemFilter.isEmpty()) blockItemFilter.setCount(1);
         blockTagStr = nbt.getString("block_tag");
 
-        toolItemFilter = nbt.contains("tool_item") ? itemOrMissingFromNBT(nbt.get("tool_item"), provider) : ItemStack.EMPTY;
+        toolItemFilter = nbt.contains("tool_item") ? QuestObjectBase.itemOrMissingFromNBT(nbt.get("tool_item"), provider) : ItemStack.EMPTY;
         if (!toolItemFilter.isEmpty()) toolItemFilter.setCount(1);
         toolTagStr = nbt.getString("tool_tag");
 

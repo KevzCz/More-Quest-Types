@@ -1,31 +1,21 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
-import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.ftb.mods.ftbquests.quest.TeamData;
-import dev.ftb.mods.ftbquests.quest.task.Task;
-import dev.ftb.mods.ftbquests.quest.task.TaskType;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import org.jetbrains.annotations.Nullable;
-import net.pixeldreamstudios.morequesttypes.compat.BlabberCompat;
+import dev.ftb.mods.ftblibrary.config.*;
+import dev.ftb.mods.ftblibrary.util.*;
+import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.task.*;
+import net.fabricmc.api.*;
+import net.minecraft.core.*;
+import net.minecraft.nbt.*;
+import net.minecraft.network.*;
+import net.minecraft.network.chat.*;
+import net.minecraft.resources.*;
+import net.minecraft.server.level.*;
+import net.minecraft.world.item.*;
+import net.pixeldreamstudios.morequesttypes.compat.*;
+import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public final class DialogueTask extends Task {
     private String dialogueId = "";
@@ -33,7 +23,7 @@ public final class DialogueTask extends Task {
     private transient final Set<UUID> watching = new HashSet<>();
     private transient final Map<UUID, String> lastState = new HashMap<>();
 
-    public DialogueTask(long id, dev.ftb.mods.ftbquests.quest.Quest quest) {
+    public DialogueTask(long id, Quest quest) {
         super(id, quest);
     }
 
@@ -84,14 +74,14 @@ public final class DialogueTask extends Task {
     }
 
     @Override
-    public void submitTask(TeamData teamData, ServerPlayer player, net.minecraft.world.item.ItemStack craftedItem) {
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
         if (!BlabberCompat.isLoaded()) return;
         if (dialogueId.isBlank()) return;
 
         UUID key = player.getUUID();
-        ResourceLocation target = parse(dialogueId);
+        ResourceLocation target = DialogueTask.parse(dialogueId);
         if (target == null) return;
 
         @Nullable ResourceLocation currentId = BlabberCompat.getCurrentDialogueId(player);
@@ -115,7 +105,7 @@ public final class DialogueTask extends Task {
         super.fillConfigGroup(config);
         config.addString("dialogue_id", dialogueId, v -> dialogueId = v.trim(), "")
                 .setNameKey("morequesttypes.task.dialogue.dialogue_id");
-        config.addList("end_states", endStates, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
+        config.addList("end_states", endStates, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.dialogue.end_states");
     }
 
@@ -136,7 +126,7 @@ public final class DialogueTask extends Task {
         dialogueId = nbt.getString("dialogue_id");
 
         endStates.clear();
-        ListTag list = nbt.getList("end_states", net.minecraft.nbt.Tag.TAG_STRING);
+        ListTag list = nbt.getList("end_states", Tag.TAG_STRING);
         if (!list.isEmpty()) {
             for (int i = 0; i < list.size(); i++) endStates.add(list.getString(i));
         } else {

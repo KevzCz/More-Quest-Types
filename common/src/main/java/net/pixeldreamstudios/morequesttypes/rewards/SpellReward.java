@@ -5,12 +5,14 @@ import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
 import dev.ftb.mods.ftbquests.quest.Quest;
+import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -100,7 +102,7 @@ public final class SpellReward extends Reward {
         try {
             var player = Minecraft.getInstance().player;
             if (player != null) {
-                var teamData = dev.ftb.mods.ftbquests.quest.TeamData.get(player);
+                var teamData = TeamData.get(player);
                 boolean isClaimed = teamData.isRewardClaimed(player.getUUID(), this);
 
                 Component status = isClaimed
@@ -123,8 +125,8 @@ public final class SpellReward extends Reward {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
         try {
-            Level level = net.minecraft.client.Minecraft.getInstance().level;
-            java.util.List<String> keys;
+            Level level = Minecraft.getInstance().level;
+            List<String> keys;
             if (SpellEngineCompat.isLoaded() && level != null) {
                 var all = SpellEngineCompat.getAllSpells(level);
                 keys = all.stream().map(Objects::toString).sorted().toList();
@@ -151,14 +153,14 @@ public final class SpellReward extends Reward {
     }
 
     @Override
-    public void writeData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         if (spellId != null) nbt.putString("spell", spellId.toString());
         if (locked) nbt.putBoolean("locked", true);
     }
 
     @Override
-    public void readData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         if (nbt.contains("spell")) spellId = ResourceLocation.tryParse(nbt.getString("spell"));
         else spellId = null;

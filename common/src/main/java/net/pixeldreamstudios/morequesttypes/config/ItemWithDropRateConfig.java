@@ -4,6 +4,7 @@ import dev.ftb.mods.ftblibrary.config.ConfigCallback;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.ConfigValue;
 import dev.ftb.mods.ftblibrary.config.DoubleConfig;
+import dev.ftb.mods.ftblibrary.config.ItemStackConfig;
 import dev.ftb.mods.ftblibrary.config.ui.EditConfigScreen;
 import dev.ftb.mods.ftblibrary.config.ui.resource.SelectItemStackScreen;
 import dev.ftb.mods.ftblibrary.icon.Color4I;
@@ -11,6 +12,7 @@ import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.ItemIcon;
 import dev.ftb.mods.ftblibrary.ui.Widget;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
+import dev.ftb.mods.ftblibrary.util.TooltipList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
@@ -50,7 +52,7 @@ public class ItemWithDropRateConfig extends ConfigValue<ItemWithDropRateConfig.I
                 var level = Minecraft.getInstance().level;
                 if (level != null) {
                     Tag fullTag = stack.save(level.registryAccess());
-                    return fullTag.toString() + "|" + dropRate;
+                    return fullTag + "|" + dropRate;
                 }
             } catch (Exception e) {
             }
@@ -185,7 +187,7 @@ public class ItemWithDropRateConfig extends ConfigValue<ItemWithDropRateConfig.I
         ItemDrop current = getValue();
 
         if (button == MouseButton.LEFT) {
-            var tempConfig = new dev.ftb.mods.ftblibrary.config.ItemStackConfig(false, true);
+            var tempConfig = new ItemStackConfig(false, true);
             tempConfig.setValue(current != null ? current.stack : ItemStack.EMPTY);
 
             new SelectItemStackScreen(tempConfig, accepted -> {
@@ -201,11 +203,7 @@ public class ItemWithDropRateConfig extends ConfigValue<ItemWithDropRateConfig.I
                     double currentRate = (current != null) ? current.dropRate : 1.0;
 
                     ConfigGroup tempGroup = new ConfigGroup("drop_rate_config", accepted2 -> {
-                        if (accepted2) {
-                            callback.save(true);
-                        } else {
-                            callback.save(false);
-                        }
+                        callback.save(accepted2);
                     });
 
                     DoubleConfig dropRateConfig = tempGroup.addDouble("drop_rate", currentRate,
@@ -241,7 +239,7 @@ public class ItemWithDropRateConfig extends ConfigValue<ItemWithDropRateConfig.I
     }
 
     @Override
-    public void addInfo(dev.ftb.mods.ftblibrary.util.TooltipList list) {
+    public void addInfo(TooltipList list) {
         super.addInfo(list);
         list.add(Component.translatable("morequesttypes.config.item_with_drop_rate.left_click"));
         list.add(Component.translatable("morequesttypes.config.item_with_drop_rate.right_click"));

@@ -11,6 +11,7 @@ import net.minecraft.nbt.*;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.pixeldreamstudios.morequesttypes.config.NbtPathRewardConfig;
@@ -133,8 +134,8 @@ public final class NbtPathReward extends Reward {
             ItemStack newStack = ItemStack.parseOptional(player.registryAccess(), fullTag);
 
             switch (targetSlot) {
-                case MAINHAND -> player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, newStack);
-                case OFFHAND -> player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, newStack);
+                case MAINHAND -> player.setItemInHand(InteractionHand.MAIN_HAND, newStack);
+                case OFFHAND -> player.setItemInHand(InteractionHand.OFF_HAND, newStack);
                 case HEAD -> player.setItemSlot(EquipmentSlot.HEAD, newStack);
                 case CHEST -> player.setItemSlot(EquipmentSlot.CHEST, newStack);
                 case LEGS -> player.setItemSlot(EquipmentSlot.LEGS, newStack);

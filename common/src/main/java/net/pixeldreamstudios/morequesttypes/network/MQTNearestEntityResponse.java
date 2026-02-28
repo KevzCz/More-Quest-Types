@@ -1,6 +1,9 @@
 package net.pixeldreamstudios.morequesttypes.network;
 
 import dev.architectury.networking.NetworkManager;
+import dev.ftb.mods.ftbquests.client.ClientQuestFile;
+import dev.ftb.mods.ftbquests.client.PinnedQuestsTracker;
+import dev.ftb.mods.ftbquests.quest.task.Task;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -32,13 +35,13 @@ public record MQTNearestEntityResponse(long taskId, double meters) implements Cu
             FindEntityTask.updateClientNearest(
                     self.taskId(), self.meters(), mc.level.getGameTime()
             );
-            var cfile = dev.ftb.mods.ftbquests.client.ClientQuestFile.INSTANCE;
+            var cfile = ClientQuestFile.INSTANCE;
             var obj   = cfile.get(self.taskId());
-            if (obj instanceof dev.ftb.mods.ftbquests.quest.task.Task t) {
+            if (obj instanceof Task t) {
                 t.clearCachedData();
             }
 
-            dev.ftb.mods.ftbquests.client.PinnedQuestsTracker.INSTANCE.refresh();
+            PinnedQuestsTracker.INSTANCE.refresh();
 
             cfile.refreshGui();
         });

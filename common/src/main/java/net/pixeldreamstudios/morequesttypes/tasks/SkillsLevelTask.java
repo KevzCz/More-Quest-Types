@@ -1,30 +1,29 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
-import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftblibrary.icon.Icon;
-import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.ftb.mods.ftbquests.quest.Quest;
-import dev.ftb.mods.ftbquests.quest.TeamData;
-import dev.ftb.mods.ftbquests.quest.task.Task;
-import dev.ftb.mods.ftbquests.quest.task.TaskType;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
-import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
-import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
-import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
+import dev.ftb.mods.ftblibrary.config.*;
+import dev.ftb.mods.ftblibrary.icon.*;
+import dev.ftb.mods.ftblibrary.util.*;
+import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.task.*;
+import net.fabricmc.api.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.*;
+import net.minecraft.resources.*;
+import net.minecraft.server.level.*;
+import net.minecraft.world.item.*;
+import net.pixeldreamstudios.morequesttypes.compat.*;
+import net.pixeldreamstudios.morequesttypes.mixin.accessor.ClientSkillScreenDataAccessor;
+import net.pixeldreamstudios.morequesttypes.mixin.accessor.SkillsClientModAccessor;
+import net.pixeldreamstudios.morequesttypes.util.*;
+import net.puffish.skillsmod.client.SkillsClientMod;
+import net.puffish.skillsmod.client.config.ClientIconConfig.ItemIconConfig;
+import net.puffish.skillsmod.client.config.ClientIconConfig.TextureIconConfig;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class SkillsLevelTask extends Task {
     public enum Mode { TOTAL_LEVEL, CATEGORY_LEVEL }
@@ -82,7 +81,7 @@ public class SkillsLevelTask extends Task {
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getButtonText() {
-        var mc = net.minecraft.client.Minecraft.getInstance();
+        var mc = Minecraft.getInstance();
         var player = mc.player;
         if (player == null) return Component.literal("?  / " + getMaxProgress());
 
@@ -109,19 +108,19 @@ public class SkillsLevelTask extends Task {
                 String catIdStr = iconData.substring(7);
                 ResourceLocation catId = ResourceLocation.tryParse(catIdStr);
                 if (catId != null && SkillsCompat.isLoaded()) {
-                    var clientMod = net.puffish.skillsmod.client.SkillsClientMod.getInstance();
-                    var clientModAccessor = (net.pixeldreamstudios.morequesttypes.mixin.accessor.SkillsClientModAccessor) clientMod;
+                    var clientMod = SkillsClientMod.getInstance();
+                    var clientModAccessor = (SkillsClientModAccessor) clientMod;
                     var screenData = clientModAccessor.mqt$getScreenData();
-                    var screenDataAccessor = (net.pixeldreamstudios.morequesttypes.mixin.accessor.ClientSkillScreenDataAccessor) screenData;
+                    var screenDataAccessor = (ClientSkillScreenDataAccessor) screenData;
                     var categoryData = screenDataAccessor.mqt$getCategory(catId);
 
                     if (categoryData.isPresent()) {
                         var config = categoryData.get().getConfig();
                         var iconConfig = config.icon();
 
-                        if (iconConfig instanceof net.puffish.skillsmod.client.config.ClientIconConfig.ItemIconConfig itemIcon) {
-                            return dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(itemIcon.item());
-                        } else if (iconConfig instanceof net.puffish.skillsmod.client.config.ClientIconConfig.TextureIconConfig textureIcon) {
+                        if (iconConfig instanceof ItemIconConfig itemIcon) {
+                            return ItemIcon.getItemIcon(itemIcon.item());
+                        } else if (iconConfig instanceof TextureIconConfig textureIcon) {
                             return Icon.getIcon(textureIcon.texture());
                         }
                     }
@@ -196,7 +195,7 @@ public class SkillsLevelTask extends Task {
     }
 
     @Override
-    public void writeData(net.minecraft.nbt.CompoundTag nbt, HolderLookup.Provider provider) {
+    public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         nbt.putString("mode", mode.name());
         nbt.putString("comparison_mode", comparisonMode.name());
@@ -206,7 +205,7 @@ public class SkillsLevelTask extends Task {
     }
 
     @Override
-    public void readData(net.minecraft.nbt.CompoundTag nbt, HolderLookup.Provider provider) {
+    public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         if (nbt.contains("mode")) {
             try { mode = Mode.valueOf(nbt.getString("mode")); }
@@ -231,7 +230,7 @@ public class SkillsLevelTask extends Task {
     }
 
     @Override
-    public void writeNetData(net.minecraft.network.RegistryFriendlyByteBuf buf) {
+    public void writeNetData(RegistryFriendlyByteBuf buf) {
         super.writeNetData(buf);
         buf.writeEnum(mode);
         buf.writeEnum(comparisonMode);
@@ -241,7 +240,7 @@ public class SkillsLevelTask extends Task {
     }
 
     @Override
-    public void readNetData(net.minecraft.network.RegistryFriendlyByteBuf buf) {
+    public void readNetData(RegistryFriendlyByteBuf buf) {
         super.readNetData(buf);
         mode = buf.readEnum(Mode.class);
         comparisonMode = buf.readEnum(ComparisonMode.class);

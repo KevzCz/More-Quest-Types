@@ -1,5 +1,7 @@
 package net.pixeldreamstudios.morequesttypes.compat.neoforge;
 
+import de.markusbordihn.easynpc.entity.easynpc.EasyNPC;
+import de.markusbordihn.easynpc.entity.easynpc.data.DialogDataCapable;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.fml.ModList;
@@ -16,8 +18,8 @@ public final class EasyNPCCompatImpl {
 
     public static void startDialogueByLabel(ServerPlayer player, Entity npc, String dialogLabel) {
         if (!isLoaded()) return;
-        if (npc instanceof de.markusbordihn.easynpc.entity.easynpc.EasyNPC<?> easyNPC
-                && easyNPC instanceof de.markusbordihn.easynpc.entity.easynpc.data.DialogDataCapable<?> dialogCapable) {
+        if (npc instanceof EasyNPC<?> easyNPC
+                && easyNPC instanceof DialogDataCapable<?> dialogCapable) {
 
             UUID dialogId = dialogCapable.getDialogId(dialogLabel);
             if (dialogId != null) {
@@ -28,8 +30,8 @@ public final class EasyNPCCompatImpl {
 
     public static boolean hasDialogueByLabel(Entity entity, String dialogLabel) {
         if (!isLoaded()) return false;
-        if (entity instanceof de.markusbordihn.easynpc.entity.easynpc.EasyNPC<?> easyNPC
-                && easyNPC instanceof de.markusbordihn.easynpc.entity.easynpc.data.DialogDataCapable<?> dialogCapable) {
+        if (entity instanceof EasyNPC<?> easyNPC
+                && easyNPC instanceof DialogDataCapable<?> dialogCapable) {
             return dialogCapable.hasDialog(dialogLabel);
         }
         return false;

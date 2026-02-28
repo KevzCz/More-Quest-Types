@@ -12,9 +12,14 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.ftb.mods.ftblibrary.config.Tristate;
 import dev.ftb.mods.ftblibrary.util.NetworkHelper;
 import dev.ftb.mods.ftbquests.net.CreateObjectResponseMessage;
+import dev.ftb.mods.ftbquests.net.EditObjectResponseMessage;
+import dev.ftb.mods.ftbquests.net.SyncTranslationMessageToClient;
 import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.task.AdvancementTask;
+import dev.ftb.mods.ftbquests.quest.task.ItemTask;
 import dev.ftb.mods.ftbquests.quest.task.KillTask;
 import dev.ftb.mods.ftbquests.quest.task.Task;
+import dev.ftb.mods.ftbquests.quest.translation.TranslationKey;
 import dev.ftb.mods.ftbquests.util.ProgressChange;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -36,6 +41,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.Block;
 import net.pixeldreamstudios.morequesttypes.api.IQuestExtension;
 import net.pixeldreamstudios.morequesttypes.network.LookAtMessage;
@@ -178,7 +184,7 @@ public final class MoreQuestTypesCommands {
         nbt.putDouble("QuestX", quest.getX());
         nbt.putDouble("QuestY", quest.getY());
 
-        dev.ftb.mods.ftblibrary.util.NetworkHelper.sendTo(
+        NetworkHelper.sendTo(
                 player,
                 new LookAtMessage(nbt)
         );
@@ -204,7 +210,7 @@ public final class MoreQuestTypesCommands {
         nbt.putDouble("QuestX", x);
         nbt.putDouble("QuestY", y);
 
-        dev.ftb.mods.ftblibrary.util.NetworkHelper.sendTo(
+        NetworkHelper.sendTo(
                 player,
                 new LookAtMessage(nbt)
         );
@@ -358,8 +364,8 @@ public final class MoreQuestTypesCommands {
 
             Quest quest = createQuest(file, chapter, col, row, "", source);
 
-            dev.ftb.mods.ftbquests.quest.task.AdvancementTask advTask =
-                    new dev.ftb.mods.ftbquests.quest.task.AdvancementTask(file.newID(), quest);
+            AdvancementTask advTask =
+                    new AdvancementTask(file.newID(), quest);
             advTask.onCreated();
 
             CompoundTag nbt = new CompoundTag();
@@ -540,8 +546,8 @@ public final class MoreQuestTypesCommands {
 
                 Quest quest = createQuest(file, chapter, col, row, "", source);
 
-                dev.ftb.mods.ftbquests.quest.task.AdvancementTask advTask =
-                        new dev.ftb.mods.ftbquests.quest.task.AdvancementTask(file.newID(), quest);
+                AdvancementTask advTask =
+                        new AdvancementTask(file.newID(), quest);
                 advTask.onCreated();
 
                 CompoundTag nbt = new CompoundTag();
@@ -713,11 +719,11 @@ public final class MoreQuestTypesCommands {
         NetworkHelper.sendToAll(source.getServer(), CreateObjectResponseMessage.create(chapter, null));
 
         String locale = file.getLocale();
-        dev.ftb.mods.ftbquests.net.SyncTranslationMessageToClient syncMsg =
-                dev.ftb.mods.ftbquests.net.SyncTranslationMessageToClient.create(
+        SyncTranslationMessageToClient syncMsg =
+                SyncTranslationMessageToClient.create(
                         chapter,
                         locale,
-                        dev.ftb.mods.ftbquests.quest.translation.TranslationKey.TITLE,
+                        TranslationKey.TITLE,
                         title
                 );
         NetworkHelper.sendToAll(source.getServer(), syncMsg);
@@ -728,8 +734,8 @@ public final class MoreQuestTypesCommands {
     private static Quest createQuest(ServerQuestFile file, Chapter chapter, int col, int row, String subtitle, CommandSourceStack source) {
         Quest quest = new Quest(file.newID(), chapter);
         quest.onCreated();
-        quest.setX((double) col);
-        quest.setY((double) row);
+        quest.setX(col);
+        quest.setY(row);
         if (!subtitle.isEmpty()) {
             quest.setRawSubtitle(subtitle);
         }
@@ -743,7 +749,7 @@ public final class MoreQuestTypesCommands {
 
         switch (taskType.toLowerCase()) {
             case "item" -> {
-                dev.ftb.mods.ftbquests.quest.task.ItemTask itemTask = new dev.ftb.mods.ftbquests.quest.task.ItemTask(file.newID(), quest);
+                ItemTask itemTask = new ItemTask(file.newID(), quest);
                 itemTask.onCreated();
                 itemTask.setStackAndCount(stack, 1);
                 itemTask.setConsumeItems(Tristate.FALSE);
@@ -900,7 +906,7 @@ public final class MoreQuestTypesCommands {
             throw NO_OBJECT.create(questId);
         }
 
-        heldItem.update(DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.EMPTY,
+        heldItem.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
                 data -> data.update(tag -> tag.putLong("LinkedQuestId", quest.id)));
 
         String title = quest.getRawTitle().isEmpty() ? quest.getCodeString() : quest.getRawTitle();
@@ -979,9 +985,9 @@ public final class MoreQuestTypesCommands {
             throw NO_OBJECT.create(chapterId);
         }
 
-        dev.ftb.mods.ftblibrary.util.NetworkHelper.sendTo(
+        NetworkHelper.sendTo(
                 player,
-                new dev.ftb.mods.ftbquests.net.EditObjectResponseMessage(chapter)
+                new EditObjectResponseMessage(chapter)
         );
 
         String title = chapter.getRawTitle().isEmpty() ? chapter.getCodeString() : chapter.getRawTitle();

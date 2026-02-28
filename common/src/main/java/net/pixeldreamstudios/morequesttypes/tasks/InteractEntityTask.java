@@ -13,9 +13,11 @@ import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import dev.ftb.mods.ftbquests.client.FTBQuestsClient;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
+import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -47,6 +49,10 @@ import net.pixeldreamstudios.morequesttypes.compat.DungeonDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.event.InteractEventBuffer;
 import net.pixeldreamstudios.morequesttypes.event.InteractEventBuffer.Interaction;
+import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
+import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
+import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +60,7 @@ import org.spongepowered.asm.mixin.Unique;
 
 import java.util.*;
 
-public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
+public class InteractEntityTask extends Task {
     public enum HandMode { ANY, MAIN_HAND, OFF_HAND }
     private static final ResourceLocation ZOMBIE = ResourceLocation.withDefaultNamespace("zombie");
     private static NameMap<ResourceLocation> ENTITY_NAME_MAP;
@@ -396,7 +402,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         }
 
         if (DynamicDifficultyCompat.isLoaded()) {
-            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension) this;
             if (ext.shouldCheckDynamicDifficultyLevel()) {
                 String levelReq = mqt$formatLevelRequirement(
                         ext.getDynamicDifficultyComparison(),
@@ -409,7 +415,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         }
 
         if (DungeonDifficultyCompat.isLoaded()) {
-            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension) this;
             if (dungeonExt.shouldCheckDungeonDifficultyLevel()) {
                 String difficultyReq = mqt$formatLevelRequirement(
                         dungeonExt.getDungeonDifficultyComparison(),
@@ -502,23 +508,23 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-           net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
-                    new net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest()
+           NetworkHelper.sendToServer(
+                    new MQTStructuresRequest()
             );
         }
     }
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
-                    new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest()
+            NetworkHelper.sendToServer(
+                    new MQTWorldsRequest()
             );
         }
     }
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
-                    new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest()
+            NetworkHelper.sendToServer(
+                    new MQTBiomesRequest()
             );
         }
     }
@@ -559,7 +565,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
             if (!isInsideBiome(level, e.blockPosition())) return true;
         }
         if (DynamicDifficultyCompat.isLoaded()) {
-            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension) this;
             if (ext.shouldCheckDynamicDifficultyLevel() && DynamicDifficultyCompat.canHaveLevel(e)) {
                 int mobLevel = DynamicDifficultyCompat.getLevel(e);
                 if (! ComparisonManager.compare(mobLevel,
@@ -572,7 +578,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         }
 
         if (DungeonDifficultyCompat.isLoaded()) {
-            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension) this;
             if (dungeonExt.shouldCheckDungeonDifficultyLevel() && DungeonDifficultyCompat.canHaveLevel(e)) {
                 int dungeonLevel = DungeonDifficultyCompat.getLevel(e);
                 if (!ComparisonManager.compare(dungeonLevel,
@@ -586,7 +592,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         return false;
     }
 
-    private boolean isInsideStructureOrTag(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean isInsideStructureOrTag(ServerLevel level, BlockPos pos) {
         StructureManager mgr = level.structureManager();
         return structure.map(
                 key -> {
@@ -615,7 +621,7 @@ public class InteractEntityTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         String cur = level.dimension().location().toString();
         return dimension.equals(cur);
     }
-    private boolean isInsideBiome(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean isInsideBiome(ServerLevel level, BlockPos pos) {
         if (biome == null || biome.isEmpty()) return true;
         Holder<Biome> h = level.getBiome(pos);
         if (biome.startsWith("#")) {

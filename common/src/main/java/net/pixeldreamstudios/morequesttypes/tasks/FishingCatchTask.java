@@ -2,10 +2,15 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.config.StringConfig;
+import dev.ftb.mods.ftblibrary.icon.Icon;
+import dev.ftb.mods.ftblibrary.icon.IconAnimation;
+import dev.ftb.mods.ftblibrary.icon.ItemIcon;
 import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import dev.ftb.mods.ftbquests.integration.item_filtering.ItemMatchingSystem;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
+import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -15,26 +20,33 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.pixeldreamstudios.morequesttypes.event.FishingCatchEventBuffer;
+import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
+import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public final class FishingCatchTask extends dev.ftb.mods.ftbquests.quest.task.Task {
+public final class FishingCatchTask extends Task {
     private long value = 1;
     private ItemStack itemFilter = ItemStack.EMPTY;
     private String itemTagStr = "";
-    private transient TagKey<net.minecraft.world.item.Item> itemTag;
+    private transient TagKey<Item> itemTag;
     private ItemMatchingSystem.ComponentMatchType matchComponents = ItemMatchingSystem.ComponentMatchType.NONE;
     private final List<String> nbtFilters = new ArrayList<>();
     private String dimension = "";
@@ -62,7 +74,7 @@ public final class FishingCatchTask extends dev.ftb.mods.ftbquests.quest.task.Ta
     }
 
     @Override
-    public void submitTask(TeamData teamData, net.minecraft.server.level.ServerPlayer player, ItemStack craftedItem) {
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
@@ -85,7 +97,7 @@ public final class FishingCatchTask extends dev.ftb.mods.ftbquests.quest.task.Ta
         teamData.setProgress(this, next);
     }
 
-    private boolean matches(net.minecraft.server.level.ServerPlayer player, FishingCatchEventBuffer.Catch caught) {
+    private boolean matches(ServerPlayer player, FishingCatchEventBuffer.Catch caught) {
         if (!insideLocationFilters(player.serverLevel(), player.blockPosition())) return false;
         return matchesItem(caught.caughtItem(), player.getUUID(), player.getGameProfile().getName(), player.registryAccess());
     }
@@ -103,9 +115,7 @@ public final class FishingCatchTask extends dev.ftb.mods.ftbquests.quest.task.Ta
 
         if (!nbtFilters.isEmpty()) {
             List<String> processed = processPlaceholders(nbtFilters, playerUuid, playerName);
-            if (!checkNbtFilters(stack, processed, provider)) {
-                return false;
-            }
+            return checkNbtFilters(stack, processed, provider);
         }
 
         return true;
@@ -191,13 +201,11 @@ public final class FishingCatchTask extends dev.ftb.mods.ftbquests.quest.task.Ta
     }
 
     private boolean tagsEqual(Tag a, Tag b) {
-        if (a instanceof CompoundTag && b instanceof CompoundTag) {
-            CompoundTag ca = (CompoundTag) a;
-            CompoundTag cb = (CompoundTag) b;
+        if (a instanceof CompoundTag ca && b instanceof CompoundTag cb) {
             if (cb.isEmpty()) return true;
             return containsPartialNbt(ca, cb);
         }
-        return net.minecraft.nbt.NbtUtils.compareNbt(a, b, true);
+        return NbtUtils.compareNbt(a, b, true);
     }
 
     private boolean insideLocationFilters(ServerLevel level, BlockPos pos) {
@@ -235,16 +243,16 @@ public final class FishingCatchTask extends dev.ftb.mods.ftbquests.quest.task.Ta
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
-                    new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest()
+            NetworkHelper.sendToServer(
+                    new MQTWorldsRequest()
             );
         }
     }
 
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
-                    new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest()
+            NetworkHelper.sendToServer(
+                    new MQTBiomesRequest()
             );
         }
     }
@@ -284,7 +292,7 @@ public final class FishingCatchTask extends dev.ftb.mods.ftbquests.quest.task.Ta
         config.addEnum("match_components", matchComponents, v -> matchComponents = v, COMP_MATCH)
                 .setNameKey("morequesttypes.task.match_components");
 
-        config.addList("nbt_filters", nbtFilters, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
+        config.addList("nbt_filters", nbtFilters, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.nbt_filters");
 
         maybeRequestWorldSync();
@@ -346,7 +354,7 @@ public final class FishingCatchTask extends dev.ftb.mods.ftbquests.quest.task.Ta
         if (!itemFilter.isEmpty()) itemFilter.setCount(1);
         itemTagStr = nbt.getString("item_tag");
         resolveItemTag();
-        matchComponents = (ItemMatchingSystem.ComponentMatchType) ItemMatchingSystem.ComponentMatchType.NAME_MAP.get(nbt.getString("match_components"));
+        matchComponents = ItemMatchingSystem.ComponentMatchType.NAME_MAP.get(nbt.getString("match_components"));
         nbtFilters.clear();
         ListTag list = nbt.getList("nbt_filters", Tag.TAG_STRING);
         for (int i = 0; i < list.size(); i++) nbtFilters.add(list.getString(i));
@@ -385,7 +393,7 @@ public final class FishingCatchTask extends dev.ftb.mods.ftbquests.quest.task.Ta
 
     @Environment(EnvType.CLIENT)
     @Override
-    public net.minecraft.network.chat.MutableComponent getAltTitle() {
+    public MutableComponent getAltTitle() {
         Component target = itemFilter.isEmpty()
                 ? Component.literal(itemTagStr.isBlank() ? "Any Fish" : itemTagStr)
                 : itemFilter.getHoverName();
@@ -394,42 +402,42 @@ public final class FishingCatchTask extends dev.ftb.mods.ftbquests.quest.task.Ta
 
     @Environment(EnvType.CLIENT)
     @Override
-    public dev.ftb.mods.ftblibrary.icon.Icon getAltIcon() {
-        java.util.List<dev.ftb.mods.ftblibrary.icon.Icon> icons = new java.util.ArrayList<>();
+    public Icon getAltIcon() {
+        List<Icon> icons = new ArrayList<>();
 
-        for (net.minecraft.world.item.ItemStack stack : getValidDisplayItems()) {
-            net.minecraft.world.item.ItemStack copy = stack.copy();
+        for (ItemStack stack : getValidDisplayItems()) {
+            ItemStack copy = stack.copy();
             copy.setCount(1);
-            dev.ftb.mods.ftblibrary.icon.Icon icon = dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(copy);
+            Icon icon = ItemIcon.getItemIcon(copy);
             if (!icon.isEmpty()) {
                 icons.add(icon);
             }
         }
 
         if (icons.isEmpty()) {
-            return dev.ftb.mods.ftblibrary.icon.Icon.getIcon("minecraft:item/fishing_rod");
+            return Icon.getIcon("minecraft:item/fishing_rod");
         }
 
-        return dev.ftb.mods.ftblibrary.icon.IconAnimation.fromList(icons, false);
+        return IconAnimation.fromList(icons, false);
     }
 
     @Environment(EnvType.CLIENT)
-    private java.util.List<net.minecraft.world.item.ItemStack> getValidDisplayItems() {
-        java.util.List<net.minecraft.world.item.ItemStack> out = new java.util.ArrayList<>();
+    private List<ItemStack> getValidDisplayItems() {
+        List<ItemStack> out = new ArrayList<>();
 
         if (!itemFilter.isEmpty()) {
-            net.minecraft.world.item.ItemStack one = itemFilter.copy();
+            ItemStack one = itemFilter.copy();
             one.setCount(1);
             out.add(one);
             return out;
         }
 
         if (itemTag != null) {
-            net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(itemTag).ifPresent(tagSet -> {
+            BuiltInRegistries.ITEM.getTag(itemTag).ifPresent(tagSet -> {
                 final int MAX = 16;
                 int i = 0;
                 for (var holder : tagSet) {
-                    out.add(new net.minecraft.world.item.ItemStack(holder.value()));
+                    out.add(new ItemStack(holder.value()));
                     if (++i >= MAX) break;
                 }
             });

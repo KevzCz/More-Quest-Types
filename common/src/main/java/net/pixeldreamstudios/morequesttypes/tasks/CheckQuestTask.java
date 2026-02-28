@@ -2,6 +2,7 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.config.StringConfig;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftbquests.quest.BaseQuestFile;
@@ -15,15 +16,19 @@ import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task {
+public final class CheckQuestTask extends Task {
     public enum Mode { ANY, ALL }
     private final List<String> selectors = new ArrayList<>();
     private Mode mode = Mode.ANY;
@@ -39,7 +44,7 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
     @Override public boolean hideProgressNumbers() { return false; }
     @Override public int autoSubmitOnPlayerTick() { return 1; }
     @Override
-    public void submitTask(TeamData teamData, ServerPlayer player, net.minecraft.world.item.ItemStack craftedItem) {
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
@@ -171,7 +176,7 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
         config.addLong("required", requiredCount, v -> requiredCount = Math.max(0, v), 0L, 0L, Long.MAX_VALUE)
                 .setNameKey("morequesttypes.task.check_quest.required");
 
-        config.addList("targets", selectors, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
+        config.addList("targets", selectors, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.check_quest.targets");
     }
 
@@ -180,8 +185,8 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
         super.writeData(nbt, provider);
         nbt.putString("mode", mode.name());
         nbt.putLong("required", requiredCount);
-        var list = new net.minecraft.nbt.ListTag();
-        for (String s : selectors) list.add(net.minecraft.nbt.StringTag.valueOf(s));
+        var list = new ListTag();
+        for (String s : selectors) list.add(StringTag.valueOf(s));
         nbt.put("targets", list);
     }
 
@@ -192,7 +197,7 @@ public final class CheckQuestTask extends dev.ftb.mods.ftbquests.quest.task.Task
         requiredCount = Math.max(0, nbt.getLong("required"));
 
         selectors.clear();
-        var list = nbt.getList("targets", net.minecraft.nbt.Tag.TAG_STRING);
+        var list = nbt.getList("targets", Tag.TAG_STRING);
         for (int i = 0; i < list.size(); i++) selectors.add(list.getString(i));
 
         cachedTargetIds = Collections.emptyList();

@@ -1,37 +1,26 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftblibrary.icon.Icon;
-import dev.ftb.mods.ftblibrary.icon.ImageIcon;
-import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.ftb.mods.ftbquests.quest.Quest;
-import dev.ftb.mods.ftbquests.quest.TeamData;
-import dev.ftb.mods.ftbquests.quest.task.Task;
-import dev.ftb.mods.ftbquests.quest.task.TaskType;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.Holder;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.item.ItemStack;
+import com.mojang.blaze3d.systems.*;
+import dev.ftb.mods.ftblibrary.config.*;
+import dev.ftb.mods.ftblibrary.icon.*;
+import dev.ftb.mods.ftblibrary.util.*;
+import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.task.*;
+import net.fabricmc.api.*;
+import net.minecraft.client.*;
+import net.minecraft.client.gui.*;
+import net.minecraft.client.renderer.texture.*;
+import net.minecraft.core.*;
+import net.minecraft.core.registries.*;
+import net.minecraft.nbt.*;
+import net.minecraft.network.*;
+import net.minecraft.network.chat.*;
+import net.minecraft.resources.*;
+import net.minecraft.server.level.*;
+import net.minecraft.world.effect.*;
+import net.minecraft.world.item.*;
 
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 
 public final class PotionEffectTask extends Task {
     private ResourceLocation effectId = ResourceLocation.withDefaultNamespace("regeneration");
@@ -66,7 +55,7 @@ public final class PotionEffectTask extends Task {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
-        Holder<MobEffect> holder = resolveEffectHolder(player.registryAccess(), effectId);
+        Holder<MobEffect> holder = PotionEffectTask.resolveEffectHolder(player.registryAccess(), effectId);
         if (holder == null) return;
 
         Collection<ServerPlayer> online = teamData.getOnlineMembers();
@@ -95,12 +84,13 @@ public final class PotionEffectTask extends Task {
         try {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level != null && effectId != null) {
-                Holder<MobEffect> holder = resolveEffectHolder(mc.level.registryAccess(), effectId);
+                Holder<MobEffect> holder = PotionEffectTask.resolveEffectHolder(mc.level.registryAccess(), effectId);
                 if (holder != null && holder.value() != null) {
                     return holder.value().getDisplayName();
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
         return Component.literal(effectId != null ? effectId.toString() : "?");
     }
 
@@ -127,18 +117,20 @@ public final class PotionEffectTask extends Task {
             if (effectId != null) {
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.level != null) {
-                    Holder<MobEffect> holder = resolveEffectHolder(mc.level.registryAccess(), effectId);
+                    Holder<MobEffect> holder = PotionEffectTask.resolveEffectHolder(mc.level.registryAccess(), effectId);
                     if (holder != null) {
                         try {
                             var sprite = mc.getMobEffectTextures().get(holder);
                             if (sprite != null) {
                                 return new MobEffectSpriteIcon(sprite);
                             }
-                        } catch (Throwable ignored) {}
+                        } catch (Throwable ignored) {
+                        }
                     }
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         return super.getAltIcon();
     }
@@ -183,14 +175,15 @@ public final class PotionEffectTask extends Task {
     }
 
     @Override
-    public void writeData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         if (effectId != null) nbt.putString("effect", effectId.toString());
         nbt.putInt("amplifier", amplifier);
     }
 
+
     @Override
-    public void readData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         effectId = ResourceLocation.tryParse(nbt.getString("effect"));
         amplifier = nbt.contains("amplifier") ? nbt.getInt("amplifier") : -1;

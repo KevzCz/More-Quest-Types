@@ -4,6 +4,7 @@ import dev.ftb.mods.ftblibrary.config.ConfigCallback;
 import dev.ftb.mods.ftblibrary.icon.Color4I;
 import dev.ftb.mods.ftblibrary.ui.Panel;
 import dev.ftb.mods.ftblibrary.ui.SimpleTextButton;
+import dev.ftb.mods.ftblibrary.ui.TextBox;
 import dev.ftb.mods.ftblibrary.ui.Theme;
 import dev.ftb.mods.ftblibrary.ui.Widget;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
@@ -44,7 +45,7 @@ public class QuestSearchResultsScreen<T extends QuestObjectBase> extends SelectQ
     }
 
     private void clearSearchBox(Widget widget) {
-        if (widget instanceof dev.ftb.mods.ftblibrary.ui.TextBox textBox) {
+        if (widget instanceof TextBox textBox) {
             textBox.setText("");
             return;
         }

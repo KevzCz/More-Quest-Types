@@ -11,14 +11,17 @@ import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.ItemIcon;
 import dev.ftb.mods.ftblibrary.ui.Widget;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
+import dev.ftb.mods.ftblibrary.util.TooltipList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.OptionalLong;
@@ -28,8 +31,13 @@ import java.util.function.Consumer;
 public class BlockStackConfig extends ResourceConfigValue<ItemStack> {
 
     private SelectableResource<ItemStack> resource = SelectableResource.item(ItemStack.EMPTY);
+    private Consumer<String> blockIdSetter = null;
 
     public BlockStackConfig() {
+    }
+
+    public BlockStackConfig(Consumer<String> blockIdSetter) {
+        this.blockIdSetter = blockIdSetter;
     }
 
     @Override
@@ -118,16 +126,12 @@ public class BlockStackConfig extends ResourceConfigValue<ItemStack> {
     private void openManualInput(ConfigCallback callback) {
         String currentId = "";
         if (!getValue().isEmpty()) {
-            ResourceLocation id = BuiltInRegistries.ITEM.getKey(getValue().getItem());
-            currentId = id.toString();
+            ResourceLocation resLoc = BuiltInRegistries.ITEM.getKey(getValue().getItem());
+            currentId = resLoc.toString();
         }
 
         ConfigGroup manualGroup = new ConfigGroup("manual_block_input", accepted -> {
-            if (accepted) {
-                callback.save(true);
-            } else {
-                callback.save(false);
-            }
+            callback.save(accepted);
         });
 
         manualGroup.addString("block_id", currentId, this::trySetBlockFromId, currentId)
@@ -136,30 +140,40 @@ public class BlockStackConfig extends ResourceConfigValue<ItemStack> {
         new EditConfigScreen(manualGroup).openGui();
     }
 
-    private void trySetBlockFromId(String blockId) {
-        if (blockId == null || blockId.trim().isEmpty()) {
+    private void trySetBlockFromId(String inputBlockId) {
+        if (inputBlockId == null || inputBlockId.trim().isEmpty()) {
             setValue(ItemStack.EMPTY);
             setResource(SelectableResource.item(ItemStack.EMPTY));
+            if (blockIdSetter != null) {
+                blockIdSetter.accept("");
+            }
             return;
         }
 
-        ResourceLocation resourceLocation = ResourceLocation.tryParse(blockId.trim());
+        ResourceLocation resourceLocation = ResourceLocation.tryParse(inputBlockId.trim());
         if (resourceLocation == null) {
             return;
         }
 
         var item = BuiltInRegistries.ITEM.get(resourceLocation);
-        if (item == null || item == Items.AIR) {
+        if (item != Items.AIR && item instanceof BlockItem) {
+            ItemStack stack = new ItemStack(item);
+            setValue(stack);
+            setResource(SelectableResource.item(stack));
+            if (blockIdSetter != null) {
+                blockIdSetter.accept("");
+            }
             return;
         }
 
-        if (!(item instanceof BlockItem)) {
-            return;
+        var block = BuiltInRegistries.BLOCK.get(resourceLocation);
+        if (block != Blocks.AIR) {
+            if (blockIdSetter != null) {
+                blockIdSetter.accept(resourceLocation.toString());
+                setValue(ItemStack.EMPTY);
+                setResource(SelectableResource.item(ItemStack.EMPTY));
+            }
         }
-
-        ItemStack stack = new ItemStack(item);
-        setValue(stack);
-        setResource(SelectableResource.item(stack));
     }
 
     @Override
@@ -171,15 +185,15 @@ public class BlockStackConfig extends ResourceConfigValue<ItemStack> {
     }
 
     @Override
-    public void addInfo(dev.ftb.mods.ftblibrary.util.TooltipList list) {
+    public void addInfo(TooltipList list) {
         super.addInfo(list);
         list.add(Component.translatable("morequesttypes.config.block_stack.info"));
         list.add(Component.translatable("morequesttypes.config.block_stack.manual_hint")
-                .withStyle(net.minecraft.ChatFormatting.GRAY));
+                .withStyle(ChatFormatting.GRAY));
     }
 
     @Override
-    public ConfigValue<ItemStack> init(@Nullable dev.ftb.mods.ftblibrary.config.ConfigGroup group, String id, @Nullable ItemStack currentValue, Consumer<ItemStack> setter, @Nullable ItemStack defaultValue) {
+    public ConfigValue<ItemStack> init(@Nullable ConfigGroup group, String id, @Nullable ItemStack currentValue, Consumer<ItemStack> setter, @Nullable ItemStack defaultValue) {
         super.init(group, id, currentValue, setter, defaultValue);
         this.resource = SelectableResource.item(currentValue != null ? currentValue : ItemStack.EMPTY);
         return this;

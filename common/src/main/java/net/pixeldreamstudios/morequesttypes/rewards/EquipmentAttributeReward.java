@@ -1,10 +1,12 @@
 package net.pixeldreamstudios.morequesttypes.rewards;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
+import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -51,7 +53,7 @@ public final class EquipmentAttributeReward extends Reward {
     private double replaceWithValue = 0;
     private boolean useReplaceWithValue = false;
 
-    public EquipmentAttributeReward(long id, dev.ftb.mods.ftbquests.quest.Quest q) {
+    public EquipmentAttributeReward(long id, Quest q) {
         super(id, q);
     }
 
@@ -151,7 +153,7 @@ public final class EquipmentAttributeReward extends Reward {
     }
 
     @Override
-    public void writeData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         nbt.putString("modifier_id", modifierId);
         nbt.putString("attribute", attributeId);
@@ -172,7 +174,7 @@ public final class EquipmentAttributeReward extends Reward {
     }
 
     @Override
-    public void readData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         modifierId = nbt.getString("modifier_id");
         attributeId = nbt.getString("attribute");

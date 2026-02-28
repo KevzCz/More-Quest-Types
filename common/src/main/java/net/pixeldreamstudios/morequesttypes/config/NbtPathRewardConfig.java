@@ -4,18 +4,25 @@ import dev.ftb.mods.ftblibrary.config.ConfigCallback;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.ConfigValue;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.config.StringConfig;
 import dev.ftb.mods.ftblibrary.config.ui.EditConfigScreen;
 import dev.ftb.mods.ftblibrary.icon.Color4I;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.Widget;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
+import dev.ftb.mods.ftblibrary.util.TooltipList;
+import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NumericTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -108,7 +115,7 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
             }
         });
 
-        dev.ftb.mods.ftbquests.client.ConfigIconItemStack itemConfig = new dev.ftb.mods.ftbquests.client.ConfigIconItemStack();
+        ConfigIconItemStack itemConfig = new ConfigIconItemStack();
         itemSelectionGroup.add("preview_item", itemConfig, cachedPreviewItem, v -> {
             cachedPreviewItem = v.copy();
             if (!cachedPreviewItem.isEmpty()) {
@@ -140,7 +147,7 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
         basicGroup.addEnum("target_slot", current.targetSlot, v -> current.targetSlot = v, SLOTS)
                 .setNameKey("morequesttypes.config.nbt_path.target_slot");
 
-        dev.ftb.mods.ftbquests.client.ConfigIconItemStack itemConfig = new dev.ftb.mods.ftbquests.client.ConfigIconItemStack();
+        ConfigIconItemStack itemConfig = new ConfigIconItemStack();
         basicGroup.add("target_item", itemConfig, current.targetItem, v -> {
             current.targetItem = v.copy();
             if (!current.targetItem.isEmpty()) {
@@ -166,7 +173,7 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
         basicGroup.addBool("is_value", current.isValue, v -> current.isValue = v, false)
                 .setNameKey("morequesttypes.config.nbt_path.is_value");
 
-        basicGroup.addList("nbt_entries", current.nbtEntries, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
+        basicGroup.addList("nbt_entries", current.nbtEntries, new StringConfig(), "")
                 .setNameKey("morequesttypes.config.nbt_path.nbt_entries");
 
         ConfigGroup condGroup = mainGroup.getOrCreateSubgroup("conditions");
@@ -185,7 +192,7 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
                     .setNameKey("morequesttypes.config.nbt_path.condition_path");
         }
 
-        condGroup.addList("condition_entries", current.conditionEntries, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
+        condGroup.addList("condition_entries", current.conditionEntries, new StringConfig(), "")
                 .setNameKey("morequesttypes.config.nbt_path.condition_entries");
 
         condGroup.addInt("conditions_match_number", current.conditionsMatchNumber,
@@ -289,7 +296,7 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
     }
 
     @Override
-    public void addInfo(dev.ftb.mods.ftblibrary.util.TooltipList list) {
+    public void addInfo(TooltipList list) {
         super.addInfo(list);
         list.add(Component.translatable("morequesttypes.config.nbt_path.info"));
     }
@@ -377,11 +384,7 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
                 showPathContents(currentPath, callback);
             } else if (button == MouseButton.MIDDLE) {
                 ConfigGroup editGroup = new ConfigGroup("edit_path", accepted -> {
-                    if (accepted) {
-                        callback.save(true);
-                    } else {
-                        callback.save(false);
-                    }
+                    callback.save(accepted);
                 });
 
                 editGroup.addString("path_manual", currentPath, v -> setValue(v), currentPath)
@@ -490,7 +493,7 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
                             .setNameKey("morequesttypes.config.nbt_path.how_to.set_value")
                             .setCanEdit(false);
 
-                    if (result instanceof net.minecraft.nbt.NumericTag) {
+                    if (result instanceof NumericTag) {
                         howToGroup.addString("add_example", generateAddValueExample(result), v -> {}, "")
                                 .setNameKey("morequesttypes.config.nbt_path.how_to.add_to_value")
                                 .setCanEdit(false);
@@ -561,25 +564,25 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
         }
 
         private String generateSetValueExample(Tag tag) {
-            if (tag instanceof net.minecraft.nbt.StringTag stringTag) {
+            if (tag instanceof StringTag stringTag) {
                 return stringTag.getAsString();
             }
             return tag.toString();
         }
 
         private String generateAddValueExample(Tag tag) {
-            if (tag instanceof net.minecraft.nbt.IntTag intTag) {
+            if (tag instanceof IntTag intTag) {
                 return String.valueOf(Math.max(1, intTag.getAsInt() / 10));
-            } else if (tag instanceof net.minecraft.nbt.DoubleTag doubleTag) {
+            } else if (tag instanceof DoubleTag doubleTag) {
                 return String.valueOf(Math.max(0.1, doubleTag.getAsDouble() / 10));
             }
             return "1";
         }
 
         private String generateSubtractValueExample(Tag tag) {
-            if (tag instanceof net.minecraft.nbt.IntTag intTag) {
+            if (tag instanceof IntTag intTag) {
                 return String.valueOf(Math.max(1, intTag.getAsInt() / 10));
-            } else if (tag instanceof net.minecraft.nbt.DoubleTag doubleTag) {
+            } else if (tag instanceof DoubleTag doubleTag) {
                 return String.valueOf(Math.max(0.1, doubleTag.getAsDouble() / 10));
             }
             return "1";
@@ -604,7 +607,7 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
         }
 
         @Override
-        public void addInfo(dev.ftb.mods.ftblibrary.util.TooltipList list) {
+        public void addInfo(TooltipList list) {
             super.addInfo(list);
             list.add(Component.translatable("morequesttypes.config.nbt_path.path.cycle_hint"));
             list.add(Component.translatable("morequesttypes.config.nbt_path.path.view_hint"));

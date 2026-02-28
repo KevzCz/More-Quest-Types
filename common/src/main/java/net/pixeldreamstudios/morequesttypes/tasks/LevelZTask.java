@@ -10,7 +10,9 @@ import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -72,7 +74,7 @@ public class LevelZTask extends Task {
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getButtonText() {
-        var mc = net.minecraft.client.Minecraft.getInstance();
+        var mc = Minecraft.getInstance();
         var player = mc.player;
         if (player == null) return Component.literal("? / " + getMaxProgress());
 
@@ -142,7 +144,7 @@ public class LevelZTask extends Task {
     }
 
     @Override
-    public void writeData(net.minecraft.nbt.CompoundTag nbt, HolderLookup.Provider provider) {
+    public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         nbt.putString("mode", mode.name());
         nbt.putString("comparison_mode", comparisonMode.name());
@@ -152,7 +154,7 @@ public class LevelZTask extends Task {
     }
 
     @Override
-    public void readData(net.minecraft.nbt.CompoundTag nbt, HolderLookup.Provider provider) {
+    public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         if (nbt.contains("mode")) {
             try {

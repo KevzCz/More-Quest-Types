@@ -2,6 +2,7 @@ package net.pixeldreamstudios.morequesttypes.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.ftb.mods.ftblibrary.icon.Color4I;
+import dev.ftb.mods.ftblibrary.ui.Theme;
 import dev.ftb.mods.ftbquests.client.gui.quests.QuestPanel;
 import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
 import net.minecraft.client.gui.GuiGraphics;
@@ -33,7 +34,7 @@ public abstract class QuestPanelCrosshairMixin {
                     shift = At.Shift.AFTER
             )
     )
-    private void mqt$drawCrosshairWhenMoving(GuiGraphics graphics, dev.ftb.mods.ftblibrary.ui.Theme theme,
+    private void mqt$drawCrosshairWhenMoving(GuiGraphics graphics, Theme theme,
                                              int x, int y, int w, int h, CallbackInfo ci) {
         QuestScreenAccessor accessor = (QuestScreenAccessor) questScreen;
         QuestPanel panel = (QuestPanel) (Object) this;

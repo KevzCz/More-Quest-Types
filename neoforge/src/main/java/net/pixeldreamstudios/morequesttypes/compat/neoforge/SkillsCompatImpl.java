@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.puffish.skillsmod.SkillsMod;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -70,7 +71,7 @@ public final class SkillsCompatImpl {
     }
 
     public static Map<String, String> getCategoryIconData(ServerPlayer player) {
-        Map<String, String> result = new java.util.HashMap<>();
+        Map<String, String> result = new HashMap<>();
         if (!isLoaded()) return result;
 
         try {
@@ -78,7 +79,7 @@ public final class SkillsCompatImpl {
             var categories = skillsMod.getCategories(false);
 
             for (ResourceLocation catId : categories) {
-                result.put(catId.toString(), "LOOKUP:" + catId.toString());
+                result.put(catId.toString(), "LOOKUP:" + catId);
             }
         } catch (Exception e) {
         }

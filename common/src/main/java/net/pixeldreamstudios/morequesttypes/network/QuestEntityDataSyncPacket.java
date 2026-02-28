@@ -7,6 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
 import net.pixeldreamstudios.morequesttypes.api.IQuestSummonedEntity;
 
@@ -93,7 +94,7 @@ public record QuestEntityDataSyncPacket(
                 questEntity.setQuestTextureOffsetY(packet.textureOffsetY);
                 questEntity.setQuestTextureOffsetZ(packet.textureOffsetZ);
 
-                if (questEntity instanceof net.minecraft.world.entity.Mob mob && packet.shouldFollow && packet.ownerUuid != null) {
+                if (questEntity instanceof Mob mob && packet.shouldFollow && packet.ownerUuid != null) {
                     mob.getNavigation().stop();
                 }
             }

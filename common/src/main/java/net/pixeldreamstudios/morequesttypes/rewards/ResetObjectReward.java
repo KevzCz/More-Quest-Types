@@ -1,6 +1,7 @@
 package net.pixeldreamstudios.morequesttypes.rewards;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
+import dev.ftb.mods.ftblibrary.config.StringConfig;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.QuestObjectBase;
 import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
@@ -12,6 +13,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -94,7 +96,7 @@ public final class ResetObjectReward extends Reward {
     @Override
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
-        config.addList("targets", targets, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
+        config.addList("targets", targets, new StringConfig(), "")
                 .setNameKey("morequesttypes.reward.reset_object.targets");
     }
 
@@ -113,7 +115,7 @@ public final class ResetObjectReward extends Reward {
         super.readData(nbt, provider);
 
         targets.clear();
-        ListTag list = nbt.getList("targets", net.minecraft.nbt.Tag.TAG_STRING);
+        ListTag list = nbt.getList("targets", Tag.TAG_STRING);
         if (!list.isEmpty()) {
             for (int i = 0; i < list.size(); i++) targets.add(list.getString(i));
         } else {

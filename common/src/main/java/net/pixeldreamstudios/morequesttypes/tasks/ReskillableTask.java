@@ -1,25 +1,21 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
-import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftblibrary.icon.Icon;
-import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.ftb.mods.ftbquests.quest.Quest;
-import dev.ftb.mods.ftbquests.quest.TeamData;
-import dev.ftb.mods.ftbquests.quest.task.Task;
-import dev.ftb.mods.ftbquests.quest.task.TaskType;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
-import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
-import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
-import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
+import dev.ftb.mods.ftblibrary.config.*;
+import dev.ftb.mods.ftblibrary.icon.*;
+import dev.ftb.mods.ftblibrary.util.*;
+import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.task.*;
+import net.fabricmc.api.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.*;
+import net.minecraft.network.chat.*;
+import net.minecraft.resources.*;
+import net.minecraft.server.level.*;
+import net.minecraft.world.item.*;
+import net.pixeldreamstudios.morequesttypes.compat.*;
+import net.pixeldreamstudios.morequesttypes.util.*;
 
 import java.util.*;
 
@@ -72,7 +68,7 @@ public class ReskillableTask extends Task {
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getButtonText() {
-        var mc = net.minecraft.client.Minecraft.getInstance();
+        var mc = Minecraft.getInstance();
         var player = mc.player;
         if (player == null) return Component.literal("?  / " + getMaxProgress());
 
@@ -180,7 +176,7 @@ public class ReskillableTask extends Task {
     }
 
     @Override
-    public void writeData(net.minecraft.nbt.CompoundTag nbt, HolderLookup.Provider provider) {
+    public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         nbt.putString("mode", mode.name());
         nbt.putString("comparison_mode", comparisonMode.name());
@@ -190,7 +186,7 @@ public class ReskillableTask extends Task {
     }
 
     @Override
-    public void readData(net.minecraft.nbt.CompoundTag nbt, HolderLookup.Provider provider) {
+    public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         if (nbt.contains("mode")) {
             try {

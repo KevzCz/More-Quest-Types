@@ -1,30 +1,28 @@
 package net.pixeldreamstudios.morequesttypes.rewards;
 
-import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftblibrary.icon.Icon;
-import dev.ftb.mods.ftbquests.quest.Quest;
-import dev.ftb.mods.ftbquests.quest.reward.Reward;
-import dev.ftb.mods.ftbquests.quest.reward.RewardType;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
+import dev.ftb.mods.ftblibrary.config.*;
+import dev.ftb.mods.ftblibrary.icon.*;
+import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.reward.*;
+import net.fabricmc.api.*;
+import net.minecraft.core.*;
+import net.minecraft.nbt.*;
+import net.minecraft.network.*;
+import net.minecraft.network.chat.*;
+import net.minecraft.resources.*;
+import net.minecraft.server.level.*;
+import net.pixeldreamstudios.morequesttypes.compat.*;
+import net.pixeldreamstudios.morequesttypes.mixin.accessor.*;
+import net.puffish.skillsmod.client.*;
+import net.puffish.skillsmod.client.config.*;
 
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.*;
 
 public final class SkillsLevelReward extends Reward {
-    public enum Kind { EXPERIENCE, POINTS }
-    public enum OperationType { ADD, SET, REDUCE }
+    public enum Kind {EXPERIENCE, POINTS}
+
+    public enum OperationType {ADD, SET, REDUCE}
 
     private String categoryId = "";
     private Kind kind = Kind.EXPERIENCE;
@@ -35,8 +33,8 @@ public final class SkillsLevelReward extends Reward {
     private static final Map<String, String> CATEGORY_ICONS = new ConcurrentHashMap<>();
 
     public static void syncCategoryIcons(Map<String, String> icons) {
-        CATEGORY_ICONS.clear();
-        CATEGORY_ICONS.putAll(icons);
+        SkillsLevelReward.CATEGORY_ICONS.clear();
+        SkillsLevelReward.CATEGORY_ICONS.putAll(icons);
     }
 
     public SkillsLevelReward(long id, Quest quest) {
@@ -50,8 +48,8 @@ public final class SkillsLevelReward extends Reward {
 
     @Override
     public void claim(ServerPlayer player, boolean notify) {
-        if (! SkillsCompat.isLoaded()) return;
-        final ResourceLocation cat = parse(categoryId);
+        if (!SkillsCompat.isLoaded()) return;
+        final ResourceLocation cat = SkillsLevelReward.parse(categoryId);
         if (cat == null) return;
         if (amount == 0 && operationType != OperationType.SET) return;
 
@@ -103,7 +101,7 @@ public final class SkillsLevelReward extends Reward {
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
-        if (! categoryId.isBlank()) nbt.putString("category", categoryId);
+        if (!categoryId.isBlank()) nbt.putString("category", categoryId);
         nbt.putString("kind", kind.name());
         nbt.putString("operation_type", operationType.name());
         nbt.putInt("amount", amount);
@@ -114,8 +112,16 @@ public final class SkillsLevelReward extends Reward {
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         categoryId = nbt.getString("category");
-        try { kind = Kind.valueOf(nbt.getString("kind")); } catch (Throwable ignored) { kind = Kind.EXPERIENCE; }
-        try { operationType = OperationType.valueOf(nbt.getString("operation_type")); } catch (Throwable ignored) { operationType = OperationType.ADD; }
+        try {
+            kind = Kind.valueOf(nbt.getString("kind"));
+        } catch (Throwable ignored) {
+            kind = Kind.EXPERIENCE;
+        }
+        try {
+            operationType = OperationType.valueOf(nbt.getString("operation_type"));
+        } catch (Throwable ignored) {
+            operationType = OperationType.ADD;
+        }
         amount = nbt.getInt("amount");
         pointSource = nbt.contains("point_source") ? nbt.getString("point_source") : "more_quest_types:reward";
     }
@@ -165,8 +171,8 @@ public final class SkillsLevelReward extends Reward {
         cats.add(0, NONE);
 
         ResourceLocation current = Objects.requireNonNullElse(
-                parse(categoryId),
-                (cats.size() > 1 ?  cats.get(1) : NONE)
+                SkillsLevelReward.parse(categoryId),
+                (cats.size() > 1 ? cats.get(1) : NONE)
         );
         if (current.equals(NONE) && cats.size() > 1) {
             current = cats.get(1);
@@ -199,25 +205,25 @@ public final class SkillsLevelReward extends Reward {
             return getType().getIconSupplier();
         }
 
-        String iconData = CATEGORY_ICONS.get(categoryId);
+        String iconData = SkillsLevelReward.CATEGORY_ICONS.get(categoryId);
         if (iconData != null && iconData.startsWith("LOOKUP:")) {
             try {
                 String catIdStr = iconData.substring(7);
                 ResourceLocation catId = ResourceLocation.tryParse(catIdStr);
                 if (catId != null && SkillsCompat.isLoaded()) {
-                    var clientMod = net.puffish.skillsmod.client.SkillsClientMod.getInstance();
-                    var clientModAccessor = (net.pixeldreamstudios.morequesttypes.mixin.accessor.SkillsClientModAccessor) clientMod;
+                    var clientMod = SkillsClientMod.getInstance();
+                    var clientModAccessor = (SkillsClientModAccessor) clientMod;
                     var screenData = clientModAccessor.mqt$getScreenData();
-                    var screenDataAccessor = (net.pixeldreamstudios.morequesttypes.mixin.accessor.ClientSkillScreenDataAccessor) screenData;
+                    var screenDataAccessor = (ClientSkillScreenDataAccessor) screenData;
                     var categoryData = screenDataAccessor.mqt$getCategory(catId);
 
                     if (categoryData.isPresent()) {
                         var config = categoryData.get().getConfig();
                         var iconConfig = config.icon();
 
-                        if (iconConfig instanceof net.puffish.skillsmod.client.config.ClientIconConfig.ItemIconConfig itemIcon) {
-                            return dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(itemIcon.item());
-                        } else if (iconConfig instanceof net.puffish.skillsmod.client.config.ClientIconConfig.TextureIconConfig textureIcon) {
+                        if (iconConfig instanceof ClientIconConfig.ItemIconConfig itemIcon) {
+                            return ItemIcon.getItemIcon(itemIcon.item());
+                        } else if (iconConfig instanceof ClientIconConfig.TextureIconConfig textureIcon) {
                             return Icon.getIcon(textureIcon.texture());
                         }
                     }

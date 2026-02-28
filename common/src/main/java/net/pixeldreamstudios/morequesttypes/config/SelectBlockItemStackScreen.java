@@ -22,6 +22,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
@@ -123,7 +124,7 @@ public class SelectBlockItemStackScreen extends ResourceSelectorScreen<ItemStack
                         : TooltipFlag.NORMAL;
 
                 getResource().getTooltipLines(
-                        net.minecraft.world.item.Item.TooltipContext.of(Minecraft.getInstance().level),
+                        Item.TooltipContext.of(Minecraft.getInstance().level),
                         Minecraft.getInstance().player,
                         flag
                 ).forEach(list::add);

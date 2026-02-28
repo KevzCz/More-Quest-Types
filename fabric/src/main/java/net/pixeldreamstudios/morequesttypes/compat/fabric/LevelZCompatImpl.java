@@ -99,7 +99,7 @@ public final class LevelZCompatImpl {
         for (int level = 0; level < targetLevel; level++) {
             int xpCost = (int)((double) ConfigInit.CONFIG.xpBaseCost +
                     (double) ConfigInit.CONFIG.xpCostMultiplicator *
-                            Math.pow((double)level, (double) ConfigInit.CONFIG.xpExponent));
+                            Math.pow(level, ConfigInit.CONFIG.xpExponent));
 
             if (ConfigInit.CONFIG.xpMaxCost != 0 && xpCost > ConfigInit.CONFIG.xpMaxCost) {
                 xpCost = ConfigInit.CONFIG.xpMaxCost;
@@ -119,7 +119,7 @@ public final class LevelZCompatImpl {
         while (true) {
             int xpForNextLevel = (int)((double) ConfigInit.CONFIG.xpBaseCost +
                     (double) ConfigInit.CONFIG.xpCostMultiplicator *
-                            Math.pow((double)level, (double) ConfigInit.CONFIG.xpExponent));
+                            Math.pow(level, ConfigInit.CONFIG.xpExponent));
 
             if (ConfigInit.CONFIG.xpMaxCost != 0 && xpForNextLevel > ConfigInit.CONFIG.xpMaxCost) {
                 xpForNextLevel = ConfigInit.CONFIG.xpMaxCost;
@@ -192,7 +192,7 @@ public final class LevelZCompatImpl {
                     // Calculate next level XP requirement
                     int xpForNextLevel = (int)((double) ConfigInit.CONFIG.xpBaseCost +
                             (double) ConfigInit.CONFIG.xpCostMultiplicator *
-                                    Math.pow((double)newLevel, (double) ConfigInit.CONFIG.xpExponent));
+                                    Math.pow(newLevel, ConfigInit.CONFIG.xpExponent));
 
                     if (ConfigInit.CONFIG.xpMaxCost != 0 && xpForNextLevel > ConfigInit.CONFIG.xpMaxCost) {
                         xpForNextLevel = ConfigInit.CONFIG.xpMaxCost;

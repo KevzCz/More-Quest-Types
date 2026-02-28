@@ -1,44 +1,40 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
-import com.mojang.datafixers.util.Either;
-import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftblibrary.util.StringUtils;
-import dev.ftb.mods.ftbquests.integration.item_filtering.ItemMatchingSystem;
-import dev.ftb.mods.ftbquests.quest.Quest;
-import dev.ftb.mods.ftbquests.quest.TeamData;
-import dev.ftb.mods.ftbquests.quest.task.TaskType;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.nbt.TagParser;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.StructureManager;
-import net.minecraft.world.level.levelgen.structure.Structure;
+import com.mojang.datafixers.util.*;
+import dev.ftb.mods.ftblibrary.config.*;
+import dev.ftb.mods.ftblibrary.icon.*;
+import dev.ftb.mods.ftblibrary.util.*;
+import dev.ftb.mods.ftbquests.client.*;
+import dev.ftb.mods.ftbquests.integration.item_filtering.*;
+import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.task.*;
+import dev.ftb.mods.ftbquests.registry.*;
+import net.fabricmc.api.*;
+import net.minecraft.core.*;
+import net.minecraft.core.registries.*;
+import net.minecraft.nbt.*;
+import net.minecraft.network.*;
+import net.minecraft.network.chat.*;
+import net.minecraft.resources.*;
+import net.minecraft.server.level.*;
+import net.minecraft.tags.*;
+import net.minecraft.world.item.*;
+import net.minecraft.world.level.*;
+import net.minecraft.world.level.levelgen.structure.*;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
+import net.pixeldreamstudios.morequesttypes.network.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
-public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
-    public enum HandMode { ANY, MAIN_HAND, OFF_HAND }
+public final class HoldItemTask extends Task {
+    public enum HandMode {ANY, MAIN_HAND, OFF_HAND}
+
     private double durationSeconds = 5.0D;
     private HandMode handMode = HandMode.ANY;
     private boolean anyItem = false;
     private ItemStack itemFilter = ItemStack.EMPTY;
     private String itemTagStr = "";
-    private transient TagKey<net.minecraft.world.item.Item> itemTag;
+    private transient TagKey<Item> itemTag;
     private ItemMatchingSystem.ComponentMatchType matchComponents = ItemMatchingSystem.ComponentMatchType.NONE;
     private final List<String> nbtFilters = new ArrayList<>();
     private static final ResourceLocation DEFAULT_STRUCTURE = ResourceLocation.withDefaultNamespace("mineshaft");
@@ -49,21 +45,48 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     private static final List<String> KNOWN_BIOMES = new ArrayList<>();
     private String biome = "";
 
-    public HoldItemTask(long id, Quest quest) { super(id, quest); }
-    private long maxTicks() { return Math.max(1L, Math.round(durationSeconds * 20.0D)); }
-    @Override public TaskType getType() { return MoreTasksTypes.HOLD_ITEM; }
-    @Override public long getMaxProgress() { return maxTicks(); }
-    @Override public boolean hideProgressNumbers() { return false; }
-    @Override public String formatMaxProgress() { return StringUtils.formatDouble(durationSeconds, true) + "s"; }
-    @Override public String formatProgress(TeamData teamData, long progress) {
+    public HoldItemTask(long id, Quest quest) {
+        super(id, quest);
+    }
+
+    private long maxTicks() {
+        return Math.max(1L, Math.round(durationSeconds * 20.0D));
+    }
+
+    @Override
+    public TaskType getType() {
+        return MoreTasksTypes.HOLD_ITEM;
+    }
+
+    @Override
+    public long getMaxProgress() {
+        return maxTicks();
+    }
+
+    @Override
+    public boolean hideProgressNumbers() {
+        return false;
+    }
+
+    @Override
+    public String formatMaxProgress() {
+        return StringUtils.formatDouble(durationSeconds, true) + "s";
+    }
+
+    @Override
+    public String formatProgress(TeamData teamData, long progress) {
         long remainingTicks = Math.max(0L, maxTicks() - progress);
         double remainingSeconds = remainingTicks / 20.0D;
         return StringUtils.formatDouble(remainingSeconds, true) + "s";
     }
-    @Override public int autoSubmitOnPlayerTick() { return 1; }
 
     @Override
-    public void submitTask(TeamData teamData, net.minecraft.server.level.ServerPlayer player, ItemStack craftedItem) {
+    public int autoSubmitOnPlayerTick() {
+        return 1;
+    }
+
+    @Override
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
@@ -72,7 +95,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
         boolean ok = switch (handMode) {
             case MAIN_HAND -> matches(player, player.getMainHandItem());
-            case OFF_HAND  -> matches(player, player.getOffhandItem());
+            case OFF_HAND -> matches(player, player.getOffhandItem());
             default -> matches(player, player.getMainHandItem()) || matches(player, player.getOffhandItem());
         };
         if (!ok) return;
@@ -82,7 +105,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         if (next != cur) teamData.setProgress(this, next);
     }
 
-    private boolean matches(net.minecraft.server.level.ServerPlayer player, ItemStack stack) {
+    private boolean matches(ServerPlayer player, ItemStack stack) {
         if (anyItem) {
             if (stack.isEmpty()) return false;
         } else {
@@ -99,9 +122,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
         if (!nbtFilters.isEmpty() && !stack.isEmpty()) {
             List<String> processed = processPlaceholders(nbtFilters, player.getUUID(), player.getGameProfile().getName());
-            if (!checkNbtFilters(stack, processed, player.registryAccess())) {
-                return false;
-            }
+            return checkNbtFilters(stack, processed, player.registryAccess());
         }
 
         return true;
@@ -187,23 +208,21 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     }
 
     private boolean tagsEqual(Tag a, Tag b) {
-        if (a instanceof CompoundTag && b instanceof CompoundTag) {
-            CompoundTag ca = (CompoundTag) a;
-            CompoundTag cb = (CompoundTag) b;
+        if (a instanceof CompoundTag ca && b instanceof CompoundTag cb) {
             if (cb.isEmpty()) return true;
             return containsPartialNbt(ca, cb);
         }
-        return net.minecraft.nbt.NbtUtils.compareNbt(a, b, true);
+        return NbtUtils.compareNbt(a, b, true);
     }
 
-    private boolean insideLocationFilters(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean insideLocationFilters(ServerLevel level, BlockPos pos) {
         if (structure != null && !isInsideStructureOrTag(level, pos)) return false;
         if (!isInsideDimension(level)) return false;
         if (!isInsideBiome(level, pos)) return false;
         return true;
     }
 
-    private boolean isInsideStructureOrTag(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean isInsideStructureOrTag(ServerLevel level, BlockPos pos) {
         StructureManager mgr = level.structureManager();
         return structure == null || structure.map(
                 key -> mgr.registryAccess().registryOrThrow(Registries.STRUCTURE).getHolder(key)
@@ -221,7 +240,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         return dimension.equals(level.dimension().location().toString());
     }
 
-    private boolean isInsideBiome(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean isInsideBiome(ServerLevel level, BlockPos pos) {
         if (biome == null || biome.isEmpty()) return true;
         var h = level.getBiome(pos);
         if (biome.startsWith("#")) {
@@ -235,14 +254,20 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     }
 
     private void resolveItemTag() {
-        if (itemTagStr == null || itemTagStr.isBlank()) { itemTag = null; return; }
+        if (itemTagStr == null || itemTagStr.isBlank()) {
+            itemTag = null;
+            return;
+        }
         String s = itemTagStr.startsWith("#") ? itemTagStr.substring(1) : itemTagStr;
         ResourceLocation rl = ResourceLocation.tryParse(s);
         itemTag = (rl != null) ? TagKey.create(Registries.ITEM, rl) : null;
     }
 
     private void setStructure(String resLoc) {
-        if (resLoc == null || resLoc.isEmpty()) { structure = null; return; }
+        if (resLoc == null || resLoc.isEmpty()) {
+            structure = null;
+            return;
+        }
         structure = resLoc.startsWith("#")
                 ? Either.right(TagKey.create(Registries.STRUCTURE, safeStructure(resLoc.substring(1))))
                 : Either.left(ResourceKey.create(Registries.STRUCTURE, safeStructure(resLoc)));
@@ -250,7 +275,7 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     private String getStructure() {
         if (structure == null) return "";
-        return structure.map(k -> k.location().toString(), t -> "#" + String.valueOf(t.location()));
+        return structure.map(k -> k.location().toString(), t -> "#" + t.location());
     }
 
     private ResourceLocation safeStructure(String s) {
@@ -259,26 +284,37 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     }
 
     private static void maybeRequestStructureSync() {
-        if (KNOWN_STRUCTURES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest());
+        if (HoldItemTask.KNOWN_STRUCTURES.isEmpty()) {
+            NetworkHelper.sendToServer(new MQTStructuresRequest());
         }
     }
 
     private static void maybeRequestWorldSync() {
-        if (KNOWN_DIMENSIONS.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest());
+        if (HoldItemTask.KNOWN_DIMENSIONS.isEmpty()) {
+            NetworkHelper.sendToServer(new MQTWorldsRequest());
         }
     }
 
     private static void maybeRequestBiomeSync() {
-        if (KNOWN_BIOMES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest());
+        if (HoldItemTask.KNOWN_BIOMES.isEmpty()) {
+            NetworkHelper.sendToServer(new MQTBiomesRequest());
         }
     }
 
-    public static void syncKnownStructureList(List<String> data) { KNOWN_STRUCTURES.clear(); KNOWN_STRUCTURES.addAll(data); }
-    public static void syncKnownDimensionList(List<String> data) { KNOWN_DIMENSIONS.clear(); KNOWN_DIMENSIONS.addAll(data); }
-    public static void syncKnownBiomeList(List<String> data)     { KNOWN_BIOMES.clear();     KNOWN_BIOMES.addAll(data); }
+    public static void syncKnownStructureList(List<String> data) {
+        HoldItemTask.KNOWN_STRUCTURES.clear();
+        HoldItemTask.KNOWN_STRUCTURES.addAll(data);
+    }
+
+    public static void syncKnownDimensionList(List<String> data) {
+        HoldItemTask.KNOWN_DIMENSIONS.clear();
+        HoldItemTask.KNOWN_DIMENSIONS.addAll(data);
+    }
+
+    public static void syncKnownBiomeList(List<String> data) {
+        HoldItemTask.KNOWN_BIOMES.clear();
+        HoldItemTask.KNOWN_BIOMES.addAll(data);
+    }
 
     @Environment(EnvType.CLIENT)
     @Override
@@ -295,15 +331,21 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         config.addBool("any_item", anyItem, v -> anyItem = v, false)
                 .setNameKey("morequesttypes.task.hold_item.any_item");
 
-        dev.ftb.mods.ftbquests.client.ConfigIconItemStack cis = new dev.ftb.mods.ftbquests.client.ConfigIconItemStack();
-        ((dev.ftb.mods.ftblibrary.config.ConfigValue<ItemStack>) config.add(
-                "item", cis, itemFilter, v -> { itemFilter = v.copy(); if (!itemFilter.isEmpty()) itemFilter.setCount(1); }, ItemStack.EMPTY
-        )).setNameKey("morequesttypes.task.hold_item.item")
+        ConfigIconItemStack cis = new ConfigIconItemStack();
+        config.add(
+                        "item", cis, itemFilter, v -> {
+                            itemFilter = v.copy();
+                            if (!itemFilter.isEmpty()) itemFilter.setCount(1);
+                        }, ItemStack.EMPTY
+                ).setNameKey("morequesttypes.task.hold_item.item")
                 .setCanEdit(!anyItem);
 
-        var ITEM_TAGS = NameMap.of("", net.minecraft.core.registries.BuiltInRegistries.ITEM.getTags()
+        var ITEM_TAGS = NameMap.of("", BuiltInRegistries.ITEM.getTags()
                 .map(p -> p.getFirst().location().toString()).sorted().toArray(String[]::new)).create();
-        config.addEnum("item_tag", itemTagStr, v -> { itemTagStr = v; resolveItemTag(); }, ITEM_TAGS)
+        config.addEnum("item_tag", itemTagStr, v -> {
+                    itemTagStr = v;
+                    resolveItemTag();
+                }, ITEM_TAGS)
                 .setNameKey("morequesttypes.task.hold_item.item_tag")
                 .setCanEdit(!anyItem);
 
@@ -312,41 +354,42 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
                 .setNameKey("morequesttypes.task.match_components")
                 .setCanEdit(!anyItem);
 
-        config.addList("nbt_filters", nbtFilters, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
+        config.addList("nbt_filters", nbtFilters, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.nbt_filters");
 
-        maybeRequestStructureSync();
+        HoldItemTask.maybeRequestStructureSync();
         List<String> structureChoices = new ArrayList<>();
         structureChoices.add("");
-        if (KNOWN_STRUCTURES.isEmpty()) structureChoices.add(DEFAULT_STRUCTURE.toString()); else structureChoices.addAll(KNOWN_STRUCTURES);
+        if (HoldItemTask.KNOWN_STRUCTURES.isEmpty()) structureChoices.add(HoldItemTask.DEFAULT_STRUCTURE.toString());
+        else structureChoices.addAll(HoldItemTask.KNOWN_STRUCTURES);
         var STRUCTURE_MAP = NameMap.of(getStructure(), structureChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "None" : s))
                 .create();
         config.addEnum("structure", getStructure(), this::setStructure, STRUCTURE_MAP)
                 .setNameKey("morequesttypes.task.structure");
 
-        maybeRequestWorldSync();
+        HoldItemTask.maybeRequestWorldSync();
         List<String> dimChoices = new ArrayList<>();
         dimChoices.add("");
-        if (KNOWN_DIMENSIONS.isEmpty()) {
+        if (HoldItemTask.KNOWN_DIMENSIONS.isEmpty()) {
             dimChoices.add("minecraft:overworld");
             dimChoices.add("minecraft:the_nether");
             dimChoices.add("minecraft:the_end");
-        } else dimChoices.addAll(KNOWN_DIMENSIONS);
+        } else dimChoices.addAll(HoldItemTask.KNOWN_DIMENSIONS);
         var DIMENSION_MAP = NameMap.of(dimension, dimChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
                 .create();
         config.addEnum("dimension", dimension, v -> dimension = v, DIMENSION_MAP)
                 .setNameKey("morequesttypes.task.dimension");
 
-        maybeRequestBiomeSync();
+        HoldItemTask.maybeRequestBiomeSync();
         List<String> biomeChoices = new ArrayList<>();
         biomeChoices.add("");
-        if (KNOWN_BIOMES.isEmpty()) {
+        if (HoldItemTask.KNOWN_BIOMES.isEmpty()) {
             biomeChoices.add("minecraft:plains");
             biomeChoices.add("minecraft:forest");
             biomeChoices.add("minecraft:desert");
-        } else biomeChoices.addAll(KNOWN_BIOMES);
+        } else biomeChoices.addAll(HoldItemTask.KNOWN_BIOMES);
         var BIOME_MAP = NameMap.of(biome, biomeChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
                 .create();
@@ -380,18 +423,23 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         durationSeconds = Math.max(0.05D, nbt.contains("duration_seconds") ? nbt.getDouble("duration_seconds") : 5.0D);
-        try { handMode = HandMode.valueOf(nbt.getString("hand_mode")); } catch (Throwable ignored) { handMode = HandMode.ANY; }
+        try {
+            handMode = HandMode.valueOf(nbt.getString("hand_mode"));
+        } catch (Throwable ignored) {
+            handMode = HandMode.ANY;
+        }
         anyItem = nbt.getBoolean("any_item");
-        itemFilter = nbt.contains("item") ? itemOrMissingFromNBT(nbt.get("item"), provider) : ItemStack.EMPTY;
+        itemFilter = nbt.contains("item") ? QuestObjectBase.itemOrMissingFromNBT(nbt.get("item"), provider) : ItemStack.EMPTY;
         if (!itemFilter.isEmpty()) itemFilter.setCount(1);
         itemTagStr = nbt.getString("item_tag");
         resolveItemTag();
-        matchComponents = (ItemMatchingSystem.ComponentMatchType) ItemMatchingSystem.ComponentMatchType.NAME_MAP.get(nbt.getString("match_components"));
+        matchComponents = ItemMatchingSystem.ComponentMatchType.NAME_MAP.get(nbt.getString("match_components"));
         nbtFilters.clear();
         ListTag list = nbt.getList("nbt_filters", Tag.TAG_STRING);
         for (int i = 0; i < list.size(); i++) nbtFilters.add(list.getString(i));
         String s = nbt.getString("structure");
-        if (!s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s);
+        else structure = null;
         String d = nbt.getString("dimension");
         dimension = d.trim();
         String b = nbt.getString("biome");
@@ -429,62 +477,63 @@ public final class HoldItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         int n = buf.readVarInt();
         for (int i = 0; i < n; i++) nbtFilters.add(buf.readUtf());
         String s = buf.readUtf();
-        if (!s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s);
+        else structure = null;
         dimension = buf.readUtf();
         biome = buf.readUtf();
     }
 
     @Environment(EnvType.CLIENT)
     @Override
-    public net.minecraft.network.chat.MutableComponent getAltTitle() {
+    public MutableComponent getAltTitle() {
         var item = anyItem ? Component.literal("Any Item")
                 : itemFilter.isEmpty() ? Component.literal(itemTagStr.isBlank() ? "Any" : itemTagStr)
                 : itemFilter.getHoverName();
         return Component.translatable("morequesttypes.task.hold_item.title", formatMaxProgress(), item);
     }
 
-    @Environment(net.fabricmc.api.EnvType.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
-    public dev.ftb.mods.ftblibrary.icon.Icon getAltIcon() {
+    public Icon getAltIcon() {
         if (anyItem) {
-            return dev.ftb.mods.ftblibrary.icon.Icon.getIcon("minecraft:item/barrier");
+            return Icon.getIcon("minecraft:item/barrier");
         }
 
-        java.util.List<dev.ftb.mods.ftblibrary.icon.Icon> icons = new java.util.ArrayList<>();
-        for (net.minecraft.world.item.ItemStack stack : getValidDisplayItems()) {
-            net.minecraft.world.item.ItemStack copy = stack.copy();
+        List<Icon> icons = new ArrayList<>();
+        for (ItemStack stack : getValidDisplayItems()) {
+            ItemStack copy = stack.copy();
             copy.setCount(1);
-            dev.ftb.mods.ftblibrary.icon.Icon icon = dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(copy);
+            Icon icon = ItemIcon.getItemIcon(copy);
             if (!icon.isEmpty()) {
                 icons.add(icon);
             }
         }
         if (icons.isEmpty()) {
-            return dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(
-                    (net.minecraft.world.item.Item) dev.ftb.mods.ftbquests.registry.ModItems.MISSING_ITEM.get()
+            return ItemIcon.getItemIcon(
+                    ModItems.MISSING_ITEM.get()
             );
         }
 
-        return dev.ftb.mods.ftblibrary.icon.IconAnimation.fromList(icons, false);
+        return IconAnimation.fromList(icons, false);
     }
 
     @Environment(EnvType.CLIENT)
-    private java.util.List<net.minecraft.world.item.ItemStack> getValidDisplayItems() {
-        java.util.List<net.minecraft.world.item.ItemStack> out = new java.util.ArrayList<>();
+    private List<ItemStack> getValidDisplayItems() {
+        List<ItemStack> out = new ArrayList<>();
 
         if (!itemFilter.isEmpty()) {
-            net.minecraft.world.item.ItemStack one = itemFilter.copy();
+            ItemStack one = itemFilter.copy();
             one.setCount(1);
             out.add(one);
             return out;
         }
 
         if (itemTag != null) {
-            net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(itemTag).ifPresent(tagSet -> {
+            BuiltInRegistries.ITEM.getTag(itemTag).ifPresent(tagSet -> {
                 final int MAX = 16;
                 int i = 0;
                 for (var holder : tagSet) {
-                    out.add(new net.minecraft.world.item.ItemStack(holder.value()));
+                    out.add(new ItemStack(holder.value()));
                     if (++i >= MAX) break;
                 }
             });

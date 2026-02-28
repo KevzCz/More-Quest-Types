@@ -121,11 +121,7 @@ public final class SummonedEntityTracker {
 
             ServerPlayer owner = level.getServer().getPlayerList().getPlayer(ownerUuid);
 
-            boolean shouldDespawn = false;
-
-            if (questEntity.getQuestDespawnIfOffline() && owner == null) {
-                shouldDespawn = true;
-            }
+            boolean shouldDespawn = questEntity.getQuestDespawnIfOffline() && owner == null;
 
             if (questEntity.getQuestDespawnIfDead() && owner != null && owner.isDeadOrDying()) {
                 shouldDespawn = true;

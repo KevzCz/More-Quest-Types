@@ -3,6 +3,7 @@ package net.pixeldreamstudios.morequesttypes.rewards;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
+import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.reward.RewardType;
@@ -35,7 +36,7 @@ public final class AttributeReward extends Reward {
     private String modifierId = "";
     private boolean locked = false;
 
-    public AttributeReward(long id, dev.ftb.mods.ftbquests.quest.Quest q) {
+    public AttributeReward(long id, Quest q) {
         super(id, q);
     }
 

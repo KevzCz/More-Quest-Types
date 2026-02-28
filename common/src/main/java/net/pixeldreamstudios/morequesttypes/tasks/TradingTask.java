@@ -13,9 +13,11 @@ import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import dev.ftb.mods.ftbquests.client.FTBQuestsClient;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
+import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -46,6 +48,7 @@ import net.pixeldreamstudios.morequesttypes.event.TradingEventBuffer.TradeEvent;
 import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -53,7 +56,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TradingTask extends dev.ftb.mods.ftbquests.quest.task.Task {
+public class TradingTask extends Task {
     private static final ResourceLocation DEFAULT_ENTITY = ResourceLocation.withDefaultNamespace("villager");
     private static NameMap<ResourceLocation> ENTITY_NAME_MAP;
     private static NameMap<String> ENTITY_TAG_MAP;
@@ -149,7 +152,7 @@ public class TradingTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         if (! tradedItemFilter.isEmpty()) tradedItemFilter.setCount(1);
         tradedItemTagStr = nbt.getString("traded_item_tag");
         resolveTradedItemTag();
-        checkBuyItem = nbt.contains("check_buy_item") ?  nbt.getBoolean("check_buy_item") : true;
+        checkBuyItem = !nbt.contains("check_buy_item") || nbt.getBoolean("check_buy_item");
 
         String s = nbt.getString("structure");
         if (!s.isEmpty()) setStructure(s); else structure = null;
@@ -514,7 +517,7 @@ public class TradingTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         return !stackToCheck.isEmpty() && ItemStack.isSameItemSameComponents(stackToCheck, tradedItemFilter);
     }
 
-    private boolean isInsideStructureOrTag(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean isInsideStructureOrTag(ServerLevel level, BlockPos pos) {
         StructureManager mgr = level.structureManager();
         return structure.map(
                 key -> {
@@ -545,7 +548,7 @@ public class TradingTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         return dimension.equals(cur);
     }
 
-    private boolean isInsideBiome(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private boolean isInsideBiome(ServerLevel level, BlockPos pos) {
         if (biome == null || biome.isEmpty()) return true;
         Holder<Biome> h = level.getBiome(pos);
         if (biome.startsWith("#")) {
@@ -635,19 +638,19 @@ public class TradingTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new MQTStructuresRequest());
+            NetworkHelper.sendToServer(new MQTStructuresRequest());
         }
     }
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new MQTWorldsRequest());
+            NetworkHelper.sendToServer(new MQTWorldsRequest());
         }
     }
 
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new MQTBiomesRequest());
+            NetworkHelper.sendToServer(new MQTBiomesRequest());
         }
     }
 }

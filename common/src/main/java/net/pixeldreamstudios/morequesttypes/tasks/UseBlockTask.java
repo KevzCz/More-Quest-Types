@@ -2,8 +2,12 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.icon.Icon;
+import dev.ftb.mods.ftblibrary.icon.IconAnimation;
+import dev.ftb.mods.ftblibrary.icon.ItemIcon;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
+import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -14,21 +18,29 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.pixeldreamstudios.morequesttypes.config.BlockStackConfig;
 import net.pixeldreamstudios.morequesttypes.event.UseBlockEventBuffer;
+import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
+import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
+public final class UseBlockTask extends Task {
     private long value = 1;
     private ItemStack blockFilter = ItemStack.EMPTY;
+    private String blockId = "";
     private String blockTagStr = "";
     private transient TagKey<Block> blockTag;
     private String dimension = "";
@@ -56,7 +68,7 @@ public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     }
 
     @Override
-    public void submitTask(TeamData teamData, net.minecraft.server.level.ServerPlayer player, ItemStack craftedItem) {
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
@@ -84,6 +96,15 @@ public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
         if (blockTag != null) {
             return state.is(blockTag);
+        }
+
+        if (blockId != null && !blockId.isEmpty()) {
+            ResourceLocation rl = ResourceLocation.tryParse(blockId);
+            if (rl != null) {
+                Block targetBlock = BuiltInRegistries.BLOCK.get(rl);
+                return state.is(targetBlock);
+            }
+            return false;
         }
 
         if (blockFilter.isEmpty()) {
@@ -129,16 +150,16 @@ public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
-                    new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest()
+            NetworkHelper.sendToServer(
+                    new MQTWorldsRequest()
             );
         }
     }
 
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(
-                    new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest()
+            NetworkHelper.sendToServer(
+                    new MQTBiomesRequest()
             );
         }
     }
@@ -161,10 +182,15 @@ public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         config.addLong("value", value, v -> value = Math.max(1L, v), 1L, 1L, Long.MAX_VALUE)
                 .setNameKey("morequesttypes.task.use_block.value");
 
-        config.add("block", new BlockStackConfig(), blockFilter, v -> {
+        config.add("block", new BlockStackConfig(id -> {
+            blockId = id;
+        }), blockFilter, v -> {
             blockFilter = v.copy();
             if (!blockFilter.isEmpty()) blockFilter.setCount(1);
         }, ItemStack.EMPTY).setNameKey("morequesttypes.task.use_block.block");
+
+        config.addString("block_id", blockId, v -> blockId = v, "")
+                .setNameKey("morequesttypes.task.use_block.block_id");
 
         var BLOCK_TAGS = NameMap.of("", BuiltInRegistries.BLOCK.getTags()
                 .map(p -> p.getFirst().location().toString()).sorted().toArray(String[]::new)).create();
@@ -211,6 +237,7 @@ public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         super.writeData(nbt, provider);
         nbt.putLong("value", value);
         if (!blockFilter.isEmpty()) nbt.put("block", saveItemSingleLine(blockFilter.copyWithCount(1)));
+        if (!blockId.isEmpty()) nbt.putString("block_id", blockId);
         if (!blockTagStr.isEmpty()) nbt.putString("block_tag", blockTagStr);
         if (!dimension.isEmpty()) nbt.putString("dimension", dimension);
         if (!biome.isEmpty()) nbt.putString("biome", biome);
@@ -222,6 +249,7 @@ public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         value = Math.max(1L, nbt.getLong("value"));
         blockFilter = nbt.contains("block") ? itemOrMissingFromNBT(nbt.get("block"), provider) : ItemStack.EMPTY;
         if (!blockFilter.isEmpty()) blockFilter.setCount(1);
+        blockId = nbt.getString("block_id");
         blockTagStr = nbt.getString("block_tag");
         resolveBlockTag();
         dimension = nbt.getString("dimension");
@@ -233,6 +261,7 @@ public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         super.writeNetData(buf);
         buf.writeVarLong(value);
         ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, blockFilter);
+        buf.writeUtf(blockId);
         buf.writeUtf(blockTagStr);
         buf.writeUtf(dimension);
         buf.writeUtf(biome);
@@ -244,6 +273,7 @@ public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         value = buf.readVarLong();
         blockFilter = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
         if (!blockFilter.isEmpty()) blockFilter.setCount(1);
+        blockId = buf.readUtf();
         blockTagStr = buf.readUtf();
         resolveBlockTag();
         dimension = buf.readUtf();
@@ -252,54 +282,75 @@ public final class UseBlockTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     @Environment(EnvType.CLIENT)
     @Override
-    public net.minecraft.network.chat.MutableComponent getAltTitle() {
-        var block = blockFilter.isEmpty()
-                ? Component.literal(blockTagStr.isBlank() ? "Any" : blockTagStr)
-                : blockFilter.getHoverName();
+    public MutableComponent getAltTitle() {
+        Component block;
+        if (!blockId.isEmpty()) {
+            block = Component.literal(blockId);
+        } else if (!blockFilter.isEmpty()) {
+            block = blockFilter.getHoverName();
+        } else {
+            block = Component.literal(blockTagStr.isBlank() ? "Any" : blockTagStr);
+        }
         return Component.translatable("morequesttypes.task.use_block.title", formatMaxProgress(), block);
     }
 
     @Environment(EnvType.CLIENT)
     @Override
-    public dev.ftb.mods.ftblibrary.icon.Icon getAltIcon() {
-        java.util.List<dev.ftb.mods.ftblibrary.icon.Icon> icons = new java.util.ArrayList<>();
+    public Icon getAltIcon() {
+        List<Icon> icons = new ArrayList<>();
 
-        for (net.minecraft.world.item.ItemStack stack : getValidDisplayItems()) {
-            net.minecraft.world.item.ItemStack copy = stack.copy();
+        for (ItemStack stack : getValidDisplayItems()) {
+            ItemStack copy = stack.copy();
             copy.setCount(1);
-            dev.ftb.mods.ftblibrary.icon.Icon icon = dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(copy);
+            Icon icon = ItemIcon.getItemIcon(copy);
             if (!icon.isEmpty()) {
                 icons.add(icon);
             }
         }
 
         if (icons.isEmpty()) {
-            return dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(
-                    dev.ftb.mods.ftbquests.registry.ModItems.MISSING_ITEM.get()
-            );
+            return ItemIcon.getItemIcon(Items.GRASS_BLOCK);
         }
 
-        return dev.ftb.mods.ftblibrary.icon.IconAnimation.fromList(icons, false);
+        return IconAnimation.fromList(icons, false);
     }
 
     @Environment(EnvType.CLIENT)
-    private java.util.List<net.minecraft.world.item.ItemStack> getValidDisplayItems() {
-        java.util.List<net.minecraft.world.item.ItemStack> out = new java.util.ArrayList<>();
+    private List<ItemStack> getValidDisplayItems() {
+        List<ItemStack> out = new ArrayList<>();
+
+        if (blockId != null && !blockId.isEmpty()) {
+            ResourceLocation rl = ResourceLocation.tryParse(blockId);
+            if (rl != null) {
+                Block block = BuiltInRegistries.BLOCK.get(rl);
+                Item item = block.asItem();
+                if (item != Items.AIR) {
+                    out.add(new ItemStack(item));
+                } else {
+                    out.add(new ItemStack(Items.GRASS_BLOCK));
+                }
+            }
+            return out;
+        }
 
         if (!blockFilter.isEmpty()) {
-            net.minecraft.world.item.ItemStack one = blockFilter.copy();
+            ItemStack one = blockFilter.copy();
             one.setCount(1);
             out.add(one);
             return out;
         }
 
         if (blockTag != null) {
-            net.minecraft.core.registries.BuiltInRegistries.BLOCK.getTag(blockTag).ifPresent(tagSet -> {
+            BuiltInRegistries.BLOCK.getTag(blockTag).ifPresent(tagSet -> {
                 final int MAX = 16;
                 int i = 0;
                 for (var holder : tagSet) {
-                    out.add(new net.minecraft.world.item.ItemStack(holder.value()));
-                    if (++i >= MAX) break;
+                    Block block = holder.value();
+                    Item item = block.asItem();
+                    if (item != Items.AIR) {
+                        out.add(new ItemStack(item));
+                        if (++i >= MAX) break;
+                    }
                 }
             });
         }

@@ -3,10 +3,13 @@ package net.pixeldreamstudios.morequesttypes.rewards.manager;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
+import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +50,7 @@ public final class EquipmentBonusManager {
                 Codec.STRING.fieldOf("slot").forGetter(BonusEntry::slot)
         ).apply(instance, BonusEntry::new));
 
-        public static final StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, BonusEntry> STREAM_CODEC = StreamCodec.composite(
+        public static final StreamCodec<RegistryFriendlyByteBuf, BonusEntry> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.STRING_UTF8, BonusEntry::modifierId,
                 ByteBufCodecs.STRING_UTF8, BonusEntry::attributeId,
                 ByteBufCodecs.DOUBLE, BonusEntry::amount,
@@ -65,7 +68,7 @@ public final class EquipmentBonusManager {
                 BonusEntry.CODEC.listOf().fieldOf("bonuses").forGetter(EquipmentBonuses::bonuses)
         ).apply(instance, EquipmentBonuses::new));
 
-        public static final StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, EquipmentBonuses> STREAM_CODEC =
+        public static final StreamCodec<RegistryFriendlyByteBuf, EquipmentBonuses> STREAM_CODEC =
                 BonusEntry.STREAM_CODEC.apply(ByteBufCodecs.list())
                         .map(EquipmentBonuses::new, EquipmentBonuses::bonuses);
     }
@@ -81,7 +84,7 @@ public final class EquipmentBonusManager {
             boolean checkAttributeExists,
             boolean checkConditionAttributeExists,
             String conditionAttribute,
-            net.pixeldreamstudios.morequesttypes.util.ComparisonMode comparisonMode,
+            ComparisonMode comparisonMode,
             double conditionFirst,
             double conditionSecond,
             String replaceWithAttribute,
@@ -121,7 +124,7 @@ public final class EquipmentBonusManager {
         }
 
         String finalModifierId = (modifierId == null || modifierId.isEmpty())
-                ? net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()
+                ? BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()
                 : modifierId;
 
         switch (mode) {
@@ -223,7 +226,7 @@ public final class EquipmentBonusManager {
             List<BonusEntry> bonuses,
             String conditionAttribute,
             String slot,
-            net.pixeldreamstudios.morequesttypes.util.ComparisonMode comparisonMode,
+            ComparisonMode comparisonMode,
             double first,
             double second
     ) {

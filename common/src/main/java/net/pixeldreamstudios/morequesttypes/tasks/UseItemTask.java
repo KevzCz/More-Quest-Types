@@ -3,47 +3,56 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 import com.mojang.datafixers.util.Either;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.config.StringConfig;
+import dev.ftb.mods.ftblibrary.icon.Icon;
+import dev.ftb.mods.ftblibrary.icon.IconAnimation;
+import dev.ftb.mods.ftblibrary.icon.ItemIcon;
 import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import dev.ftb.mods.ftbquests.integration.item_filtering.ItemMatchingSystem;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.TeamData;
+import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
+import dev.ftb.mods.ftbquests.registry.ModItems;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.nbt.TagParser;
+import net.minecraft.nbt.*;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.pixeldreamstudios.morequesttypes.event.UseItemEventBuffer;
+import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
+import net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest;
+import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
+import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
-public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
+public final class UseItemTask extends Task {
     public enum HandMode { ANY, MAIN_HAND, OFF_HAND }
     private long value = 1;
     private HandMode handMode = HandMode.ANY;
     private boolean anyItem = false;
     private ItemStack itemFilter = ItemStack.EMPTY;
     private String itemTagStr = "";
-    private transient TagKey<net.minecraft.world.item.Item> itemTag;
+    private transient TagKey<Item> itemTag;
     private ItemMatchingSystem.ComponentMatchType matchComponents = ItemMatchingSystem.ComponentMatchType.NONE;
     private final List<String> nbtFilters = new ArrayList<>();
     private static final ResourceLocation DEFAULT_STRUCTURE = ResourceLocation.withDefaultNamespace("mineshaft");
@@ -60,7 +69,7 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     @Override public int autoSubmitOnPlayerTick() { return 1; }
 
     @Override
-    public void submitTask(TeamData teamData, net.minecraft.server.level.ServerPlayer player, ItemStack craftedItem) {
+    public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
@@ -77,7 +86,7 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         teamData.setProgress(this, next);
     }
 
-    private int countExact(List<UseItemEventBuffer.Use> events, net.minecraft.server.level.ServerPlayer player) {
+    private int countExact(List<UseItemEventBuffer.Use> events, ServerPlayer player) {
         int inc = 0;
         for (var ev : events) {
             if (handMode == HandMode.MAIN_HAND && ev.hand() != InteractionHand.MAIN_HAND) continue;
@@ -87,7 +96,7 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         return inc;
     }
 
-    private int countAny(List<UseItemEventBuffer.Use> events, net.minecraft.server.level.ServerPlayer player) {
+    private int countAny(List<UseItemEventBuffer.Use> events, ServerPlayer player) {
         int inc = 0;
         EnumSet<InteractionHand> counted = EnumSet.noneOf(InteractionHand.class);
         for (var ev : events) {
@@ -100,7 +109,7 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         return inc;
     }
 
-    private boolean matches(net.minecraft.server.level.ServerPlayer who, ItemStack stack) {
+    private boolean matches(ServerPlayer who, ItemStack stack) {
         if (!insideLocationFilters(who.serverLevel(), who.blockPosition())) return false;
 
         if (anyItem) {
@@ -119,9 +128,7 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
         if (!nbtFilters.isEmpty() && !stack.isEmpty()) {
             List<String> processed = processPlaceholders(nbtFilters, who.getUUID(), who.getGameProfile().getName());
-            if (!checkNbtFilters(stack, processed, who.registryAccess())) {
-                return false;
-            }
+            return checkNbtFilters(stack, processed, who.registryAccess());
         }
 
         return true;
@@ -207,13 +214,11 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
     }
 
     private boolean tagsEqual(Tag a, Tag b) {
-        if (a instanceof CompoundTag && b instanceof CompoundTag) {
-            CompoundTag ca = (CompoundTag) a;
-            CompoundTag cb = (CompoundTag) b;
+        if (a instanceof CompoundTag ca && b instanceof CompoundTag cb) {
             if (cb.isEmpty()) return true;
             return containsPartialNbt(ca, cb);
         }
-        return net.minecraft.nbt.NbtUtils.compareNbt(a, b, true);
+        return NbtUtils.compareNbt(a, b, true);
     }
 
 
@@ -281,19 +286,19 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     private static void maybeRequestStructureSync() {
         if (KNOWN_STRUCTURES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTStructuresRequest());
+            NetworkHelper.sendToServer(new MQTStructuresRequest());
         }
     }
 
     private static void maybeRequestWorldSync() {
         if (KNOWN_DIMENSIONS.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest());
+            NetworkHelper.sendToServer(new MQTWorldsRequest());
         }
     }
 
     private static void maybeRequestBiomeSync() {
         if (KNOWN_BIOMES.isEmpty()) {
-            net.pixeldreamstudios.morequesttypes.network.NetworkHelper.sendToServer(new net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest());
+            NetworkHelper.sendToServer(new MQTBiomesRequest());
         }
     }
 
@@ -332,7 +337,7 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
                 .setNameKey("morequesttypes.task.match_components")
                 .setCanEdit(!anyItem);
 
-        config.addList("nbt_filters", nbtFilters, new dev.ftb.mods.ftblibrary.config.StringConfig(), "")
+        config.addList("nbt_filters", nbtFilters, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.nbt_filters");
 
         maybeRequestStructureSync();
@@ -406,7 +411,7 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
         if (!itemFilter.isEmpty()) itemFilter.setCount(1);
         itemTagStr = nbt.getString("item_tag");
         resolveItemTag();
-        matchComponents = (ItemMatchingSystem.ComponentMatchType) ItemMatchingSystem.ComponentMatchType.NAME_MAP.get(nbt.getString("match_components"));
+        matchComponents = ItemMatchingSystem.ComponentMatchType.NAME_MAP.get(nbt.getString("match_components"));
         nbtFilters.clear();
         ListTag list = nbt.getList("nbt_filters", Tag.TAG_STRING);
         for (int i = 0; i < list.size(); i++) nbtFilters.add(list.getString(i));
@@ -456,57 +461,57 @@ public final class UseItemTask extends dev.ftb.mods.ftbquests.quest.task.Task {
 
     @Environment(EnvType.CLIENT)
     @Override
-    public net.minecraft.network.chat.MutableComponent getAltTitle() {
+    public MutableComponent getAltTitle() {
         var item = anyItem ? Component.literal("Any Item")
                 : itemFilter.isEmpty() ? Component.literal(itemTagStr.isBlank() ? "Any" : itemTagStr)
                 : itemFilter.getHoverName();
         return Component.translatable("morequesttypes.task.use_item.title", formatMaxProgress(), item);
     }
 
-    @Environment(net.fabricmc.api.EnvType.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
-    public dev.ftb.mods.ftblibrary.icon.Icon getAltIcon() {
+    public Icon getAltIcon() {
         if (anyItem) {
-            return dev.ftb.mods.ftblibrary.icon.Icon.getIcon("minecraft:item/barrier");
+            return Icon.getIcon("minecraft:item/barrier");
         }
 
-        java.util.List<dev.ftb.mods.ftblibrary.icon.Icon> icons = new java.util.ArrayList<>();
+        List<Icon> icons = new ArrayList<>();
 
-        for (net.minecraft.world.item.ItemStack stack : getValidDisplayItems()) {
-            net.minecraft.world.item.ItemStack copy = stack.copy();
+        for (ItemStack stack : getValidDisplayItems()) {
+            ItemStack copy = stack.copy();
             copy.setCount(1);
-            dev.ftb.mods.ftblibrary.icon.Icon icon = dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(copy);
+            Icon icon = ItemIcon.getItemIcon(copy);
             if (!icon.isEmpty()) {
                 icons.add(icon);
             }
         }
 
         if (icons.isEmpty()) {
-            return dev.ftb.mods.ftblibrary.icon.ItemIcon.getItemIcon(
-                    dev.ftb.mods.ftbquests.registry.ModItems.MISSING_ITEM.get()
+            return ItemIcon.getItemIcon(
+                    ModItems.MISSING_ITEM.get()
             );
         }
 
-        return dev.ftb.mods.ftblibrary.icon.IconAnimation.fromList(icons, false);
+        return IconAnimation.fromList(icons, false);
     }
 
     @Environment(EnvType.CLIENT)
-    private java.util.List<net.minecraft.world.item.ItemStack> getValidDisplayItems() {
-        java.util.List<net.minecraft.world.item.ItemStack> out = new java.util.ArrayList<>();
+    private List<ItemStack> getValidDisplayItems() {
+        List<ItemStack> out = new ArrayList<>();
 
         if (!itemFilter.isEmpty()) {
-            net.minecraft.world.item.ItemStack one = itemFilter.copy();
+            ItemStack one = itemFilter.copy();
             one.setCount(1);
             out.add(one);
             return out;
         }
 
         if (itemTag != null) {
-            net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(itemTag).ifPresent(tagSet -> {
+            BuiltInRegistries.ITEM.getTag(itemTag).ifPresent(tagSet -> {
                 final int MAX = 16;
                 int i = 0;
                 for (var holder : tagSet) {
-                    out.add(new net.minecraft.world.item.ItemStack(holder.value()));
+                    out.add(new ItemStack(holder.value()));
                     if (++i >= MAX) break;
                 }
             });

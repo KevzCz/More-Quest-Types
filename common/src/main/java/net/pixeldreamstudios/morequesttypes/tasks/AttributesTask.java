@@ -1,33 +1,24 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
-import dev.ftb.mods.ftblibrary.config.ConfigGroup;
-import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.ftb.mods.ftbquests.quest.TeamData;
-import dev.ftb.mods.ftbquests.quest.task.Task;
-import dev.ftb.mods.ftbquests.quest.task.TaskType;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.core.Holder;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.item.ItemStack;
-import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
+import dev.ftb.mods.ftblibrary.config.*;
+import dev.ftb.mods.ftblibrary.util.*;
+import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.task.*;
+import net.fabricmc.api.*;
+import net.minecraft.client.*;
+import net.minecraft.core.*;
+import net.minecraft.core.registries.*;
+import net.minecraft.nbt.*;
+import net.minecraft.network.*;
+import net.minecraft.network.chat.*;
+import net.minecraft.resources.*;
+import net.minecraft.server.level.*;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.*;
+import net.minecraft.world.item.*;
+import net.pixeldreamstudios.morequesttypes.util.*;
 
-import java.util.Collection;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 
 public final class AttributesTask extends Task {
     private ResourceLocation attributeId = ResourceLocation.withDefaultNamespace("generic.max_health");
@@ -35,7 +26,7 @@ public final class AttributesTask extends Task {
     private double firstNumber = 20.0D;
     private double secondNumber = 30.0D;
 
-    public AttributesTask(long id, dev.ftb.mods.ftbquests.quest.Quest quest) {
+    public AttributesTask(long id, Quest quest) {
         super(id, quest);
     }
 
@@ -60,7 +51,7 @@ public final class AttributesTask extends Task {
     @Environment(EnvType.CLIENT)
     @Override
     public MutableComponent getButtonText() {
-        var mc = net.minecraft.client.Minecraft.getInstance();
+        var mc = Minecraft.getInstance();
         var player = mc.player;
         if (player == null) return Component.literal("? ");
 
@@ -70,7 +61,7 @@ public final class AttributesTask extends Task {
             return Component.literal(p >= 1 ? "✓" : "✗");
         }
 
-        return Component.literal(trim(shownCurrentFromProgress(p)));
+        return Component.literal(AttributesTask.trim(shownCurrentFromProgress(p)));
     }
 
     private static String trim(double v) {
@@ -86,7 +77,7 @@ public final class AttributesTask extends Task {
         if (comparisonMode.isRange()) {
             return "1";
         }
-        return trim(firstNumber);
+        return AttributesTask.trim(firstNumber);
     }
 
     @Environment(EnvType.CLIENT)
@@ -95,7 +86,7 @@ public final class AttributesTask extends Task {
         if (comparisonMode.isRange()) {
             return progress >= 1 ? "1" : "0";
         }
-        return trim(shownCurrentFromProgress(progress));
+        return AttributesTask.trim(shownCurrentFromProgress(progress));
     }
 
     @Override
@@ -118,7 +109,7 @@ public final class AttributesTask extends Task {
         if (teamData.isCompleted(this)) return;
         if (!checkTaskSequence(teamData)) return;
 
-        Holder<Attribute> holder = resolveAttributeHolder(player.registryAccess(), attributeId);
+        Holder<Attribute> holder = AttributesTask.resolveAttributeHolder(player.registryAccess(), attributeId);
         if (holder == null) return;
 
         Collection<ServerPlayer> online = teamData.getOnlineMembers();
@@ -126,7 +117,7 @@ public final class AttributesTask extends Task {
 
         double bestValue = Double.NEGATIVE_INFINITY;
         for (ServerPlayer sp : online) {
-            double v = read(sp, holder);
+            double v = AttributesTask.read(sp, holder);
             if (v > bestValue) bestValue = v;
         }
 
@@ -135,14 +126,14 @@ public final class AttributesTask extends Task {
 
         if (comparisonMode.isRange()) {
             double validatedSecond = validateNumbers(firstNumber, secondNumber);
-            boolean inRange = compareDouble(bestValue, comparisonMode, firstNumber, validatedSecond);
+            boolean inRange = AttributesTask.compareDouble(bestValue, comparisonMode, firstNumber, validatedSecond);
             target = inRange ? 1 : 0;
         } else {
-            boolean satisfied = compareDouble(bestValue, comparisonMode, firstNumber, secondNumber);
+            boolean satisfied = AttributesTask.compareDouble(bestValue, comparisonMode, firstNumber, secondNumber);
             if (satisfied) {
                 target = 100L;
             } else {
-                double percent = computePercent(bestValue, firstNumber, comparisonMode);
+                double percent = AttributesTask.computePercent(bestValue, firstNumber, comparisonMode);
                 target = Math.max(0L, Math.min(100L, Math.round(100.0 * percent)));
             }
         }
@@ -172,19 +163,19 @@ public final class AttributesTask extends Task {
             case GREATER_OR_EQUAL, GREATER_THAN -> {
                 if (target >= 0.0) {
                     double denom = Math.max(Math.abs(target), 1.0E-9);
-                    yield clamp01(current / denom);
+                    yield AttributesTask.clamp01(current / denom);
                 } else {
                     double denom = Math.max(Math.abs(target), 1.0E-9);
-                    yield clamp01((current - target) / denom);
+                    yield AttributesTask.clamp01((current - target) / denom);
                 }
             }
             case LESS_OR_EQUAL, LESS_THAN -> {
-                yield computePercent(-current, -target, ComparisonMode.GREATER_OR_EQUAL);
+                yield AttributesTask.computePercent(-current, -target, ComparisonMode.GREATER_OR_EQUAL);
             }
             case EQUALS -> {
                 double denom = Math.max(Math.abs(target), 1.0E-6);
                 double diff = Math.abs(current - target);
-                yield clamp01(1.0 - (diff / denom));
+                yield AttributesTask.clamp01(1.0 - (diff / denom));
             }
             default -> 0.0;
         };
@@ -264,7 +255,7 @@ public final class AttributesTask extends Task {
     }
 
     @Override
-    public void writeData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         if (attributeId != null) nbt.putString("attribute", attributeId.toString());
         nbt.putString("comparison_mode", comparisonMode.name());
@@ -273,7 +264,7 @@ public final class AttributesTask extends Task {
     }
 
     @Override
-    public void readData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         attributeId = ResourceLocation.tryParse(nbt.getString("attribute"));
 
@@ -288,8 +279,7 @@ public final class AttributesTask extends Task {
         firstNumber = nbt.contains("first_number") ? nbt.getDouble("first_number") : 20.0D;
         secondNumber = nbt.contains("second_number") ? nbt.getDouble("second_number") : 30.0D;
 
-        // Legacy support for old "operator" and "amount" fields
-        if (nbt.contains("operator") && ! nbt.contains("comparison_mode")) {
+        if (nbt.contains("operator") && !nbt.contains("comparison_mode")) {
             try {
                 String oldOp = nbt.getString("operator");
                 comparisonMode = switch (oldOp) {
@@ -300,10 +290,11 @@ public final class AttributesTask extends Task {
                     case "LE" -> ComparisonMode.LESS_OR_EQUAL;
                     default -> ComparisonMode.GREATER_OR_EQUAL;
                 };
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
 
-        if (nbt.contains("amount") && ! nbt.contains("first_number")) {
+        if (nbt.contains("amount") && !nbt.contains("first_number")) {
             firstNumber = nbt.getDouble("amount");
         }
 
@@ -370,15 +361,17 @@ public final class AttributesTask extends Task {
         double validatedSecond = validateNumbers(firstNumber, secondNumber);
 
         return switch (comparisonMode) {
-            case EQUALS -> "= " + trim(firstNumber);
-            case GREATER_THAN -> "> " + trim(firstNumber);
-            case LESS_THAN -> "< " + trim(firstNumber);
-            case GREATER_OR_EQUAL -> "≥ " + trim(firstNumber);
-            case LESS_OR_EQUAL -> "≤ " + trim(firstNumber);
-            case RANGE -> trim(firstNumber) + " < x < " + trim(validatedSecond);
-            case RANGE_EQUAL -> trim(firstNumber) + " ≤ x ≤ " + trim(validatedSecond);
-            case RANGE_EQUAL_FIRST -> trim(firstNumber) + " ≤ x < " + trim(validatedSecond);
-            case RANGE_EQUAL_SECOND -> trim(firstNumber) + " < x ≤ " + trim(validatedSecond);
+            case EQUALS -> "= " + AttributesTask.trim(firstNumber);
+            case GREATER_THAN -> "> " + AttributesTask.trim(firstNumber);
+            case LESS_THAN -> "< " + AttributesTask.trim(firstNumber);
+            case GREATER_OR_EQUAL -> "≥ " + AttributesTask.trim(firstNumber);
+            case LESS_OR_EQUAL -> "≤ " + AttributesTask.trim(firstNumber);
+            case RANGE -> AttributesTask.trim(firstNumber) + " < x < " + AttributesTask.trim(validatedSecond);
+            case RANGE_EQUAL -> AttributesTask.trim(firstNumber) + " ≤ x ≤ " + AttributesTask.trim(validatedSecond);
+            case RANGE_EQUAL_FIRST ->
+                    AttributesTask.trim(firstNumber) + " ≤ x < " + AttributesTask.trim(validatedSecond);
+            case RANGE_EQUAL_SECOND ->
+                    AttributesTask.trim(firstNumber) + " < x ≤ " + AttributesTask.trim(validatedSecond);
         };
     }
 }

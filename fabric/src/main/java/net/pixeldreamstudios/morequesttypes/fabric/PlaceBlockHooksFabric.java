@@ -1,13 +1,15 @@
 package net.pixeldreamstudios.morequesttypes.fabric;
 
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.block.state.BlockState;
 import net.pixeldreamstudios.morequesttypes.event.PlaceBlockEventBuffer;
 
 public final class PlaceBlockHooksFabric {
     public static void register() {
-        net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+        UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
             if (player instanceof ServerPlayer sp) {
                 BlockPos pos = hitResult.getBlockPos().relative(hitResult.getDirection());
                 world.getServer().execute(() -> {
@@ -17,7 +19,7 @@ public final class PlaceBlockHooksFabric {
                     }
                 });
             }
-            return net.minecraft.world.InteractionResult.PASS;
+            return InteractionResult.PASS;
         });
     }
 

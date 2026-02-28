@@ -10,6 +10,7 @@ import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.Widget;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
+import dev.ftb.mods.ftblibrary.util.TooltipList;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
 import dev.ftb.mods.ftbquests.quest.loot.RewardTable;
 import net.fabricmc.api.EnvType;
@@ -155,11 +156,7 @@ public class RewardTableDropConfig extends ConfigValue<RewardTableDropConfig.Rew
                     .create();
 
             ConfigGroup tempGroup = new ConfigGroup("reward_table_drop_config", accepted -> {
-                if (accepted) {
-                    callback.save(true);
-                } else {
-                    callback.save(false);
-                }
+                callback.save(accepted);
             });
 
             tempGroup.addEnum("reward_table", currentTableId, selectedId -> {
@@ -218,7 +215,7 @@ public class RewardTableDropConfig extends ConfigValue<RewardTableDropConfig.Rew
     }
 
     @Override
-    public void addInfo(dev.ftb.mods.ftblibrary.util.TooltipList list) {
+    public void addInfo(TooltipList list) {
         super.addInfo(list);
         list.add(Component.translatable("morequesttypes.config.reward_table_drop.left_click"));
         list.add(Component.translatable("morequesttypes.config.reward_table_drop.right_click"));
