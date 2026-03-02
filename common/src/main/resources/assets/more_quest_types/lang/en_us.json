@@ -777,6 +777,8 @@
   "morequesttypes.task.use_block.title": "Use %s × %s",
   "morequesttypes.task.use_block.block": "Block",
   "morequesttypes.task.use_block.block.tooltip": "The block that must be right-clicked/used.",
+  "morequesttypes.task.use_block.block_id": "Block ID",
+  "morequesttypes.task.use_block.block_id.tooltip": "Use this to specify a block by its ID. Useful for blocks without item forms (e.g., minecraft:water, minecraft:fire).",
   "morequesttypes.task.use_block.block_tag": "Block Tag",
   "morequesttypes.task.use_block.block_tag.tooltip": "Match blocks in this tag instead of a specific block. Prefix with # for tags (e.g., #minecraft:logs).",
   "morequesttypes.task.use_block.value": "Number of Uses",
