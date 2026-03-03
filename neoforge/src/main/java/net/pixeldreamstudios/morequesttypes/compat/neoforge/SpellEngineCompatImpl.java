@@ -1,31 +1,29 @@
 package net.pixeldreamstudios.morequesttypes.compat.neoforge;
 
-import dev.architectury.platform.Platform;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
-import net.spell_engine.api.spell.container.SpellContainer;
-import net.spell_engine.api.spell.registry.SpellRegistry;
-import net.spell_engine.client.util.SpellRender;
-import net.spell_engine.internals.container.SpellContainerSource;
+import dev.architectury.platform.*;
+import net.minecraft.resources.*;
+import net.minecraft.server.level.*;
+import net.minecraft.world.level.*;
+import net.spell_engine.api.spell.container.*;
+import net.spell_engine.api.spell.registry.*;
+import net.spell_engine.client.util.*;
+import net.spell_engine.internals.container.*;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.stream.*;
 
 public final class SpellEngineCompatImpl {
     private static final String MOD_ID = "spell_engine";
 
-    private SpellEngineCompatImpl() {}
+    private SpellEngineCompatImpl() {
+    }
 
     public static boolean isLoaded() {
-        return Platform.isModLoaded(MOD_ID);
+        return Platform.isModLoaded(SpellEngineCompatImpl.MOD_ID);
     }
 
     public static Collection<ResourceLocation> getAllSpells(Level level) {
-        if (!isLoaded() || level == null) return List.of();
+        if (!SpellEngineCompatImpl.isLoaded() || level == null) return List.of();
         try {
             return SpellRegistry.stream(level)
                     .map(holderRef -> holderRef.unwrapKey().map(k -> k.location()).orElse(null))
@@ -37,7 +35,7 @@ public final class SpellEngineCompatImpl {
     }
 
     public static void installSpells(ServerPlayer player, String baseKey, Collection<ResourceLocation> spells) {
-        if (!isLoaded() || player == null) return;
+        if (!SpellEngineCompatImpl.isLoaded() || player == null) return;
         try {
             @SuppressWarnings("unchecked")
             Map<String, SpellContainer> serverSide = ((SpellContainerSource.Owner) player).serverSideSpellContainers();
@@ -45,26 +43,37 @@ public final class SpellEngineCompatImpl {
 
             if (spells != null && !spells.isEmpty()) {
                 List<String> ids = spells.stream().map(ResourceLocation::toString).collect(Collectors.toList());
-                SpellContainer container = new SpellContainer(SpellContainer.ContentType.ANY, true, "", 0, ids);
-                serverSide.put(baseKey + "/any", container);
+                SpellContainer container = new SpellContainer(
+                        SpellContainer.ContentType.MAGIC, // access (ContentType)
+                        "",                                // access_param
+                        "",                                // pool
+                        "",                                // slot
+                        ids.size(),                        // max_spell_count
+                        ids,                               // spell_ids
+                        0                                  // extra_tier_binding
+                );
+                serverSide.put(baseKey + "/magic", container);
             }
 
             SpellContainerSource.setDirtyServerSide(player);
             SpellContainerSource.syncServerSideContainers(player);
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     public static void uninstallSpells(ServerPlayer player, String baseKey) {
-        if (!isLoaded() || player == null) return;
+        if (!SpellEngineCompatImpl.isLoaded() || player == null) return;
         try {
             Map<String, SpellContainer> serverSide = ((SpellContainerSource.Owner) player).serverSideSpellContainers();
             serverSide.keySet().removeIf(k -> k.startsWith(baseKey + "/"));
             SpellContainerSource.setDirtyServerSide(player);
             SpellContainerSource.syncServerSideContainers(player);
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
+
     public static Collection<String> getInstalledSpellKeys(ServerPlayer player) {
-        if (!isLoaded() || player == null) return List.of();
+        if (!SpellEngineCompatImpl.isLoaded() || player == null) return List.of();
         try {
             @SuppressWarnings("unchecked")
             Map<String, SpellContainer> serverSide =
@@ -76,7 +85,7 @@ public final class SpellEngineCompatImpl {
     }
 
     public static void removeInstalledSpellKeys(ServerPlayer player, Collection<String> keys) {
-        if (!isLoaded() || player == null || keys == null || keys.isEmpty()) return;
+        if (!SpellEngineCompatImpl.isLoaded() || player == null || keys == null || keys.isEmpty()) return;
         try {
             @SuppressWarnings("unchecked")
             Map<String, SpellContainer> serverSide =
@@ -84,12 +93,13 @@ public final class SpellEngineCompatImpl {
             for (String k : keys) serverSide.remove(k);
             SpellContainerSource.setDirtyServerSide(player);
             SpellContainerSource.syncServerSideContainers(player);
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
+
     public static ResourceLocation getSpellIconTexture(ResourceLocation spellId) {
-        if (!isLoaded() || spellId == null) return null;
+        if (!SpellEngineCompatImpl.isLoaded() || spellId == null) return null;
         try {
-            // SpellRender helper you showed maps spell id -> texture path
             return SpellRender.iconTexture(spellId);
         } catch (Throwable t) {
             return null;
