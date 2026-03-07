@@ -23,6 +23,8 @@ public final class MoreRewardTypes {
     public static RewardType SUMMON;
     public static RewardType NBT_PATH;
     public static RewardType EQUIPMENT_ATTRIBUTE;
+    public static RewardType ACCESSORIES_ATTRIBUTE;
+    public static RewardType SPELL_EQUIPMENT;
     public static RewardType EASY_NPC_DIALOGUE;
     public static void init() {
         if (BlabberCompat.isLoaded()) {
@@ -44,6 +46,11 @@ public final class MoreRewardTypes {
                     FTBQuestsAPI.rl("spell"),
                     SpellReward::new,
                     () -> Icon.getIcon("minecraft:item/lapis_lazuli")
+            );
+            SPELL_EQUIPMENT = RewardTypes.register(
+                    FTBQuestsAPI.rl("spell_equipment"),
+                    SpellEquipmentReward::new,
+                    () -> Icon.getIcon("minecraft:item/enchanted_book")
             );
         }
         EQUIPMENT_ATTRIBUTE = RewardTypes.register(
@@ -110,6 +117,13 @@ public final class MoreRewardTypes {
                     FTBQuestsAPI.rl("easynpc_dialogue"),
                     EasyNPCDialogueReward::new,
                     () -> Icon.getIcon("easy_npc:block/easy_npc_spawner/boss_spawner")
+            );
+        }
+        if (AccessoriesCompat.isLoaded()) {
+            ACCESSORIES_ATTRIBUTE = RewardTypes.register(
+                    FTBQuestsAPI.rl("accessories_attribute"),
+                    AccessoriesAttributeReward::new,
+                    () -> Icon.getIcon("minecraft:item/golden_horse_armor")
             );
         }
     }

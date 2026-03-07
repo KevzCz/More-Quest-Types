@@ -50,6 +50,7 @@ dependencies {
     modCompileOnly "curse.maven:dungeon-difficulty-645559:7310937"
     modCompileOnly "curse.maven:easy-npc-core-1308987:7619172"
     modCompileOnly "curse.maven:easy-npc-config-ui-1214728:7618667"
+    modCompileOnly "curse.maven:accessories-938917:7583320"
 }
 
 processResources {

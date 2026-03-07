@@ -58,6 +58,7 @@ dependencies {
 
     modCompileOnly "curse.maven:easy-npc-core-1308987:7619174"
     modCompileOnly "curse.maven:easy-npc-config-ui-1214728:7618692"
+    modCompileOnly "curse.maven:accessories-938917:7583323"
 }
 
 processResources {

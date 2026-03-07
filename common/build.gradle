@@ -28,4 +28,5 @@ dependencies {
         transitive = false
     }
     modCompileOnly files("libs/Calio-1.14.0-alpha.9+mc.1.21.x.jar")
+    modCompileOnly "curse.maven:accessories-938917:7583323"
 }
