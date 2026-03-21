@@ -23,9 +23,9 @@ public abstract class TeamDataPlayerLevelingMixin {
     private void mqt$checkPlayerLevelingBeforeSetProgress(Task task, long progress, CallbackInfo ci) {
         if (progress <= 0) return;
 
-        TeamData teamData = (TeamData)(Object)this;
+        TeamData teamData = (TeamData) (Object) this;
 
-        if (! mqt$checkSkillsRequirement(task, teamData)) {
+        if (!mqt$checkSkillsRequirement(task, teamData)) {
             ci.cancel();
             return;
         }
@@ -108,7 +108,7 @@ public abstract class TeamDataPlayerLevelingMixin {
             if (extension.getReskillableMode() == ITaskReskillableExtension.ReskillableMode.TOTAL_LEVEL) {
                 playerValue = ReskillableCompat.getTotalSkillLevels(player);
             } else {
-                playerValue = ReskillableCompat.getSkillLevel(player, extension.getReskillableSkillIndex());
+                playerValue = ReskillableCompat.getSkillLevel(player, extension.getReskillableSkillId());
             }
 
             if (extension.getReskillableComparison().compare(

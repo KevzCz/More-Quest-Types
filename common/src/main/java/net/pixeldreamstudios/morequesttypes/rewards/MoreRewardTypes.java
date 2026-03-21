@@ -26,6 +26,7 @@ public final class MoreRewardTypes {
     public static RewardType ACCESSORIES_ATTRIBUTE;
     public static RewardType SPELL_EQUIPMENT;
     public static RewardType EASY_NPC_DIALOGUE;
+    public static RewardType SGECONOMY;
     public static void init() {
         if (BlabberCompat.isLoaded()) {
             DIALOGUE = RewardTypes.register(
@@ -124,6 +125,13 @@ public final class MoreRewardTypes {
                     FTBQuestsAPI.rl("accessories_attribute"),
                     AccessoriesAttributeReward::new,
                     () -> Icon.getIcon("minecraft:item/golden_horse_armor")
+            );
+        }
+        if (SGEconomyCompat.isLoaded()) {
+            SGECONOMY = RewardTypes.register(
+                    FTBQuestsAPI.rl("sgeconomy"),
+                    SGEconomyReward::new,
+                    () -> Icon.getIcon("minecraft:item/gold_ingot")
             );
         }
     }

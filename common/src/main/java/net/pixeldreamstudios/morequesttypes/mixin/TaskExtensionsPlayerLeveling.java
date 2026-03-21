@@ -71,79 +71,187 @@ public abstract class TaskExtensionsPlayerLeveling implements
     @Unique
     private int mqt$reskillableSecond = 20;
     @Unique
-    private int mqt$reskillableSkillIndex = 0;
+    private String mqt$reskillableSkillId = "mining";
+
     @Override
-    public boolean shouldCheckSkillsLevel() { return mqt$checkSkills; }
+    public boolean shouldCheckSkillsLevel() {
+        return mqt$checkSkills;
+    }
+
     @Override
-    public void setShouldCheckSkillsLevel(boolean check) { mqt$checkSkills = check; }
+    public void setShouldCheckSkillsLevel(boolean check) {
+        mqt$checkSkills = check;
+    }
+
     @Override
-    public ITaskSkillsExtension.SkillsMode getSkillsMode() { return mqt$skillsMode; }
+    public ITaskSkillsExtension.SkillsMode getSkillsMode() {
+        return mqt$skillsMode;
+    }
+
     @Override
-    public void setSkillsMode(ITaskSkillsExtension.SkillsMode mode) { mqt$skillsMode = mode; }
+    public void setSkillsMode(ITaskSkillsExtension.SkillsMode mode) {
+        mqt$skillsMode = mode;
+    }
+
     @Override
-    public ComparisonMode getSkillsComparison() { return mqt$skillsComparison; }
+    public ComparisonMode getSkillsComparison() {
+        return mqt$skillsComparison;
+    }
+
     @Override
-    public void setSkillsComparison(ComparisonMode mode) { mqt$skillsComparison = mode; }
+    public void setSkillsComparison(ComparisonMode mode) {
+        mqt$skillsComparison = mode;
+    }
+
     @Override
-    public int getSkillsFirstNumber() { return mqt$skillsFirst; }
+    public int getSkillsFirstNumber() {
+        return mqt$skillsFirst;
+    }
+
     @Override
-    public void setSkillsFirstNumber(int value) { mqt$skillsFirst = value; }
+    public void setSkillsFirstNumber(int value) {
+        mqt$skillsFirst = value;
+    }
+
     @Override
-    public int getSkillsSecondNumber() { return mqt$skillsSecond; }
+    public int getSkillsSecondNumber() {
+        return mqt$skillsSecond;
+    }
+
     @Override
-    public void setSkillsSecondNumber(int value) { mqt$skillsSecond = value; }
+    public void setSkillsSecondNumber(int value) {
+        mqt$skillsSecond = value;
+    }
+
     @Override
-    public String getSkillsCategoryId() { return mqt$skillsCategoryId; }
+    public String getSkillsCategoryId() {
+        return mqt$skillsCategoryId;
+    }
+
     @Override
-    public void setSkillsCategoryId(String categoryId) { mqt$skillsCategoryId = categoryId; }
+    public void setSkillsCategoryId(String categoryId) {
+        mqt$skillsCategoryId = categoryId;
+    }
+
     @Override
-    public boolean shouldCheckLevelZ() { return mqt$checkLevelZ; }
+    public boolean shouldCheckLevelZ() {
+        return mqt$checkLevelZ;
+    }
+
     @Override
-    public void setShouldCheckLevelZ(boolean check) { mqt$checkLevelZ = check; }
+    public void setShouldCheckLevelZ(boolean check) {
+        mqt$checkLevelZ = check;
+    }
+
     @Override
-    public ITaskLevelZExtension.LevelZMode getLevelZMode() { return mqt$levelZMode; }
+    public ITaskLevelZExtension.LevelZMode getLevelZMode() {
+        return mqt$levelZMode;
+    }
+
     @Override
-    public void setLevelZMode(ITaskLevelZExtension.LevelZMode mode) { mqt$levelZMode = mode; }
+    public void setLevelZMode(ITaskLevelZExtension.LevelZMode mode) {
+        mqt$levelZMode = mode;
+    }
+
     @Override
-    public ComparisonMode getLevelZComparison() { return mqt$levelZComparison; }
+    public ComparisonMode getLevelZComparison() {
+        return mqt$levelZComparison;
+    }
+
     @Override
-    public void setLevelZComparison(ComparisonMode mode) { mqt$levelZComparison = mode; }
+    public void setLevelZComparison(ComparisonMode mode) {
+        mqt$levelZComparison = mode;
+    }
+
     @Override
-    public int getLevelZFirstNumber() { return mqt$levelZFirst; }
+    public int getLevelZFirstNumber() {
+        return mqt$levelZFirst;
+    }
+
     @Override
-    public void setLevelZFirstNumber(int value) { mqt$levelZFirst = value; }
+    public void setLevelZFirstNumber(int value) {
+        mqt$levelZFirst = value;
+    }
+
     @Override
-    public int getLevelZSecondNumber() { return mqt$levelZSecond; }
+    public int getLevelZSecondNumber() {
+        return mqt$levelZSecond;
+    }
+
     @Override
-    public void setLevelZSecondNumber(int value) { mqt$levelZSecond = value; }
+    public void setLevelZSecondNumber(int value) {
+        mqt$levelZSecond = value;
+    }
+
     @Override
-    public int getLevelZSkillId() { return mqt$levelZSkillId; }
+    public int getLevelZSkillId() {
+        return mqt$levelZSkillId;
+    }
+
     @Override
-    public void setLevelZSkillId(int skillId) { mqt$levelZSkillId = skillId; }
+    public void setLevelZSkillId(int skillId) {
+        mqt$levelZSkillId = skillId;
+    }
+
     @Override
-    public boolean shouldCheckReskillable() { return mqt$checkReskillable; }
+    public boolean shouldCheckReskillable() {
+        return mqt$checkReskillable;
+    }
+
     @Override
-    public void setShouldCheckReskillable(boolean check) { mqt$checkReskillable = check; }
+    public void setShouldCheckReskillable(boolean check) {
+        mqt$checkReskillable = check;
+    }
+
     @Override
-    public ITaskReskillableExtension.ReskillableMode getReskillableMode() { return mqt$reskillableMode; }
+    public ITaskReskillableExtension.ReskillableMode getReskillableMode() {
+        return mqt$reskillableMode;
+    }
+
     @Override
-    public void setReskillableMode(ITaskReskillableExtension.ReskillableMode mode) { mqt$reskillableMode = mode; }
+    public void setReskillableMode(ITaskReskillableExtension.ReskillableMode mode) {
+        mqt$reskillableMode = mode;
+    }
+
     @Override
-    public ComparisonMode getReskillableComparison() { return mqt$reskillableComparison; }
+    public ComparisonMode getReskillableComparison() {
+        return mqt$reskillableComparison;
+    }
+
     @Override
-    public void setReskillableComparison(ComparisonMode mode) { mqt$reskillableComparison = mode; }
+    public void setReskillableComparison(ComparisonMode mode) {
+        mqt$reskillableComparison = mode;
+    }
+
     @Override
-    public int getReskillableFirstNumber() { return mqt$reskillableFirst; }
+    public int getReskillableFirstNumber() {
+        return mqt$reskillableFirst;
+    }
+
     @Override
-    public void setReskillableFirstNumber(int value) { mqt$reskillableFirst = value; }
+    public void setReskillableFirstNumber(int value) {
+        mqt$reskillableFirst = value;
+    }
+
     @Override
-    public int getReskillableSecondNumber() { return mqt$reskillableSecond; }
+    public int getReskillableSecondNumber() {
+        return mqt$reskillableSecond;
+    }
+
     @Override
-    public void setReskillableSecondNumber(int value) { mqt$reskillableSecond = value; }
+    public void setReskillableSecondNumber(int value) {
+        mqt$reskillableSecond = value;
+    }
+
     @Override
-    public int getReskillableSkillIndex() { return mqt$reskillableSkillIndex; }
+    public String getReskillableSkillId() {
+        return mqt$reskillableSkillId;
+    }
+
     @Override
-    public void setReskillableSkillIndex(int skillIndex) { mqt$reskillableSkillIndex = skillIndex; }
+    public void setReskillableSkillId(String skillId) {
+        mqt$reskillableSkillId = skillId;
+    }
 
     @Unique
     private boolean mqt$shouldSerializePlayerLeveling() {
@@ -153,11 +261,11 @@ public abstract class TaskExtensionsPlayerLeveling implements
                 && !(self instanceof LevelZTask)
                 && !(self instanceof ReskillableTask);
     }
+
     @Inject(method = "writeData", at = @At("TAIL"), remap = false)
     private void mqt$writePlayerLevelingData(CompoundTag nbt, HolderLookup.Provider provider, CallbackInfo ci) {
-        if (! mqt$shouldSerializePlayerLeveling()) return;
+        if (!mqt$shouldSerializePlayerLeveling()) return;
 
-        // Skills
         if (SkillsCompat.isLoaded()) {
             CompoundTag skillsTag = new CompoundTag();
             skillsTag.putBoolean("check", mqt$checkSkills);
@@ -187,7 +295,7 @@ public abstract class TaskExtensionsPlayerLeveling implements
             reskillableTag.putString("comparison", mqt$reskillableComparison.name());
             reskillableTag.putInt("first", mqt$reskillableFirst);
             reskillableTag.putInt("second", mqt$reskillableSecond);
-            reskillableTag.putInt("skill_index", mqt$reskillableSkillIndex);
+            reskillableTag.putString("skill_id", mqt$reskillableSkillId);
             nbt.put("Reskillable", reskillableTag);
         }
     }
@@ -199,10 +307,16 @@ public abstract class TaskExtensionsPlayerLeveling implements
         if (SkillsCompat.isLoaded() && nbt.contains("SkillsLevel")) {
             CompoundTag tag = nbt.getCompound("SkillsLevel");
             mqt$checkSkills = tag.getBoolean("check");
-            try { mqt$skillsMode = ITaskSkillsExtension.SkillsMode.valueOf(tag.getString("mode")); }
-            catch (Exception e) { mqt$skillsMode = ITaskSkillsExtension.SkillsMode.TOTAL_LEVEL; }
-            try { mqt$skillsComparison = ComparisonMode.valueOf(tag.getString("comparison")); }
-            catch (Exception e) { mqt$skillsComparison = ComparisonMode.GREATER_OR_EQUAL; }
+            try {
+                mqt$skillsMode = ITaskSkillsExtension.SkillsMode.valueOf(tag.getString("mode"));
+            } catch (Exception e) {
+                mqt$skillsMode = ITaskSkillsExtension.SkillsMode.TOTAL_LEVEL;
+            }
+            try {
+                mqt$skillsComparison = ComparisonMode.valueOf(tag.getString("comparison"));
+            } catch (Exception e) {
+                mqt$skillsComparison = ComparisonMode.GREATER_OR_EQUAL;
+            }
             mqt$skillsFirst = tag.getInt("first");
             mqt$skillsSecond = tag.getInt("second");
             mqt$skillsCategoryId = tag.getString("category");
@@ -211,10 +325,16 @@ public abstract class TaskExtensionsPlayerLeveling implements
         if (LevelZCompat.isLoaded() && nbt.contains("LevelZ")) {
             CompoundTag tag = nbt.getCompound("LevelZ");
             mqt$checkLevelZ = tag.getBoolean("check");
-            try { mqt$levelZMode = ITaskLevelZExtension.LevelZMode.valueOf(tag.getString("mode")); }
-            catch (Exception e) { mqt$levelZMode = ITaskLevelZExtension.LevelZMode.LEVEL; }
-            try { mqt$levelZComparison = ComparisonMode.valueOf(tag.getString("comparison")); }
-            catch (Exception e) { mqt$levelZComparison = ComparisonMode.GREATER_OR_EQUAL; }
+            try {
+                mqt$levelZMode = ITaskLevelZExtension.LevelZMode.valueOf(tag.getString("mode"));
+            } catch (Exception e) {
+                mqt$levelZMode = ITaskLevelZExtension.LevelZMode.LEVEL;
+            }
+            try {
+                mqt$levelZComparison = ComparisonMode.valueOf(tag.getString("comparison"));
+            } catch (Exception e) {
+                mqt$levelZComparison = ComparisonMode.GREATER_OR_EQUAL;
+            }
             mqt$levelZFirst = tag.getInt("first");
             mqt$levelZSecond = tag.getInt("second");
             mqt$levelZSkillId = tag.getInt("skill_id");
@@ -223,13 +343,37 @@ public abstract class TaskExtensionsPlayerLeveling implements
         if (ReskillableCompat.isLoaded() && nbt.contains("Reskillable")) {
             CompoundTag tag = nbt.getCompound("Reskillable");
             mqt$checkReskillable = tag.getBoolean("check");
-            try { mqt$reskillableMode = ITaskReskillableExtension.ReskillableMode.valueOf(tag.getString("mode")); }
-            catch (Exception e) { mqt$reskillableMode = ITaskReskillableExtension.ReskillableMode.SKILL_LEVEL; }
-            try { mqt$reskillableComparison = ComparisonMode.valueOf(tag.getString("comparison")); }
-            catch (Exception e) { mqt$reskillableComparison = ComparisonMode.GREATER_OR_EQUAL; }
+            try {
+                mqt$reskillableMode = ITaskReskillableExtension.ReskillableMode.valueOf(tag.getString("mode"));
+            } catch (Exception e) {
+                mqt$reskillableMode = ITaskReskillableExtension.ReskillableMode.SKILL_LEVEL;
+            }
+            try {
+                mqt$reskillableComparison = ComparisonMode.valueOf(tag.getString("comparison"));
+            } catch (Exception e) {
+                mqt$reskillableComparison = ComparisonMode.GREATER_OR_EQUAL;
+            }
             mqt$reskillableFirst = tag.getInt("first");
             mqt$reskillableSecond = tag.getInt("second");
-            mqt$reskillableSkillIndex = tag.getInt("skill_index");
+
+            if (tag.contains("skill_id")) {
+                mqt$reskillableSkillId = tag.getString("skill_id");
+            } else if (tag.contains("skill_index")) {
+                int oldIndex = tag.getInt("skill_index");
+                mqt$reskillableSkillId = switch (oldIndex) {
+                    case 0 -> "mining";
+                    case 1 -> "gathering";
+                    case 2 -> "attack";
+                    case 3 -> "defense";
+                    case 4 -> "building";
+                    case 5 -> "farming";
+                    case 6 -> "agility";
+                    case 7 -> "magic";
+                    default -> "mining";
+                };
+            } else {
+                mqt$reskillableSkillId = "mining";
+            }
         }
     }
 
@@ -272,7 +416,7 @@ public abstract class TaskExtensionsPlayerLeveling implements
             buffer.writeEnum(mqt$reskillableComparison);
             buffer.writeVarInt(mqt$reskillableFirst);
             buffer.writeVarInt(mqt$reskillableSecond);
-            buffer.writeVarInt(mqt$reskillableSkillIndex);
+            buffer.writeUtf(mqt$reskillableSkillId);
         }
     }
 
@@ -312,7 +456,7 @@ public abstract class TaskExtensionsPlayerLeveling implements
             mqt$reskillableComparison = buffer.readEnum(ComparisonMode.class);
             mqt$reskillableFirst = buffer.readVarInt();
             mqt$reskillableSecond = buffer.readVarInt();
-            mqt$reskillableSkillIndex = buffer.readVarInt();
+            mqt$reskillableSkillId = buffer.readUtf();
         }
     }
 
@@ -366,7 +510,7 @@ public abstract class TaskExtensionsPlayerLeveling implements
 
             ResourceLocation current = ResourceLocation.tryParse(mqt$skillsCategoryId);
             if (current == null || current.equals(NONE)) {
-                current = cats.size() > 1 ? cats.get(1) :  NONE;
+                current = cats.size() > 1 ? cats.get(1) : NONE;
             }
 
             var CAT_MAP = NameMap.of(current, cats.toArray(ResourceLocation[]::new))
@@ -464,19 +608,19 @@ public abstract class TaskExtensionsPlayerLeveling implements
                 }
             }, 20, 0, 100000).setNameKey("morequesttypes.task.second_number");
 
-            Map<Integer, String> skills = new LinkedHashMap<>();
-            skills.putAll(ReskillableCompat.getAvailableSkills());
-            if (skills.isEmpty()) skills.put(0, "No Skills Available");
+            Map<String, String> skills = new LinkedHashMap<>();
+            skills.putAll(ReskillableCompat.getAllSkills());
+            if (skills.isEmpty()) skills.put("none", "No Skills Available");
 
-            List<Integer> skillIds = new ArrayList<>(skills.keySet());
-            Integer currentSkillIndex = skillIds.contains(mqt$reskillableSkillIndex) ?
-                    mqt$reskillableSkillIndex : skillIds.get(0);
+            List<String> skillIds = new ArrayList<>(skills.keySet());
+            String currentSkillId = skillIds.contains(mqt$reskillableSkillId) ?
+                    mqt$reskillableSkillId : skillIds.get(0);
 
-            var SKILL_MAP = NameMap.of(currentSkillIndex, skillIds.toArray(Integer[]::new))
+            var SKILL_MAP = NameMap.of(currentSkillId, skillIds.toArray(String[]::new))
                     .name(id -> Component.literal(skills.getOrDefault(id, "Unknown")))
                     .create();
 
-            reskillableGroup.addEnum("skill", currentSkillIndex, v -> mqt$reskillableSkillIndex = v, SKILL_MAP)
+            reskillableGroup.addEnum("skill", currentSkillId, v -> mqt$reskillableSkillId = v, SKILL_MAP)
                     .setNameKey("morequesttypes.task.reskillable.skill");
         }
     }

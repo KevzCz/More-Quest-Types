@@ -2,14 +2,11 @@
   "ftbquests.reward.ftbquests.complete_object": "Complete Quest",
   "morequesttypes.reward.complete_object.targets": "Targets",
   "morequesttypes.reward.complete_object.targets.tooltip": "Quest or task IDs to complete. Use # for tags (e.g., #sometag) or hex IDs for specific quests/tasks.",
-
   "ftbquests.reward.ftbquests.reset_object": "Reset Quest",
   "morequesttypes.reward.reset_object.targets": "Targets",
   "morequesttypes.reward.reset_object.targets.tooltip": "Quest or task IDs to reset. Use # for tags (e.g., #sometag) or hex IDs for specific quests/tasks.",
-
   "ftbquests.reward.ftbquests": "More Quest Types Rewards",
   "ftbquests.task.ftbquests": "More Quest Types Tasks",
-
   "ftbquests.reward.ftbquests.loot_table": "Loot Table",
   "morequesttypes.reward.loot_table.drop_if_full": "Drop If Full",
   "morequesttypes.reward.loot_table.drop_if_full.tooltip": "If true, drops items on the ground when the player's inventory is full.",
@@ -19,7 +16,6 @@
   "morequesttypes.reward.loot_table.rolls.tooltip": "Number of times to roll the loot table.",
   "morequesttypes.reward.loot_table.table": "Table",
   "morequesttypes.reward.loot_table.table.tooltip": "The loot table ID to use (e.g., minecraft:chests/simple_dungeon).",
-
   "ftbquests.reward.ftbquests.play_sound": "Play Sound",
   "morequesttypes.reward.play_sound.category": "Category",
   "morequesttypes.reward.play_sound.category.tooltip": "Sound category for volume control (e.g., PLAYERS, MASTER, MUSIC).",
@@ -29,14 +25,12 @@
   "morequesttypes.reward.play_sound.sound.tooltip": "The sound event ID (e.g., minecraft:entity.player.levelup).",
   "morequesttypes.reward.play_sound.volume": "Volume",
   "morequesttypes.reward.play_sound.volume.tooltip": "Volume of the sound (0.0 to 10.0). 1.0 is normal volume.",
-
   "ftbquests.reward.ftbquests.spell": "Spell",
   "morequesttypes.reward.ftbquests.spell": "Spell Reward",
   "morequesttypes.reward.spell.spell": "Spell",
   "morequesttypes.reward.spell.spell.tooltip": "The spell ID to install (requires Spell Engine mod).",
   "morequesttypes.reward.spell.button.install": "Install spell",
   "morequesttypes.reward.spell.button.remove": "Remove spell",
-
   "ftbquests.reward.ftbquests.attribute": "Attribute Reward",
   "morequesttypes.reward.attribute.title": "%s %s",
   "morequesttypes.reward.attribute.attribute": "Attribute",
@@ -47,7 +41,6 @@
   "morequesttypes.reward.attribute.amount.tooltip": "The amount to modify the attribute by. Can be negative.",
   "morequesttypes.reward.attribute.modifier_id": "Modifier ID",
   "morequesttypes.reward.attribute.modifier_id.tooltip": "Unique ID for this modifier. Leave empty to auto-generate.",
-
   "ftbquests.task.ftbquests.attributes": "Attribute",
   "morequesttypes.task.attributes.title": "%s: %s",
   "morequesttypes.task.attributes.amount": "Amount",
@@ -55,7 +48,6 @@
   "morequesttypes.task.attributes.attribute.tooltip": "The entity attribute to check (e.g., minecraft:generic.max_health).",
   "morequesttypes.task.attributes.operator": "Operator",
   "morequesttypes.task.attributes.tooltip": "%s: %s",
-
   "ftbquests.task.ftbquests.damage": "Damage",
   "ftbquests.task.ftbquests.damage.custom_name": "Entity Name",
   "ftbquests.task.ftbquests.damage.custom_name.tooltip": "Match entities with this exact custom name. Leave empty for any name.",
@@ -74,7 +66,6 @@
   "morequesttypes.task.damage.value.tooltip": "Total damage or highest hit value required.",
   "morequesttypes.task.damage.any_entity": "Any Entity",
   "morequesttypes.task.damage.any_entity.tooltip": "If enabled, damage dealt to ANY living entity will count. When enabled, specific entity type and tag filters are ignored.",
-
   "ftbquests.reward.ftbquests.dialogue": "Dialogue",
   "morequesttypes.reward.dialogue.title": "Dialogue: %s → %s (%s)",
   "morequesttypes.reward.dialogue.dialogue_id": "Dialogue ID",
@@ -85,7 +76,6 @@
   "morequesttypes.reward.dialogue.sort.tooltip": "How to select the entity: NEAREST, FURTHEST, or RANDOM.",
   "morequesttypes.reward.dialogue_custom_name": "Custom Name",
   "morequesttypes.reward.dialogue_custom_name.tooltip": "Only use entities with this exact custom name.",
-
   "ftbquests.task.ftbquests.dialogue": "Dialogue",
   "morequesttypes.task.dialogue.dialogue_id": "Dialogue ID",
   "morequesttypes.task.dialogue.dialogue_id.tooltip": "The dialogue ID that must be completed (requires Blabber mod).",
@@ -96,7 +86,6 @@
   "morequesttypes.task.dialogue.ends": "Valid endings: %s",
   "morequesttypes.task.dialogue.end_states": "Valid endings",
   "morequesttypes.task.dialogue.end_states.tooltip": "Specific dialogue end states that count as completion. Leave empty for any ending.",
-
   "ftbquests.task.ftbquests.find_entity": "Find Entity",
   "ftbquests.task.ftbquests.find_entity.entity": "Entity",
   "ftbquests.task.ftbquests.find_entity.entity.tooltip": "The entity type to find (e.g., minecraft:villager).",
@@ -109,7 +98,6 @@
   "morequesttypes.task.find_entity.target": "Complete when within radius (blocks)",
   "morequesttypes.task.find_entity.target.tooltip": "Complete the task when within this distance of the entity.",
   "morequesttypes.task.find_entity.title": "Find %s",
-
   "ftbquests.task.ftbquests.hold_item": "Hold item",
   "morequesttypes.task.hold_item.duration": "Duration (seconds)",
   "morequesttypes.task.hold_item.duration.tooltip": "How long the item must be held.",
@@ -120,7 +108,6 @@
   "morequesttypes.task.hold_item.item_tag": "Item Tag",
   "morequesttypes.task.hold_item.item_tag.tooltip": "Match items in this tag instead of a specific item.",
   "morequesttypes.task.hold_item.title": "Hold %2$s for %1$s",
-
   "ftbquests.task.ftbquests.interact_entity": "Interact Entity",
   "ftbquests.task.ftbquests.interact_entity.custom_name": "Name",
   "ftbquests.task.ftbquests.interact_entity.custom_name.tooltip": "Only match entities with this exact custom name.",
@@ -142,7 +129,6 @@
   "morequesttypes.task.interact_entity.title": "Interact %s× with %s",
   "morequesttypes.task.interact_entity.title_with_hand": "Interact %s× with %s in %s",
   "morequesttypes.task.interact_entity.with_item": "with %s",
-
   "morequesttypes.task.biome": "Inside Biome",
   "morequesttypes.task.biome.tooltip": "Biome ID or tag (prefix with #) where the action must occur. Leave empty for any biome.",
   "morequesttypes.task.dimension": "Inside Dimension",
@@ -155,7 +141,6 @@
   "morequesttypes.task.structure.tooltip": "Structure ID or tag (prefix with #) where the action must occur. Leave empty for any structure.",
   "morequesttypes.task.tags_csv": "Scoreboard Tags",
   "morequesttypes.task.tags_csv.tooltip": "List of scoreboard tags the entity must have.",
-
   "ftbquests.task.ftbquests.break_block": "Break Block",
   "morequesttypes.task.break_block.block_item": "Block Item Filter",
   "morequesttypes.task.break_block.block_item.tooltip": "The block to break. Leave empty for any block.",
@@ -168,7 +153,6 @@
   "morequesttypes.task.break_block.tool_tag.tooltip": "Match tools in this tag instead of a specific tool.",
   "morequesttypes.task.break_block.value": "Count",
   "morequesttypes.task.break_block.value.tooltip": "Number of blocks to break.",
-
   "ftbquests.task.ftbquests.check_quest": "Check Quest",
   "morequesttypes.task.check_quest.mode": "Mode",
   "morequesttypes.task.check_quest.mode.tooltip": "ANY: Complete when any target is done. ALL: Complete when all targets are done.",
@@ -183,7 +167,6 @@
   "morequesttypes.task.check_quest.complete_any": "Complete any quest(s):",
   "morequesttypes.task.check_quest.complete_required": "Complete %s quest(s):",
   "morequesttypes.task.check_quest.and_more": "   …and %s more",
-
   "ftbquests.task.ftbquests.skills_level": "Level",
   "morequesttypes.task.skills_level.category": "Category",
   "morequesttypes.task.skills_level.category.tooltip": "The skill category ID (requires Pufferfish's Skills mod).",
@@ -192,7 +175,6 @@
   "morequesttypes.task.skills_level.required": "Required Level",
   "morequesttypes.task.skills_level.tooltip.category": "Reach %s level \u2265 %s",
   "morequesttypes.task.skills_level.tooltip.total": "Reach total level \u2265 %s",
-
   "ftbquests.reward.ftbquests.skills_level": "Level",
   "morequesttypes.reward.skills_level.amount": "Amount",
   "morequesttypes.reward.skills_level.amount.tooltip": "Amount of experience or points to give/set/reduce.",
@@ -205,7 +187,6 @@
   "morequesttypes.reward.skills_level.operation_type.tooltip": "ADD: Add to current. SET: Set to exact value. REDUCE: Subtract from current.",
   "morequesttypes.reward.skills_level.point_source": "Point Source",
   "morequesttypes.reward.skills_level.point_source.tooltip": "Source ID for skill points (e.g., more_quest_types:reward).",
-
   "ftbquests.task.ftbquests.use_item": "Use item",
   "ftbquests.task.ftbquests.use_item.value": "Times to use",
   "ftbquests.task.ftbquests.use_item.value.tooltip": "Number of times to use the item.",
@@ -217,7 +198,6 @@
   "morequesttypes.task.use_item.item_tag.tooltip": "Match items in this tag instead of a specific item.",
   "morequesttypes.task.use_item.title": "Use %2$s × %1$s",
   "morequesttypes.task.use_item.value": "Times to use",
-
   "ftbquests.task.ftbquests.kill_advanced": "Advanced Kill Entity",
   "ftbquests.task.ftbquests.kill_advanced.custom_name": "Name",
   "ftbquests.task.ftbquests.kill_advanced.custom_name.tooltip": "Only match entities with this exact custom name.",
@@ -227,20 +207,17 @@
   "ftbquests.task.ftbquests.kill_advanced.entity_type_tag.tooltip": "Match entities in this tag instead of a specific type.",
   "ftbquests.task.ftbquests.kill_advanced.value": "Count",
   "ftbquests.task.ftbquests.kill_advanced.value.tooltip": "Number of entities to kill.",
-
   "ftbquests.task.ftbquests.timer": "Timer",
   "morequesttypes.task.timer.duration": "Duration (seconds)",
   "morequesttypes.task.timer.duration.tooltip": "How long the timer must run for the task to complete.",
   "morequesttypes.task.timer.remaining": "Remaining: %s",
   "morequesttypes.task.timer.title": "Timer",
-
   "morequesttypes.reward.status": "Status: %s",
   "morequesttypes.reward.status.on": "On",
   "morequesttypes.reward.status.off": "Off",
   "morequesttypes.reward.toggle_hint": "Click again to toggle on/off",
   "morequesttypes.reward.locked": "Locked",
   "morequesttypes.reward.locked.tooltip": "If true, this reward cannot be toggled off once claimed.",
-
   "ftbquests.task.ftbquests.potion_effect": "Potion Effect",
   "morequesttypes.task.potion_effect.effect": "Effect",
   "morequesttypes.task.potion_effect.effect.tooltip": "The potion effect that must be active (e.g., minecraft:regeneration).",
@@ -249,7 +226,6 @@
   "morequesttypes.task.potion_effect.title_with_amp": "%s %s",
   "morequesttypes.task.potion_effect.tooltip.any_amp": "Have the %s effect (any amplifier)",
   "morequesttypes.task.potion_effect.tooltip.specific_amp": "Have the %s effect at amp %s",
-
   "morequesttypes.quest.max_repeats": "Max Repeats",
   "morequesttypes.quest.always_invisible": "Always Invisible",
   "morequesttypes.quest.always_invisible.toggle": "Always Invisible: %s",
@@ -258,23 +234,18 @@
   "morequesttypes.quest.repeatable_limited": "Repeatable Quest (%s times)",
   "morequesttypes.quest.repeatable_remaining": "%s/%s remaining",
   "morequesttypes.quest.linked_item": "Linked Item",
-
   "key.categories.morequesttypes": "More Quest Types",
   "key.morequesttypes.search_quest_by_item": "Search/Open Quest for Item",
-
   "morequesttypes.search.title": "Quests for %s",
   "morequesttypes.search.no_quest_file": "Quest file not loaded!",
   "morequesttypes.search.no_item": "You must be holding an item!",
   "morequesttypes.search.no_quests_found": "No active quests found for %s",
   "morequesttypes.search.found_one": "Opening quest: %s",
   "morequesttypes.search.found_multiple": "Found %s quests",
-
   "morequesttypes.link.opened": "Opened linked quest: %s",
   "morequesttypes.link.opened_quest_item": "Opened quest linked to item: %s",
-
   "morequesttypes.command.link.no_item": "You must be holding an item!",
   "morequesttypes.command.link.success": "Linked quest '%s' to %s",
-
   "ftbquests.reward.ftbquests.potion": "Potion Effect",
   "morequesttypes.reward.potion.title_with_amp": "%s %s",
   "morequesttypes.reward.potion.effect": "Effect",
@@ -285,7 +256,17 @@
   "morequesttypes.reward.potion.duration_ticks.tooltip": "How long the effect lasts in ticks (20 ticks = 1 second).",
   "morequesttypes.reward.potion.show_particles": "Show Particles",
   "morequesttypes.reward.potion.show_particles.tooltip": "Whether to show particle effects.",
-
+  "ftbquests.reward.ftbquests.sgeconomy": "SGEconomy",
+  "morequesttypes.reward.sgeconomy.mode": "Mode",
+  "morequesttypes.reward.sgeconomy.mode.tooltip": "ADD: Deposits amount (supports negative values).\nREMOVE: Withdraws amount.\nSET: Sets balance to exact amount.",
+  "morequesttypes.reward.sgeconomy.title.add": "Add %s",
+  "morequesttypes.reward.sgeconomy.title.remove": "Remove %s",
+  "morequesttypes.reward.sgeconomy.title.set": "Set Balance to %s",
+  "morequesttypes.reward.sgeconomy.amount": "Amount",
+  "morequesttypes.reward.sgeconomy.amount.tooltip": "Amount of currency to add (positive) or remove (negative). Uses SG-Economy mod (NeoForge only).",
+  "morequesttypes.reward.sgeconomy.added": "Added %s to your balance.",
+  "morequesttypes.reward.sgeconomy.removed": "Removed %s from your balance.",
+  "morequesttypes.reward.sgeconomy.set": "Balance set to %s.",
   "ftbquests.task.ftbquests.levelz": "LevelZ",
   "morequesttypes.task.levelz.mode": "Mode",
   "morequesttypes.task.levelz.mode.tooltip": "TOTAL_LEVEL: Check total skill level. LEVEL: Check player or skill level.",
@@ -294,7 +275,6 @@
   "morequesttypes.task.levelz.skill.tooltip": "The skill to check (requires LevelZ mod). Use 'Player Level' for overall player level.",
   "morequesttypes.task.levelz.tooltip.total": "Reach total skill level ≥ %s",
   "morequesttypes.task.levelz.tooltip.skill": "Reach %s ≥ %s",
-
   "ftbquests.reward.ftbquests.levelz": "LevelZ",
   "morequesttypes.reward.levelz.kind": "Type",
   "morequesttypes.reward.levelz.kind.tooltip": "EXPERIENCE: Give raw XP. LEVEL: Give skill levels. SKILL_POINT: Give skill points.",
@@ -305,7 +285,6 @@
   "morequesttypes.reward.levelz.title": "%s %s (%s) to %s",
   "morequesttypes.reward.levelz.operation_type": "Operation",
   "morequesttypes.reward.levelz.operation_type.tooltip": "ADD: Add to current. SET: Set to exact value. REDUCE: Subtract from current.",
-
   "ftbquests.task.ftbquests.trading": "Trading",
   "ftbquests.task.ftbquests.trading.custom_name": "Entity Name",
   "ftbquests.task.ftbquests.trading.custom_name.tooltip": "Only match entities with this exact custom name.",
@@ -326,7 +305,6 @@
   "morequesttypes.task.trading.title": "Trade %s× with %s",
   "morequesttypes.task.trading.title_with_sold_item": "Trade %s× with %s (selling %s)",
   "morequesttypes.task.trading.title_with_received_item": "Trade %s× with %s (receiving %s)",
-
   "ftbquests.task.ftbquests.reskillable": "Reskillable",
   "morequesttypes.task.reskillable.mode": "Mode",
   "morequesttypes.task.reskillable.mode.tooltip": "TOTAL_LEVEL: Check total skill level. SKILL_LEVEL: Check specific skill level.",
@@ -335,7 +313,6 @@
   "morequesttypes.task.reskillable.skill.tooltip": "The skill to check (requires Reskillable mod).",
   "morequesttypes.task.reskillable.tooltip.total": "Reach total skill level ≥ %s",
   "morequesttypes.task.reskillable.tooltip.skill": "Reach %s ≥ %s",
-
   "ftbquests.reward.ftbquests.reskillable": "Reskillable",
   "morequesttypes.reward.reskillable.operation_type": "Operation",
   "morequesttypes.reward.reskillable.operation_type.tooltip": "ADD: Add to current. SET: Set to exact value. REDUCE: Subtract from current.",
@@ -344,7 +321,6 @@
   "morequesttypes.reward.reskillable.skill": "Skill",
   "morequesttypes.reward.reskillable.skill.tooltip": "The skill to modify (requires Reskillable mod).",
   "morequesttypes.reward.reskillable.title": "%s %s to %s",
-
   "morequesttypes.comparison.equals": "Equals (==)",
   "morequesttypes.comparison.greater_than": "Greater Than (>)",
   "morequesttypes.comparison.less_than": "Less Than (<)",
@@ -354,65 +330,55 @@
   "morequesttypes.comparison.range_equal": "Range Equal (x ≥ y ≥ z)",
   "morequesttypes.comparison.range_equal_first": "Range Equal First (x ≥ y > z)",
   "morequesttypes.comparison.range_equal_second": "Range Equal Second (x > y ≥ z)",
-
   "morequesttypes.task.comparison_mode": "Comparison Mode",
   "morequesttypes.task.comparison_mode.tooltip": "How to compare the value. For ranges, value must be between first and second numbers.",
   "morequesttypes.task.first_number": "First Number (Min for Range)",
   "morequesttypes.task.first_number.tooltip": "The number to compare against, or minimum value for range comparisons.",
   "morequesttypes.task.second_number": "Second Number (Max for Range)",
   "morequesttypes.task.second_number.tooltip": "Maximum value for range comparisons. Ignored for non-range comparisons.",
-
   "morequesttypes.task.skills_level.tooltip.category_comparison": "%s: %s",
   "morequesttypes.task.skills_level.tooltip.total_comparison": "Total Level: %s",
   "morequesttypes.task.skills_level.tooltip.specific_skill": "%s: %s",
-
   "morequesttypes.task.reskillable.tooltip.total_comparison": "Total Level: %s",
   "morequesttypes.task.reskillable.tooltip.skill_comparison": "%s: %s",
-
   "morequesttypes.task.levelz.tooltip.total_comparison": "Total Level: %s",
   "morequesttypes.task.levelz.tooltip.skill_comparison": "%s: %s",
-
   "morequesttypes.config.group.dynamic_difficulty": "Dynamic Difficulty",
   "morequesttypes.config.group.dungeon_difficulty": "Dungeon Difficulty",
-
   "morequesttypes.task.mob_level_comparison": "Mob Level Comparison",
   "morequesttypes.task.mob_level_comparison.tooltip": "How to compare the mob's Dynamic Difficulty level (requires Dynamic Difficulty mod).",
   "morequesttypes.task.mob_level_first": "Mob Level (First/Min)",
   "morequesttypes.task.mob_level_first.tooltip": "The level to compare against, or minimum level for range comparisons.",
   "morequesttypes.task.mob_level_second": "Mob Level (Second/Max)",
   "morequesttypes.task.mob_level_second.tooltip": "Maximum level for range comparisons. Ignored for non-range comparisons.",
-
   "morequesttypes.task.dungeon_difficulty_comparison": "Dungeon Difficulty Comparison",
   "morequesttypes.task.dungeon_difficulty_comparison.tooltip": "How to compare the mob's Dungeon Difficulty level (requires Dungeon Difficulty mod).",
   "morequesttypes.task.dungeon_difficulty_first": "Difficulty Level (First/Min)",
   "morequesttypes.task.dungeon_difficulty_first.tooltip": "The difficulty to compare against, or minimum difficulty for range comparisons.",
   "morequesttypes.task.dungeon_difficulty_second": "Difficulty Level (Second/Max)",
   "morequesttypes.task.dungeon_difficulty_second.tooltip": "Maximum difficulty for range comparisons. Ignored for non-range comparisons.",
-
   "morequesttypes.reward.summon.set_mob_level": "Set Mob Level",
   "morequesttypes.reward.summon.set_mob_level.tooltip": "If enabled, sets the Dynamic Difficulty level of the summoned mob (requires Dynamic Difficulty mod).",
   "morequesttypes.reward.summon.mob_level": "Mob Level",
   "morequesttypes.reward.summon.mob_level.tooltip": "The Dynamic Difficulty level to set on the summoned mob.",
-
   "morequesttypes.reward.summon.set_dungeon_difficulty_level": "Set Dungeon Difficulty Level",
   "morequesttypes.reward.summon.set_dungeon_difficulty_level.tooltip": "If enabled, sets the Dungeon Difficulty level of the summoned mob (requires Dungeon Difficulty mod).",
-  "morequesttypes.reward.summon.dungeon_difficulty_level":  "Difficulty Level",
+  "morequesttypes.reward.summon.dungeon_difficulty_level": "Difficulty Level",
   "morequesttypes.reward.summon.dungeon_difficulty_level.tooltip": "The Dungeon Difficulty level to set on the summoned mob.",
-
-  "ftbquests.reward.ftbquests.summon":  "Summon Entity",
+  "ftbquests.reward.ftbquests.summon": "Summon Entity",
   "morequesttypes.reward.summon.entity": "Entity",
   "morequesttypes.reward.summon.entity.tooltip": "The entity type to summon (e.g., minecraft:zombie).",
   "morequesttypes.reward.summon.random_spawn_area": "Random Spawn Area",
   "morequesttypes.reward.summon.random_spawn_area.tooltip": "Random offset radius in blocks. 0 = exact position.",
   "morequesttypes.reward.summon.amount": "Amount",
   "morequesttypes.reward.summon.amount.tooltip": "Number of entities to summon.",
-  "morequesttypes.reward.summon.smart_spawn":  "Smart Spawn",
+  "morequesttypes.reward.summon.smart_spawn": "Smart Spawn",
   "morequesttypes.reward.summon.smart_spawn.tooltip": "If true, finds a valid spawn position (solid ground, no suffocation).",
   "morequesttypes.reward.summon.use_absolute_coords": "Use Absolute Coords",
   "morequesttypes.reward.summon.use_absolute_coords.tooltip": "If true, uses absolute world coordinates. If false, uses relative to player position.",
   "morequesttypes.reward.summon.spawn_x": "Spawn X",
   "morequesttypes.reward.summon.spawn_x.tooltip": "X coordinate offset (relative) or absolute position.",
-  "morequesttypes.reward.summon.spawn_y":  "Spawn Y",
+  "morequesttypes.reward.summon.spawn_y": "Spawn Y",
   "morequesttypes.reward.summon.spawn_y.tooltip": "Y coordinate offset (relative) or absolute position.",
   "morequesttypes.reward.summon.spawn_z": "Spawn Z",
   "morequesttypes.reward.summon.spawn_z.tooltip": "Z coordinate offset (relative) or absolute position.",
@@ -430,12 +396,12 @@
   "morequesttypes.reward.summon.persistent.tooltip": "If true, entity won't despawn naturally (still respects other despawn conditions).",
   "morequesttypes.reward.summon.set_owner": "Set Owner",
   "morequesttypes.reward.summon.set_owner.tooltip": "If true, tames the entity to the player (only works for tameable entities).",
-  "morequesttypes.reward.summon.follow":  "Follow",
+  "morequesttypes.reward.summon.follow": "Follow",
   "morequesttypes.reward.summon.follow.tooltip": "If true, entity follows the player.",
-  "morequesttypes.reward.summon.aggro":  "Aggro",
+  "morequesttypes.reward.summon.aggro": "Aggro",
   "morequesttypes.reward.summon.aggro.tooltip": "Who the entity should attack: NONE, CLOSEST, FARTHEST, or CLAIMER (quest completer).",
   "morequesttypes.reward.summon.aggro.none": "None",
-  "morequesttypes.reward.summon.aggro.closest":  "Closest Player",
+  "morequesttypes.reward.summon.aggro.closest": "Closest Player",
   "morequesttypes.reward.summon.aggro.farthest": "Farthest Player",
   "morequesttypes.reward.summon.aggro.claimer": "Quest Claimer",
   "morequesttypes.reward.summon.helmet": "Helmet",
@@ -458,7 +424,7 @@
   "morequesttypes.reward.summon.texture_offset_x.tooltip": "X offset for the custom texture position.",
   "morequesttypes.reward.summon.texture_offset_y": "Texture Offset Y",
   "morequesttypes.reward.summon.texture_offset_y.tooltip": "Y offset for the custom texture position.",
-  "morequesttypes.reward.summon.texture_offset_z":  "Texture Offset Z",
+  "morequesttypes.reward.summon.texture_offset_z": "Texture Offset Z",
   "morequesttypes.reward.summon.texture_offset_z.tooltip": "Z offset for the custom texture position.",
   "morequesttypes.reward.summon.scoreboard_tags": "Scoreboard Tags",
   "morequesttypes.reward.summon.scoreboard_tags.tooltip": "Comma-separated list of scoreboard tags to add to the entity.",
@@ -470,7 +436,6 @@
   "ftbquests.reward.ftbquests.summon.equipment": "Equipment",
   "ftbquests.reward.ftbquests.summon.visual": "Visual",
   "ftbquests.reward.ftbquests.summon.advanced": "Advanced",
-
   "morequesttypes.task.dynamic_difficulty.check_level": "Check level",
   "morequesttypes.task.dynamic_difficulty.check_level.tooltip": "If enabled, requires mob to have a specific Dynamic Difficulty level.",
   "morequesttypes.task.dynamic_difficulty.comparison": "Mode",
@@ -487,7 +452,6 @@
   "morequesttypes.task.dungeon_difficulty.level_first.tooltip": "The difficulty to compare against, or minimum difficulty for range comparisons.",
   "morequesttypes.task.dungeon_difficulty.level_second": "Second Number",
   "morequesttypes.task.dungeon_difficulty.level_second.tooltip": "Maximum difficulty for range comparisons. Ignored for non-range comparisons.",
-
   "morequesttypes.quest.requirement.origin": "Required Origin: %s",
   "morequesttypes.quest.requirement.skills.total": "Required Total Level: %s",
   "morequesttypes.quest.requirement.skills.category": "Required %s Level: %s",
@@ -496,36 +460,28 @@
   "morequesttypes.quest.requirement.levelz.skill": "Required %s Level: %s",
   "morequesttypes.quest. requirement.reskillable.total": "Required Total Level: %s",
   "morequesttypes.quest.requirement.reskillable.skill": "Required %s Level: %s",
-
   "ftbquests.task.ftbquests.origin": "Origin",
   "morequesttypes.task.origins.layer": "Origin Layer",
   "morequesttypes.task.origins.layer.tooltip": "The origin layer to check (requires Origins mod).",
-  "morequesttypes.task.origins.origin":  "Origin",
+  "morequesttypes.task.origins.origin": "Origin",
   "morequesttypes.task.origins.origin.tooltip": "The specific origin the player must have.",
   "morequesttypes.task.origins.title": "Be %s origin: %s",
   "morequesttypes.task.origins.check_origin": "Check Origin",
   "morequesttypes.config.group.origins": "Origins",
-
   "morequesttypes.task.kill_advanced.title_with_dynamic_difficulty": "%s (Level %s)",
   "morequesttypes.task.kill_advanced.title_with_dungeon_difficulty": "%s (Difficulty %s)",
-
   "morequesttypes.task.find_entity.title_with_dynamic_difficulty": "%s (Level %s)",
   "morequesttypes.task.find_entity.title_with_dungeon_difficulty": "%s (Difficulty %s)",
-
   "morequesttypes.task.damage.title_with_dynamic_difficulty": "%s (Level %s)",
   "morequesttypes.task.damage.title_with_dungeon_difficulty": "%s (Difficulty %s)",
-
   "morequesttypes.task.interact_entity.title_with_dynamic_difficulty": "%s (Level %s)",
   "morequesttypes.task.interact_entity.title_with_dungeon_difficulty": "%s (Difficulty %s)",
-
   "morequesttypes.config.group.skills_level": "Pufferfish's Skills",
   "morequesttypes.config.group.levelz": "LevelZ",
   "morequesttypes.config.group.reskillable": "Reskillable",
-
   "morequesttypes.task.skills_level.check": "Enabled",
   "morequesttypes.task.levelz.check": "Enabled",
   "morequesttypes.task.reskillable.check": "Enabled",
-
   "ftbquests.reward.ftbquests.nbt_path": "NBT Path",
   "morequesttypes.reward.nbt_path.title": "%s to %s",
   "morequesttypes.reward.nbt_path.operation": "Operation",
@@ -551,7 +507,6 @@
   "morequesttypes.reward.nbt_path.condition_entries.tooltip": "Values to check against when using ENTRY_EXISTS, ENTRY_NOT_EXISTS, VALUE_EQUALS, or VALUE_NOT_EQUALS conditions.\n\nExamples:\n• minecraft:zombie_spawn_egg (check if item ID matches)\n• {attribute:\"minecraft:generic.armor\"} (check if armor bonus exists)\n• '\"Custom Name\"' (check if custom name matches)\n\nSupports placeholders: {claimer_name}, {claimer_uuid}, {claimer_uuid_array}",
   "morequesttypes.reward.nbt_path.conditions_match_number": "Required Matches",
   "morequesttypes.reward.nbt_path.conditions_match_number.tooltip": "How many condition entries must match. -1 = all entries must match. Set to 1 to require at least one match, 2 for at least two, etc.",
-
   "ftbquests.reward.ftbquests.equipment_attribute": "Equipment Attribute",
   "morequesttypes.reward.equipment_attribute.title": "%s %s to item in %s (applies in %s)",
   "morequesttypes.reward.equipment_attribute.basic": "Basic Settings",
@@ -590,7 +545,6 @@
   "morequesttypes.reward.equipment_attribute.target_slot.tooltip": "Which equipment slot contains the item to modify (MAIN_HAND, OFF_HAND, HEAD, CHEST, LEGS, FEET).",
   "morequesttypes.reward.equipment_attribute.attribute_slot": "Attribute Applies In Slot",
   "morequesttypes.reward.equipment_attribute.attribute_slot.tooltip": "Which slot the attribute bonus applies to. This can be different from the target item slot.\n\nExample: Modify chest item (target_slot = CHEST) but make the bonus only work when equipped in legs slot (attribute_slot = LEGS).",
-
   "ftbquests.reward.ftbquests.accessories_attribute": "Accessories Attribute",
   "morequesttypes.reward.accessories_attribute.title": "%s %s to item in %s",
   "morequesttypes.config.accessories_attribute": "Accessories Attribute Config",
@@ -633,31 +587,24 @@
   "morequesttypes.config.spell_equipment.check_has_spell.tooltip": "Only apply if the specified Check Spell ID already exists on the item.",
   "morequesttypes.config.spell_equipment.check_spell_id": "Check Spell ID",
   "morequesttypes.config.spell_equipment.check_spell_id.tooltip": "The spell ID to check for when 'Check Has Spell' is enabled.",
-
   "ftbquests.task.ftbquests.place_block": "Place Block",
   "morequesttypes.task.place_block.block": "Block",
   "morequesttypes.task.place_block.block.tooltip": "The block type that must be placed. Leave empty for any block.",
   "morequesttypes.task.place_block.block_tag": "Block Tag",
   "morequesttypes.task.place_block.block_tag.tooltip": "Match blocks in this tag instead of a specific block type.",
   "morequesttypes.task.place_block.title": "Place %s × %s",
-
   "morequesttypes.task.match_components": "Match Components",
   "morequesttypes.task.match_components.tooltip": "How strictly to match item components:\n\nNONE: Only check item type (minecraft:diamond_sword)\nFUZZY: Match common components (enchantments, damage, etc.)\nSTRICT: Match all components exactly",
-
   "morequesttypes.task.nbt_filters": "NBT Filters",
   "morequesttypes.task.nbt_filters.tooltip": "List of NBT patterns that the item must match. All filters must pass for the item to be valid.\n\nEach entry is a partial NBT match - the item must contain at least the specified NBT structure.\n\nExamples:\n• {components:{\"minecraft:unbreakable\":{}}} - Item must have unbreakable component\n• {components:{\"minecraft:custom_name\":'\"Epic Sword\"'}} - Must have specific custom name\n• {components:{\"minecraft:enchantments\":{levels:{\"minecraft:sharpness\":5}}}} - Must have Sharpness 5\n\nEmpty compound tags {} check if the key exists (any value accepted).\nNon-empty values must match exactly.\n\nPlaceholders:\n• {player_uuid} - Player's UUID as string\n• {player_name} - Player's username\n• {player_uuid_array} - UUID as int array [I;...]",
-
   "morequesttypes.task.use_item.any_item": "Any Item",
   "morequesttypes.task.use_item.any_item.tooltip": "If enabled, any item will count (item and tag filters are ignored). Use NBT filters to specify requirements.",
-
   "morequesttypes.task.hold_item.any_item": "Any Item",
   "morequesttypes.task.hold_item.any_item.tooltip": "If enabled, any item will count (item and tag filters are ignored). Use NBT filters to specify requirements.",
-
   "morequesttypes.reward.summon.custom_name": "Custom Name",
   "morequesttypes.reward.summon.custom_name.tooltip": "Sets a custom display name for the spawned entity. Leave empty for default name.",
   "morequesttypes.reward.summon.custom_drops": "Custom Drops",
   "morequesttypes.reward.summon.custom_drops.tooltip": "Custom items to drop when the entity dies. Each item can have a drop rate.",
-
   "morequesttypes.reward.summon.helmet_drop_rate": "Helmet Drop Rate",
   "morequesttypes.reward.summon.helmet_drop_rate.tooltip": "Chance (0.0 to 1.0) that the helmet will drop when the entity dies.",
   "morequesttypes.reward.summon.chestplate_drop_rate": "Chestplate Drop Rate",
@@ -670,7 +617,6 @@
   "morequesttypes.reward.summon.mainhand_drop_rate.tooltip": "Chance (0.0 to 1.0) that the main hand item will drop when the entity dies.",
   "morequesttypes.reward.summon.offhand_drop_rate": "Off Hand Drop Rate",
   "morequesttypes.reward.summon.offhand_drop_rate.tooltip": "Chance (0.0 to 1.0) that the off hand item will drop when the entity dies.",
-
   "morequesttypes.config.drop_rate": "Drop Rate (0% - 100%)",
   "morequesttypes.config.drop_rate.tooltip": "Probability that this item will drop (0.0 = never, 1.0 = always).",
   "morequesttypes.config.item_with_drop_rate.left_click": "Left Click: Select Item & Set Drop Rate",
@@ -681,7 +627,6 @@
   "morequesttypes.reward.summon.reward_killer_type.tooltip": "Who receives the rewards when the entity dies: OWNER (quest completer only) or ANYONE (whoever kills it).",
   "morequesttypes.reward.summon.reward_killer.owner": "Owner Only",
   "morequesttypes.reward.summon.reward_killer.anyone": "Anyone Who Kills",
-
   "morequesttypes.config.reward_table": "Reward Table",
   "morequesttypes.config.reward_table.tooltip": "The reward table to trigger. Item rewards will drop as items, other rewards are given to the player.",
   "morequesttypes.config.trigger_mode": "Trigger Mode",
@@ -690,7 +635,6 @@
   "morequesttypes.config.trigger_mode.all": "All Rewards",
   "morequesttypes.config.reward_table_drop.left_click": "Left Click: Select Reward Table, Mode & Drop Rate",
   "morequesttypes.config.reward_table_drop.right_click": "Right Click: Edit Drop Rate & Mode Only",
-
   "ftbquests.reward.ftbquests.easynpc_dialogue": "Easy NPC Dialogue",
   "morequesttypes.reward.easynpc_dialogue.title": "Dialogue: %s → %s (%s)",
   "morequesttypes.reward.easynpc_dialogue.dialogue_label": "Dialogue Label",
@@ -701,13 +645,11 @@
   "morequesttypes.reward.easynpc_dialogue.sort.tooltip": "How to select the entity: NEAREST, FURTHEST, or RANDOM.",
   "morequesttypes.reward.easynpc_dialogue.custom_name": "Custom Name",
   "morequesttypes.reward.easynpc_dialogue.custom_name.tooltip": "Only use entities with this exact custom name.",
-
   "ftbquests.task.ftbquests.easynpc_dialogue": "Easy NPC Dialogue",
   "morequesttypes.task.easynpc_dialogue.title": "Complete Dialogue: %s",
   "morequesttypes.task.easynpc_dialogue.dialogue_label": "Dialogue Label",
   "morequesttypes.task.easynpc_dialogue.dialogue_label.tooltip": "The dialogue label that must be completed (e.g., 'question'). Found in the Easy NPC dialogue editor's 'Label' field.",
   "morequesttypes.task.easynpc_dialogue.label_tooltip": "Dialogue Label: %s",
-
   "morequesttypes.config.nbt_path.basic": "Basic Settings",
   "morequesttypes.config.nbt_path.operation": "Operation",
   "morequesttypes.config.nbt_path.target_slot": "Target Item Slot",
@@ -734,7 +676,6 @@
   "morequesttypes.config.nbt_path.list_contents": "List Contents",
   "morequesttypes.config.nbt_path.value": "Value",
   "morequesttypes.reward.nbt_path.config": "Configure",
-
   "morequesttypes.config.equipment_attribute.basic": "Basic Settings",
   "morequesttypes.config.equipment_attribute.advanced": "Advanced Settings",
   "morequesttypes.config.equipment_attribute.existing_attributes": "Existing Attributes on Item",
@@ -758,7 +699,6 @@
   "morequesttypes.config.equipment_attribute.preview_item": "Preview Item",
   "morequesttypes.config.equipment_attribute.info": "Configure equipment attribute modifications",
   "morequesttypes.reward.equipment_attribute.config": "Configure",
-
   "morequesttypes.config.nbt_path.item_selection_info.tooltip": "Optional: Select an item to preview its NBT structure and available paths. Leave empty to enter paths manually.",
   "morequesttypes.config.nbt_path.path.tooltip": "The NBT path to modify. Use dots to navigate nested tags. Prefix with 'root.' for item-level fields.\n\nLeft Click: Cycle through available paths\nRight Click: View path contents\nMiddle Click: Edit manually",
   "morequesttypes.config.nbt_path.path.cycle_hint": "Left Click: Cycle through available paths",
@@ -795,7 +735,6 @@
   "morequesttypes.config.nbt_path.comparison_mode.tooltip": "How to compare numeric values for VALUE_COMPARE condition.",
   "morequesttypes.config.nbt_path.comparison_first.tooltip": "First comparison value (or minimum for ranges).",
   "morequesttypes.config.nbt_path.comparison_second.tooltip": "Second comparison value (maximum for ranges).",
-
   "morequesttypes.config.nbt_path.how_to_modify": "How To Modify",
   "morequesttypes.config.nbt_path.how_to.add_to_compound": "To ADD to this compound, use this format in NBT Entries",
   "morequesttypes.config.nbt_path.how_to.set_compound": "To SET/REPLACE this entire compound, use this format in NBT Entries",
@@ -806,7 +745,6 @@
   "morequesttypes.config.nbt_path.how_to.add_to_value": "To ADD to this value, use this in NBT Entries (enable 'Is Value', use ADD operation)",
   "morequesttypes.config.nbt_path.how_to.subtract_from_value": "To SUBTRACT from this value, use this in NBT Entries (enable 'Is Value', use REMOVE operation)",
   "morequesttypes.config.nbt_path.value_contents": "Value Contents",
-
   "ftbquests.task.ftbquests.fishing_catch": "Fishing Catch",
   "morequesttypes.task.fishing_catch.title": "Catch %s × %s",
   "morequesttypes.task.fishing_catch.value": "Number of Catches",
@@ -815,7 +753,6 @@
   "morequesttypes.task.fishing_catch.item.tooltip": "The item that must be caught. Leave empty for any catch.",
   "morequesttypes.task.fishing_catch.item_tag": "Item Tag",
   "morequesttypes.task.fishing_catch.item_tag.tooltip": "Match items in this tag instead of a specific item. Prefix with # for tags (e.g., #minecraft:fishes).",
-
   "ftbquests.task.ftbquests.use_block": "Use Block",
   "morequesttypes.task.use_block.title": "Use %s × %s",
   "morequesttypes.task.use_block.block": "Block",
@@ -826,13 +763,32 @@
   "morequesttypes.task.use_block.block_tag.tooltip": "Match blocks in this tag instead of a specific block. Prefix with # for tags (e.g., #minecraft:logs).",
   "morequesttypes.task.use_block.value": "Number of Uses",
   "morequesttypes.task.use_block.value.tooltip": "Number of times to use/interact with the specified block(s).",
-
   "morequesttypes.chapter_image.flip_horizontal": "Flip Horizontal",
   "morequesttypes.chapter_image.flip_vertical": "Flip Vertical",
-
   "morequesttypes.select_block.list_mode.all": "All Blocks",
   "morequesttypes.select_block.list_mode.inv": "Inventory Blocks",
   "morequesttypes.config.block_stack.info": "Click to select a block. Only blocks will be shown in the selector.",
   "morequesttypes.config.block_stack.manual_id": "Block ID",
-  "morequesttypes.config.block_stack.manual_hint": "Middle-click to type block ID manually"
+  "morequesttypes.config.block_stack.manual_hint": "Middle-click to type block ID manually",
+  "ftbquests.task.ftbquests.command": "Command",
+  "morequesttypes.task.command.title": "Execute command: %s (%s match)",
+  "morequesttypes.task.command.title.empty": "Execute any command",
+  "morequesttypes.task.command.value": "Count",
+  "morequesttypes.task.command.value.tooltip": "Number of times the command must be executed.",
+  "morequesttypes.task.command.patterns": "Command Patterns",
+  "morequesttypes.task.command.patterns.tooltip": "List of command patterns to match. Any of these patterns will count towards completion.\n\nExamples:\n• /home - Matches teleport home command\n• /tp - Matches any teleport command\n• spawnpoint - Matches when command contains 'spawnpoint'\n\nDepends on match mode setting below.",
+  "morequesttypes.task.command.match_mode": "Match Mode",
+  "morequesttypes.task.command.match_mode.tooltip": "How to match commands:\n• EXACT: Command must match pattern exactly (/home)\n• STARTS_WITH: Command must start with pattern (/tp will match /tp @s ~1 ~1 ~1)\n• CONTAINS: Command must contain pattern anywhere (spawnpoint matches /spawnpoint set)",
+  "morequesttypes.task.command.ignore_case": "Ignore Case",
+  "morequesttypes.task.command.ignore_case.tooltip": "If enabled, comparison is case-insensitive (/HOME matches /home).",
+  "ftbquests.task.ftbquests.pay": "SGEconomy",
+  "morequesttypes.task.pay.title.check": "Check %s",
+  "morequesttypes.task.pay.title.pay": "Pay %s",
+  "morequesttypes.task.pay.mode": "Mode",
+  "morequesttypes.task.pay.mode.tooltip": "CHECK: Automatically completes when you have the required amount (doesn't deduct).\nPAY: Only completable when you have the amount, and deducts it upon manual completion.",
+  "morequesttypes.task.pay.required_amount": "Required Amount",
+  "morequesttypes.task.pay.required_amount.tooltip": "The amount of currency required. Uses SG-Economy mod (NeoForge only).",
+  "morequesttypes.task.pay.comparison_mode": "Comparison Mode",
+  "morequesttypes.task.pay.comparison_mode.tooltip": "How to compare your balance against the required amount (CHECK mode only).",
+  "morequesttypes.task.pay.deducted": "Paid %s from your balance."
 }

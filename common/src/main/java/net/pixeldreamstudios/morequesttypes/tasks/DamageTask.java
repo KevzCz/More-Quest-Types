@@ -9,6 +9,7 @@ import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import dev.ftb.mods.ftbquests.client.FTBQuestsClient;
 import dev.ftb.mods.ftbquests.quest.Quest;
+import dev.ftb.mods.ftbquests.quest.QuestObjectBase;
 import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.task.Task;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
@@ -19,7 +20,12 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -56,7 +62,7 @@ import java.util.List;
 import java.util.UUID;
 
 public final class DamageTask extends Task {
-    public enum Mode { TOTAL, HIGHEST }
+    public enum Mode {TOTAL, HIGHEST}
 
     private boolean anyEntity = false;
     private ResourceLocation entityTypeId = ResourceLocation.withDefaultNamespace("zombie");
@@ -110,7 +116,7 @@ public final class DamageTask extends Task {
         MutableComponent baseTitle = Component.translatable("morequesttypes.task.damage.title", formatMaxProgress(), who, how);
 
         if (DynamicDifficultyCompat.isLoaded()) {
-            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension) (Object) this;
             if (ext.shouldCheckDynamicDifficultyLevel()) {
                 String levelReq = mqt$formatLevelRequirement(
                         ext.getDynamicDifficultyComparison(),
@@ -123,7 +129,7 @@ public final class DamageTask extends Task {
         }
 
         if (DungeonDifficultyCompat.isLoaded()) {
-            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension) (Object) this;
             if (dungeonExt.shouldCheckDungeonDifficultyLevel()) {
                 String difficultyReq = mqt$formatLevelRequirement(
                         dungeonExt.getDungeonDifficultyComparison(),
@@ -179,7 +185,7 @@ public final class DamageTask extends Task {
 
         if (!player.getUUID().equals(leaderId)) return;
 
-        var hits = DamageEventBuffer.snapshotUnprocessed(player.getUUID(), this.id);
+        var hits = DamageEventBuffer.snapshotUnprocessed(player.getUUID(), id);
         if (hits.isEmpty()) return;
 
         long tick = hits.get(hits.size() - 1).gameTime();
@@ -215,7 +221,7 @@ public final class DamageTask extends Task {
                 teamData.setProgress(this, next);
             }
 
-            DamageEventBuffer.markProcessed(this.id, matchedHits);
+            DamageEventBuffer.markProcessed(id, matchedHits);
         }
     }
 
@@ -237,7 +243,7 @@ public final class DamageTask extends Task {
         if (nbtFilterParsed != null) {
             var actual = new CompoundTag();
             e.saveWithoutId(actual);
-            if (!(nbtFilterParsed instanceof CompoundTag filter) || !nbtSubsetMatches(actual, filter)) {
+            if (!(nbtFilterParsed instanceof CompoundTag filter) || !DamageTask.nbtSubsetMatches(actual, filter)) {
                 return false;
             }
         }
@@ -250,7 +256,7 @@ public final class DamageTask extends Task {
         }
 
         if (DynamicDifficultyCompat.isLoaded()) {
-            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension) (Object) this;
             if (ext.shouldCheckDynamicDifficultyLevel() && DynamicDifficultyCompat.canHaveLevel(e)) {
                 int mobLevel = DynamicDifficultyCompat.getLevel(e);
                 if (!ComparisonManager.compare(mobLevel,
@@ -263,7 +269,7 @@ public final class DamageTask extends Task {
         }
 
         if (DungeonDifficultyCompat.isLoaded()) {
-            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension) (Object) this;
             if (dungeonExt.shouldCheckDungeonDifficultyLevel() && DungeonDifficultyCompat.canHaveLevel(e)) {
                 int dungeonLevel = DungeonDifficultyCompat.getLevel(e);
                 return ComparisonManager.compare(dungeonLevel,
@@ -352,7 +358,7 @@ public final class DamageTask extends Task {
             for (String key : f.getAllKeys()) {
                 Tag fVal = f.get(key);
                 Tag aVal = a.get(key);
-                if (aVal == null || !nbtSubsetMatches(aVal, fVal)) return false;
+                if (aVal == null || !DamageTask.nbtSubsetMatches(aVal, fVal)) return false;
             }
             return true;
         }
@@ -362,7 +368,7 @@ public final class DamageTask extends Task {
             outer:
             for (Tag fEl : fList) {
                 for (int j = 0; j < remaining.size(); j++) {
-                    if (nbtSubsetMatches(remaining.get(j), fEl)) {
+                    if (DamageTask.nbtSubsetMatches(remaining.get(j), fEl)) {
                         remaining.remove(j);
                         continue outer;
                     }
@@ -384,8 +390,12 @@ public final class DamageTask extends Task {
 
         var ids = new ArrayList<ResourceLocation>();
         BuiltInRegistries.ENTITY_TYPE.forEach(type -> {
-            if (type.create(FTBQuestsClient.getClientLevel()) instanceof LivingEntity) {
-                ids.add(type.arch$registryName());
+            try {
+                if (type.create(FTBQuestsClient.getClientLevel()) instanceof LivingEntity) {
+                    ids.add(type.arch$registryName());
+                }
+            } catch (Exception e) {
+                // Skip
             }
         });
         ids.sort((a, b) -> {
@@ -405,14 +415,17 @@ public final class DamageTask extends Task {
 
         config.addEnum("entity", entityTypeId, v -> entityTypeId = v, ENTITY_NAME_MAP, ResourceLocation.withDefaultNamespace("zombie"))
                 .setCanEdit(!anyEntity);
-        config.addEnum("entity_type_tag", getTypeTagStr(), v -> entityTypeTag = parseTypeTag(v), ENTITY_TAG_MAP)
+        config.addEnum("entity_type_tag", getTypeTagStr(), v -> entityTypeTag = DamageTask.parseTypeTag(v), ENTITY_TAG_MAP)
                 .setCanEdit(!anyEntity);
         config.addString("custom_name", customName, v -> customName = v, "");
         config.addList("scoreboard_tags", scoreboardTags, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.tags_csv");
         config.addInt("min_tags_required", minTagsRequired, v -> minTagsRequired = Math.max(0, v), 0, 0, 64)
                 .setNameKey("morequesttypes.task.min_tags");
-        config.addString("nbt_filter_snbt", nbtFilterSnbt, v -> { nbtFilterSnbt = v; parseNbtFilter(); }, "")
+        config.addString("nbt_filter_snbt", nbtFilterSnbt, v -> {
+                    nbtFilterSnbt = v;
+                    parseNbtFilter();
+                }, "")
                 .setNameKey("morequesttypes.task.nbt");
 
         var MODES = NameMap.of(Mode.TOTAL, Mode.values()).create();
@@ -425,7 +438,10 @@ public final class DamageTask extends Task {
                 "held_item",
                 new ConfigIconItemStack(),
                 heldItemFilter,
-                v -> { heldItemFilter = v.copy(); if (!heldItemFilter.isEmpty()) heldItemFilter.setCount(1); },
+                v -> {
+                    heldItemFilter = v.copy();
+                    if (!heldItemFilter.isEmpty()) heldItemFilter.setCount(1);
+                },
                 ItemStack.EMPTY
         ).setNameKey("morequesttypes.task.damage.held_item");
 
@@ -440,14 +456,14 @@ public final class DamageTask extends Task {
             resolveHeldItemTag();
         }, ITEM_TAG_MAP).setNameKey("morequesttypes.task.damage.held_item_tag");
 
-        maybeRequestStructureSync();
+        DamageTask.maybeRequestStructureSync();
 
         List<String> choices = new ArrayList<>();
         choices.add("");
-        if (KNOWN_STRUCTURES.isEmpty()) {
-            choices.add(DEFAULT_STRUCTURE.toString());
+        if (DamageTask.KNOWN_STRUCTURES.isEmpty()) {
+            choices.add(DamageTask.DEFAULT_STRUCTURE.toString());
         } else {
-            choices.addAll(KNOWN_STRUCTURES);
+            choices.addAll(DamageTask.KNOWN_STRUCTURES);
         }
 
         var STRUCTURE_MAP = NameMap
@@ -458,15 +474,15 @@ public final class DamageTask extends Task {
         config.addEnum("structure", getStructure(), this::setStructure, STRUCTURE_MAP)
                 .setNameKey("morequesttypes.task.structure");
 
-        maybeRequestWorldSync();
+        DamageTask.maybeRequestWorldSync();
         List<String> dimChoices = new ArrayList<>();
         dimChoices.add("");
-        if (KNOWN_DIMENSIONS.isEmpty()) {
+        if (DamageTask.KNOWN_DIMENSIONS.isEmpty()) {
             dimChoices.add("minecraft:overworld");
             dimChoices.add("minecraft:the_nether");
             dimChoices.add("minecraft:the_end");
         } else {
-            dimChoices.addAll(KNOWN_DIMENSIONS);
+            dimChoices.addAll(DamageTask.KNOWN_DIMENSIONS);
         }
         var DIMENSION_MAP = NameMap.of(dimension, dimChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
@@ -474,15 +490,15 @@ public final class DamageTask extends Task {
         config.addEnum("dimension", dimension, v -> dimension = v, DIMENSION_MAP)
                 .setNameKey("morequesttypes.task.dimension");
 
-        maybeRequestBiomeSync();
+        DamageTask.maybeRequestBiomeSync();
         List<String> biomeChoices = new ArrayList<>();
         biomeChoices.add("");
-        if (KNOWN_BIOMES.isEmpty()) {
+        if (DamageTask.KNOWN_BIOMES.isEmpty()) {
             biomeChoices.add("minecraft:plains");
             biomeChoices.add("minecraft:forest");
             biomeChoices.add("minecraft:desert");
         } else {
-            biomeChoices.addAll(KNOWN_BIOMES);
+            biomeChoices.addAll(DamageTask.KNOWN_BIOMES);
         }
         var BIOME_MAP = NameMap.of(biome, biomeChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
@@ -524,7 +540,7 @@ public final class DamageTask extends Task {
         super.readData(nbt, provider);
         anyEntity = nbt.getBoolean("any_entity");
         entityTypeId = ResourceLocation.tryParse(nbt.getString("entity"));
-        entityTypeTag = parseTypeTag(nbt.getString("entityTypeTag"));
+        entityTypeTag = DamageTask.parseTypeTag(nbt.getString("entityTypeTag"));
         customName = nbt.getString("custom_name");
         scoreboardTags.clear();
         if (nbt.contains("scoreboard_tags")) {
@@ -535,22 +551,27 @@ public final class DamageTask extends Task {
             }
         } else if (nbt.contains("scoreboard_tags_csv")) {
             String csv = nbt.getString("scoreboard_tags_csv");
-            if (!csv.isBlank()) scoreboardTags.addAll(parseCsv(csv));
+            if (!csv.isBlank()) scoreboardTags.addAll(DamageTask.parseCsv(csv));
         }
         minTagsRequired = nbt.contains("min_tags_required") ? nbt.getInt("min_tags_required") : 0;
         nbtFilterSnbt = nbt.getString("nbt_filter_snbt");
         parseNbtFilter();
 
-        try { mode = Mode.valueOf(nbt.getString("mode")); } catch (Throwable ignored) { mode = Mode.TOTAL; }
+        try {
+            mode = Mode.valueOf(nbt.getString("mode"));
+        } catch (Throwable ignored) {
+            mode = Mode.TOTAL;
+        }
         value = Math.max(1L, nbt.getLong("value"));
 
-        heldItemFilter = nbt.contains("held_item") ? itemOrMissingFromNBT(nbt.get("held_item"), provider) : ItemStack.EMPTY;
+        heldItemFilter = nbt.contains("held_item") ? QuestObjectBase.itemOrMissingFromNBT(nbt.get("held_item"), provider) : ItemStack.EMPTY;
         if (!heldItemFilter.isEmpty()) heldItemFilter.setCount(1);
         heldItemTagStr = nbt.getString("held_item_tag");
         resolveHeldItemTag();
 
         String s = nbt.getString("structure");
-        if (!s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s);
+        else structure = null;
 
         String d = nbt.getString("dimension");
         dimension = d.trim();
@@ -587,7 +608,7 @@ public final class DamageTask extends Task {
         super.readNetData(buf);
         anyEntity = buf.readBoolean();
         entityTypeId = ResourceLocation.tryParse(buf.readUtf());
-        entityTypeTag = parseTypeTag(buf.readUtf());
+        entityTypeTag = DamageTask.parseTypeTag(buf.readUtf());
         customName = buf.readUtf();
         scoreboardTags.clear();
         int nTags = buf.readVarInt();
@@ -608,21 +629,30 @@ public final class DamageTask extends Task {
         resolveHeldItemTag();
 
         String s = buf.readUtf();
-        if (!s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s);
+        else structure = null;
 
         dimension = buf.readUtf();
         biome = buf.readUtf();
     }
 
     private void parseNbtFilter() {
-        if (nbtFilterSnbt == null || nbtFilterSnbt.isBlank()) { nbtFilterParsed = null; return; }
+        if (nbtFilterSnbt == null || nbtFilterSnbt.isBlank()) {
+            nbtFilterParsed = null;
+            return;
+        }
         try {
             nbtFilterParsed = TagParser.parseTag(nbtFilterSnbt);
-        } catch (Exception ignored) { nbtFilterParsed = null; }
+        } catch (Exception ignored) {
+            nbtFilterParsed = null;
+        }
     }
 
     private void resolveHeldItemTag() {
-        if (heldItemTagStr == null || heldItemTagStr.isBlank()) { heldItemTag = null; return; }
+        if (heldItemTagStr == null || heldItemTagStr.isBlank()) {
+            heldItemTag = null;
+            return;
+        }
         String s = heldItemTagStr.startsWith("#") ? heldItemTagStr.substring(1) : heldItemTagStr;
         ResourceLocation rl = ResourceLocation.tryParse(s);
         heldItemTag = (rl != null) ? TagKey.create(Registries.ITEM, rl) : null;
@@ -640,7 +670,10 @@ public final class DamageTask extends Task {
     }
 
     private void setStructure(String resLoc) {
-        if (resLoc == null || resLoc.isEmpty()) { structure = null; return; }
+        if (resLoc == null || resLoc.isEmpty()) {
+            structure = null;
+            return;
+        }
         structure = resLoc.startsWith("#")
                 ? Either.right(TagKey.create(Registries.STRUCTURE, safeStructure(resLoc.substring(1))))
                 : Either.left(ResourceKey.create(Registries.STRUCTURE, safeStructure(resLoc)));
@@ -657,7 +690,7 @@ public final class DamageTask extends Task {
     }
 
     private static void maybeRequestStructureSync() {
-        if (KNOWN_STRUCTURES.isEmpty()) {
+        if (DamageTask.KNOWN_STRUCTURES.isEmpty()) {
             NetworkHelper.sendToServer(
                     new MQTStructuresRequest()
             );
@@ -665,7 +698,7 @@ public final class DamageTask extends Task {
     }
 
     private static void maybeRequestWorldSync() {
-        if (KNOWN_DIMENSIONS.isEmpty()) {
+        if (DamageTask.KNOWN_DIMENSIONS.isEmpty()) {
             NetworkHelper.sendToServer(
                     new MQTWorldsRequest()
             );
@@ -673,7 +706,7 @@ public final class DamageTask extends Task {
     }
 
     private static void maybeRequestBiomeSync() {
-        if (KNOWN_BIOMES.isEmpty()) {
+        if (DamageTask.KNOWN_BIOMES.isEmpty()) {
             NetworkHelper.sendToServer(
                     new MQTBiomesRequest()
             );
@@ -681,17 +714,17 @@ public final class DamageTask extends Task {
     }
 
     public static void syncKnownDimensionList(List<String> data) {
-        KNOWN_DIMENSIONS.clear();
-        KNOWN_DIMENSIONS.addAll(data);
+        DamageTask.KNOWN_DIMENSIONS.clear();
+        DamageTask.KNOWN_DIMENSIONS.addAll(data);
     }
 
     public static void syncKnownBiomeList(List<String> data) {
-        KNOWN_BIOMES.clear();
-        KNOWN_BIOMES.addAll(data);
+        DamageTask.KNOWN_BIOMES.clear();
+        DamageTask.KNOWN_BIOMES.addAll(data);
     }
 
     public static void syncKnownStructureList(List<String> data) {
-        KNOWN_STRUCTURES.clear();
-        KNOWN_STRUCTURES.addAll(data);
+        DamageTask.KNOWN_STRUCTURES.clear();
+        DamageTask.KNOWN_STRUCTURES.addAll(data);
     }
 }

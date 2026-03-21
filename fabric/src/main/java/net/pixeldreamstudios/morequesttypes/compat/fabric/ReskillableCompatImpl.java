@@ -5,13 +5,14 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Map;
 
 public final class ReskillableCompatImpl {
-    private ReskillableCompatImpl() {}
+    private ReskillableCompatImpl() {
+    }
 
     public static boolean isLoaded() {
         return false;
     }
 
-    public static int getSkillLevel(ServerPlayer player, int skillIndex) {
+    public static int getSkillLevel(ServerPlayer player, String skillId) {
         return 0;
     }
 
@@ -19,11 +20,15 @@ public final class ReskillableCompatImpl {
         return 0;
     }
 
-    public static void setSkillLevel(ServerPlayer player, int skillIndex, int level) {
+    public static void setSkillLevel(ServerPlayer player, String skillId, int level) {
         // No-op
     }
 
-    public static Map<Integer, String> getAvailableSkills() {
+    public static Map<String, String> getAllSkills() {
         return Map.of();
+    }
+
+    public static String getSkillIcon(String skillId) {
+        return "";
     }
 }

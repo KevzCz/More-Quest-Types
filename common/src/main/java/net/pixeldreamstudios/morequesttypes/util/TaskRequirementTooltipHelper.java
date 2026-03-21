@@ -7,14 +7,14 @@ import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.pixeldreamstudios.morequesttypes.api.ITaskOriginExtension;
-import net.pixeldreamstudios.morequesttypes.api.ITaskSkillsExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskLevelZExtension;
+import net.pixeldreamstudios.morequesttypes.api.ITaskOriginExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskReskillableExtension;
-import net.pixeldreamstudios.morequesttypes.compat.OriginsCompat;
-import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
+import net.pixeldreamstudios.morequesttypes.api.ITaskSkillsExtension;
 import net.pixeldreamstudios.morequesttypes.compat.LevelZCompat;
+import net.pixeldreamstudios.morequesttypes.compat.OriginsCompat;
 import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
+import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,24 +25,24 @@ public class TaskRequirementTooltipHelper {
     public static void addRequirementTooltips(TooltipList list, Task task) {
         boolean hasAnyRequirement = false;
 
-        hasAnyRequirement |= addOriginRequirement(list, task, hasAnyRequirement);
-        hasAnyRequirement |= addSkillsRequirement(list, task, hasAnyRequirement);
-        hasAnyRequirement |= addLevelZRequirement(list, task, hasAnyRequirement);
-        hasAnyRequirement |= addReskillableRequirement(list, task, hasAnyRequirement);
+        hasAnyRequirement |= TaskRequirementTooltipHelper.addOriginRequirement(list, task, hasAnyRequirement);
+        hasAnyRequirement |= TaskRequirementTooltipHelper.addSkillsRequirement(list, task, hasAnyRequirement);
+        hasAnyRequirement |= TaskRequirementTooltipHelper.addLevelZRequirement(list, task, hasAnyRequirement);
+        hasAnyRequirement |= TaskRequirementTooltipHelper.addReskillableRequirement(list, task, hasAnyRequirement);
     }
 
     private static boolean addOriginRequirement(TooltipList list, Task task, boolean alreadyHasRequirement) {
         if (!OriginsCompat.isLoaded()) return false;
         if (!(task instanceof ITaskOriginExtension extension)) return false;
-        if (! extension.shouldCheckOrigin()) return false;
+        if (!extension.shouldCheckOrigin()) return false;
 
         ResourceLocation layer = extension.getRequiredOriginLayer();
         ResourceLocation origin = extension.getRequiredOrigin();
 
-        if (layer != null && ! layer.equals(ResourceLocation.withDefaultNamespace("empty")) &&
+        if (layer != null && !layer.equals(ResourceLocation.withDefaultNamespace("empty")) &&
                 origin != null && !origin.equals(ResourceLocation.withDefaultNamespace("empty"))) {
 
-            if (! alreadyHasRequirement) {
+            if (!alreadyHasRequirement) {
                 list.blankLine();
             }
 
@@ -65,7 +65,7 @@ public class TaskRequirementTooltipHelper {
             list.blankLine();
         }
 
-        String requirement = formatRequirement(
+        String requirement = TaskRequirementTooltipHelper.formatRequirement(
                 extension.getSkillsComparison(),
                 extension.getSkillsFirstNumber(),
                 extension.getSkillsSecondNumber()
@@ -97,7 +97,7 @@ public class TaskRequirementTooltipHelper {
             list.blankLine();
         }
 
-        String requirement = formatRequirement(
+        String requirement = TaskRequirementTooltipHelper.formatRequirement(
                 extension.getLevelZComparison(),
                 extension.getLevelZFirstNumber(),
                 extension.getLevelZSecondNumber()
@@ -132,7 +132,7 @@ public class TaskRequirementTooltipHelper {
             list.blankLine();
         }
 
-        String requirement = formatRequirement(
+        String requirement = TaskRequirementTooltipHelper.formatRequirement(
                 extension.getReskillableComparison(),
                 extension.getReskillableFirstNumber(),
                 extension.getReskillableSecondNumber()
@@ -142,9 +142,9 @@ public class TaskRequirementTooltipHelper {
             list.add(Component.translatable("morequesttypes.quest.requirement.reskillable.total", requirement)
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
         } else {
-            Map<Integer, String> skills = new LinkedHashMap<>();
-            skills.putAll(ReskillableCompat.getAvailableSkills());
-            String skillName = skills.getOrDefault(extension.getReskillableSkillIndex(), "Unknown Skill");
+            Map<String, String> skills = new LinkedHashMap<>();
+            skills.putAll(ReskillableCompat.getAllSkills());
+            String skillName = skills.getOrDefault(extension.getReskillableSkillId(), "Unknown Skill");
 
             list.add(Component.translatable("morequesttypes.quest.requirement.reskillable.skill",
                     skillName, requirement).withStyle(ChatFormatting.LIGHT_PURPLE));

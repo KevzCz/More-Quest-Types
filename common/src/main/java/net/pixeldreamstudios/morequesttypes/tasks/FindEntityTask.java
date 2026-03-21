@@ -23,7 +23,12 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -65,7 +70,7 @@ public final class FindEntityTask extends Task {
     private static final ResourceLocation ZOMBIE = ResourceLocation.withDefaultNamespace("zombie");
     private static NameMap<ResourceLocation> ENTITY_NAME_MAP;
     private static NameMap<String> ENTITY_TAG_MAP;
-    private ResourceLocation entityTypeId = ZOMBIE;
+    private ResourceLocation entityTypeId = FindEntityTask.ZOMBIE;
     private TagKey<EntityType<?>> entityTypeTag = null;
     private String customName = "";
     private final List<String> scoreboardTags = new ArrayList<>();
@@ -88,25 +93,46 @@ public final class FindEntityTask extends Task {
 
     static {
         if (Platform.getEnv() == EnvType.CLIENT) {
-            CLIENT_NEAREST = new HashMap<>();
-            CLIENT_LAST_REQ_TICK = 0L;
+            FindEntityTask.CLIENT_NEAREST = new HashMap<>();
+            FindEntityTask.CLIENT_LAST_REQ_TICK = 0L;
         }
     }
+
     @Environment(EnvType.CLIENT)
     public static void updateClientNearest(long taskId, double meters, long gameTime) {
-        CLIENT_NEAREST.put(taskId, meters);
-        CLIENT_LAST_REQ_TICK = gameTime;
+        FindEntityTask.CLIENT_NEAREST.put(taskId, meters);
+        FindEntityTask.CLIENT_LAST_REQ_TICK = gameTime;
 
         try {
             ClientQuestFile.INSTANCE.refreshGui();
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
-    public FindEntityTask(long id, Quest quest) { super(id, quest); }
 
-    @Override public TaskType getType() { return MoreTasksTypes.FIND_ENTITY; }
-    @Override public long getMaxProgress() { return 1L; }
-    @Override public boolean hideProgressNumbers() { return true; }
-    @Override public int autoSubmitOnPlayerTick() { return 10; }
+    public FindEntityTask(long id, Quest quest) {
+        super(id, quest);
+    }
+
+    @Override
+    public TaskType getType() {
+        return MoreTasksTypes.FIND_ENTITY;
+    }
+
+    @Override
+    public long getMaxProgress() {
+        return 1L;
+    }
+
+    @Override
+    public boolean hideProgressNumbers() {
+        return true;
+    }
+
+    @Override
+    public int autoSubmitOnPlayerTick() {
+        return 10;
+    }
+
     @Override
     public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
@@ -131,6 +157,7 @@ public final class FindEntityTask extends Task {
         }
         return best;
     }
+
     private boolean entityMatches(LivingEntity e) {
         boolean baseOk = (entityTypeTag == null)
                 ? entityTypeId.equals(RegistrarManager.getId(e.getType(), Registries.ENTITY_TYPE)) && nameMatchOK(e)
@@ -148,7 +175,8 @@ public final class FindEntityTask extends Task {
         if (nbtFilterParsed != null) {
             var actual = new CompoundTag();
             e.saveWithoutId(actual);
-            if (!(nbtFilterParsed instanceof CompoundTag filter) || !nbtSubsetMatches(actual, filter)) return false;
+            if (!(nbtFilterParsed instanceof CompoundTag filter) || !FindEntityTask.nbtSubsetMatches(actual, filter))
+                return false;
         }
 
         if (structure != null || (dimension != null && !dimension.isEmpty()) || (biome != null && !biome.isEmpty())) {
@@ -158,10 +186,10 @@ public final class FindEntityTask extends Task {
             if (!isInsideBiome(level, e.blockPosition())) return false;
         }
         if (DynamicDifficultyCompat.isLoaded()) {
-            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension) (Object) this;
             if (ext.shouldCheckDynamicDifficultyLevel() && DynamicDifficultyCompat.canHaveLevel(e)) {
                 int mobLevel = DynamicDifficultyCompat.getLevel(e);
-                if (! ComparisonManager.compare(mobLevel,
+                if (!ComparisonManager.compare(mobLevel,
                         ext.getDynamicDifficultyComparison(),
                         ext.getDynamicDifficultyFirst(),
                         ext.getDynamicDifficultySecond())) {
@@ -171,7 +199,7 @@ public final class FindEntityTask extends Task {
         }
 
         if (DungeonDifficultyCompat.isLoaded()) {
-            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension) (Object) this;
             if (dungeonExt.shouldCheckDungeonDifficultyLevel() && DungeonDifficultyCompat.canHaveLevel(e)) {
                 int dungeonLevel = DungeonDifficultyCompat.getLevel(e);
                 return ComparisonManager.compare(dungeonLevel,
@@ -208,7 +236,7 @@ public final class FindEntityTask extends Task {
             for (String key : f.getAllKeys()) {
                 Tag fVal = f.get(key);
                 Tag aVal = a.get(key);
-                if (aVal == null || !nbtSubsetMatches(aVal, fVal)) return false;
+                if (aVal == null || !FindEntityTask.nbtSubsetMatches(aVal, fVal)) return false;
             }
             return true;
         }
@@ -218,7 +246,7 @@ public final class FindEntityTask extends Task {
             outer:
             for (Tag fEl : fList) {
                 for (int j = 0; j < remaining.size(); j++) {
-                    if (nbtSubsetMatches(remaining.get(j), fEl)) {
+                    if (FindEntityTask.nbtSubsetMatches(remaining.get(j), fEl)) {
                         remaining.remove(j);
                         continue outer;
                     }
@@ -229,6 +257,7 @@ public final class FindEntityTask extends Task {
         }
         return NbtUtils.compareNbt(filter, actual, false) && NbtUtils.compareNbt(actual, filter, false);
     }
+
     private boolean isInsideStructureOrTag(ServerLevel level, BlockPos pos) {
         StructureManager mgr = level.structureManager();
         return structure == null || structure.map(
@@ -241,10 +270,12 @@ public final class FindEntityTask extends Task {
                         }).orElse(false)
         );
     }
+
     private boolean isInsideDimension(ServerLevel level) {
         if (dimension == null || dimension.isEmpty()) return true;
         return dimension.equals(level.dimension().location().toString());
     }
+
     private boolean isInsideBiome(ServerLevel level, BlockPos pos) {
         if (biome == null || biome.isEmpty()) return true;
         Holder<Biome> h = level.getBiome(pos);
@@ -264,38 +295,60 @@ public final class FindEntityTask extends Task {
         ResourceLocation rl = ResourceLocation.tryParse(s);
         return (rl != null && !rl.getPath().isEmpty()) ? TagKey.create(Registries.ENTITY_TYPE, rl) : null;
     }
-    private String getTypeTagStr() { return entityTypeTag == null ? "" : entityTypeTag.location().toString(); }
 
-    public static void syncKnownStructureList(List<String> data) { KNOWN_STRUCTURES.clear(); KNOWN_STRUCTURES.addAll(data); }
-    public static void syncKnownDimensionList(List<String> data) { KNOWN_DIMENSIONS.clear(); KNOWN_DIMENSIONS.addAll(data); }
-    public static void syncKnownBiomeList(List<String> data)     { KNOWN_BIOMES.clear();     KNOWN_BIOMES.addAll(data); }
+    private String getTypeTagStr() {
+        return entityTypeTag == null ? "" : entityTypeTag.location().toString();
+    }
+
+    public static void syncKnownStructureList(List<String> data) {
+        FindEntityTask.KNOWN_STRUCTURES.clear();
+        FindEntityTask.KNOWN_STRUCTURES.addAll(data);
+    }
+
+    public static void syncKnownDimensionList(List<String> data) {
+        FindEntityTask.KNOWN_DIMENSIONS.clear();
+        FindEntityTask.KNOWN_DIMENSIONS.addAll(data);
+    }
+
+    public static void syncKnownBiomeList(List<String> data) {
+        FindEntityTask.KNOWN_BIOMES.clear();
+        FindEntityTask.KNOWN_BIOMES.addAll(data);
+    }
 
     private void setStructure(String resLoc) {
-        if (resLoc == null || resLoc.isEmpty()) { structure = null; return; }
+        if (resLoc == null || resLoc.isEmpty()) {
+            structure = null;
+            return;
+        }
         structure = resLoc.startsWith("#")
                 ? Either.right(TagKey.create(Registries.STRUCTURE, safeStructure(resLoc.substring(1))))
                 : Either.left(ResourceKey.create(Registries.STRUCTURE, safeStructure(resLoc)));
     }
+
     private String getStructure() {
         if (structure == null) return "";
         return structure.map(k -> k.location().toString(), t -> "#" + t.location());
     }
+
     private ResourceLocation safeStructure(String s) {
         ResourceLocation rl = ResourceLocation.tryParse(s);
         return rl != null ? rl : FindEntityTask.DEFAULT_STRUCTURE;
     }
+
     private static void maybeRequestStructureSync() {
-        if (KNOWN_STRUCTURES.isEmpty()) {
+        if (FindEntityTask.KNOWN_STRUCTURES.isEmpty()) {
             NetworkHelper.sendToServer(new MQTStructuresRequest());
         }
     }
+
     private static void maybeRequestWorldSync() {
-        if (KNOWN_DIMENSIONS.isEmpty()) {
+        if (FindEntityTask.KNOWN_DIMENSIONS.isEmpty()) {
             NetworkHelper.sendToServer(new MQTWorldsRequest());
         }
     }
+
     private static void maybeRequestBiomeSync() {
-        if (KNOWN_BIOMES.isEmpty()) {
+        if (FindEntityTask.KNOWN_BIOMES.isEmpty()) {
             NetworkHelper.sendToServer(new MQTBiomesRequest());
         }
     }
@@ -305,11 +358,15 @@ public final class FindEntityTask extends Task {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-        if (ENTITY_NAME_MAP == null) {
+        if (FindEntityTask.ENTITY_NAME_MAP == null) {
             var ids = new ArrayList<ResourceLocation>();
             BuiltInRegistries.ENTITY_TYPE.forEach(type -> {
-                if (type.create(FTBQuestsClient.getClientLevel()) instanceof LivingEntity) {
-                    ids.add(type.arch$registryName());
+                try {
+                    if (type.create(FTBQuestsClient.getClientLevel()) instanceof LivingEntity) {
+                        ids.add(type.arch$registryName());
+                    }
+                } catch (Exception e) {
+                    // Skip
                 }
             });
             ids.sort((a, b) -> {
@@ -317,29 +374,32 @@ public final class FindEntityTask extends Task {
                 var c2 = Component.translatable("entity." + b.toLanguageKey());
                 return c1.getString().compareTo(c2.getString());
             });
-            ENTITY_NAME_MAP = NameMap.of(ZOMBIE, ids)
+            FindEntityTask.ENTITY_NAME_MAP = NameMap.of(FindEntityTask.ZOMBIE, ids)
                     .nameKey(id -> "entity." + id.toLanguageKey())
                     .icon(AdvancedKillTask::iconForEntityType)
                     .create();
         }
-        if (ENTITY_TAG_MAP == null) {
+        if (FindEntityTask.ENTITY_TAG_MAP == null) {
             var list = new ArrayList<String>(List.of(""));
             list.addAll(BuiltInRegistries.ENTITY_TYPE.getTags()
                     .map(p -> p.getFirst().location().toString())
                     .sorted()
                     .toList());
-            ENTITY_TAG_MAP = NameMap.of("", list).create();
+            FindEntityTask.ENTITY_TAG_MAP = NameMap.of("", list).create();
         }
 
-        config.addEnum("entity", entityTypeId, v -> entityTypeId = v, ENTITY_NAME_MAP, ZOMBIE);
-        config.addEnum("entity_type_tag", getTypeTagStr(), v -> entityTypeTag = parseTypeTag(v), ENTITY_TAG_MAP);
+        config.addEnum("entity", entityTypeId, v -> entityTypeId = v, FindEntityTask.ENTITY_NAME_MAP, FindEntityTask.ZOMBIE);
+        config.addEnum("entity_type_tag", getTypeTagStr(), v -> entityTypeTag = FindEntityTask.parseTypeTag(v), FindEntityTask.ENTITY_TAG_MAP);
         config.addString("custom_name", customName, v -> customName = v, "")
                 .setNameKey("morequesttypes.task.find_entity.custom_name");
         config.addList("scoreboard_tags", scoreboardTags, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.tags_csv");
         config.addInt("min_tags_required", minTagsRequired, v -> minTagsRequired = Math.max(0, v), 0, 0, 64)
                 .setNameKey("morequesttypes.task.min_tags");
-        config.addString("nbt_filter_snbt", nbtFilterSnbt, v -> { nbtFilterSnbt = v; parseNbtFilter(); }, "")
+        config.addString("nbt_filter_snbt", nbtFilterSnbt, v -> {
+                    nbtFilterSnbt = v;
+                    parseNbtFilter();
+                }, "")
                 .setNameKey("morequesttypes.task.nbt");
 
         config.addInt("target_radius_blocks", targetRadiusBlocks, v -> targetRadiusBlocks = Math.max(0, v), 5, 0, 256)
@@ -347,38 +407,40 @@ public final class FindEntityTask extends Task {
         config.addInt("search_radius_blocks", searchRadiusBlocks, v -> searchRadiusBlocks = Math.max(1, v), 64, 1, 512)
                 .setNameKey("morequesttypes.task.find_entity.radius");
 
-        maybeRequestStructureSync();
+        FindEntityTask.maybeRequestStructureSync();
         List<String> structureChoices = new ArrayList<>();
         structureChoices.add("");
-        if (KNOWN_STRUCTURES.isEmpty()) structureChoices.add(DEFAULT_STRUCTURE.toString()); else structureChoices.addAll(KNOWN_STRUCTURES);
+        if (FindEntityTask.KNOWN_STRUCTURES.isEmpty())
+            structureChoices.add(FindEntityTask.DEFAULT_STRUCTURE.toString());
+        else structureChoices.addAll(FindEntityTask.KNOWN_STRUCTURES);
         var STRUCTURE_MAP = NameMap.of(getStructure(), structureChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "None" : s))
                 .create();
         config.addEnum("structure", getStructure(), this::setStructure, STRUCTURE_MAP)
                 .setNameKey("morequesttypes.task.structure");
 
-        maybeRequestWorldSync();
+        FindEntityTask.maybeRequestWorldSync();
         List<String> dimChoices = new ArrayList<>();
         dimChoices.add("");
-        if (KNOWN_DIMENSIONS.isEmpty()) {
+        if (FindEntityTask.KNOWN_DIMENSIONS.isEmpty()) {
             dimChoices.add("minecraft:overworld");
             dimChoices.add("minecraft:the_nether");
             dimChoices.add("minecraft:the_end");
-        } else dimChoices.addAll(KNOWN_DIMENSIONS);
+        } else dimChoices.addAll(FindEntityTask.KNOWN_DIMENSIONS);
         var DIMENSION_MAP = NameMap.of(dimension, dimChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
                 .create();
         config.addEnum("dimension", dimension, v -> dimension = v, DIMENSION_MAP)
                 .setNameKey("morequesttypes.task.dimension");
 
-        maybeRequestBiomeSync();
+        FindEntityTask.maybeRequestBiomeSync();
         List<String> biomeChoices = new ArrayList<>();
         biomeChoices.add("");
-        if (KNOWN_BIOMES.isEmpty()) {
+        if (FindEntityTask.KNOWN_BIOMES.isEmpty()) {
             biomeChoices.add("minecraft:plains");
             biomeChoices.add("minecraft:forest");
             biomeChoices.add("minecraft:desert");
-        } else biomeChoices.addAll(KNOWN_BIOMES);
+        } else biomeChoices.addAll(FindEntityTask.KNOWN_BIOMES);
         var BIOME_MAP = NameMap.of(biome, biomeChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
                 .create();
@@ -387,10 +449,15 @@ public final class FindEntityTask extends Task {
     }
 
     private void parseNbtFilter() {
-        if (nbtFilterSnbt == null || nbtFilterSnbt.isBlank()) { nbtFilterParsed = null; return; }
+        if (nbtFilterSnbt == null || nbtFilterSnbt.isBlank()) {
+            nbtFilterParsed = null;
+            return;
+        }
         try {
             nbtFilterParsed = TagParser.parseTag(nbtFilterSnbt);
-        } catch (Exception ignored) { nbtFilterParsed = null; }
+        } catch (Exception ignored) {
+            nbtFilterParsed = null;
+        }
     }
 
     @Environment(EnvType.CLIENT)
@@ -403,7 +470,7 @@ public final class FindEntityTask extends Task {
         MutableComponent baseTitle = Component.translatable("morequesttypes.task.find_entity.title", entityName);
 
         if (DynamicDifficultyCompat.isLoaded()) {
-            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension)(Object) this;
+            ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension) (Object) this;
             if (ext.shouldCheckDynamicDifficultyLevel()) {
                 String levelReq = mqt$formatLevelRequirement(
                         ext.getDynamicDifficultyComparison(),
@@ -416,7 +483,7 @@ public final class FindEntityTask extends Task {
         }
 
         if (DungeonDifficultyCompat.isLoaded()) {
-            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension)(Object) this;
+            ITaskDungeonDifficultyExtension dungeonExt = (ITaskDungeonDifficultyExtension) (Object) this;
             if (dungeonExt.shouldCheckDungeonDifficultyLevel()) {
                 String difficultyReq = mqt$formatLevelRequirement(
                         dungeonExt.getDungeonDifficultyComparison(),
@@ -450,7 +517,7 @@ public final class FindEntityTask extends Task {
     private double lastNearestClientMeters() {
         try {
             var client = FTBQuestsClient.getClientPlayer();
-            var level  = Minecraft.getInstance().level;
+            var level = Minecraft.getInstance().level;
             if (client == null || level == null) return Double.POSITIVE_INFINITY;
 
             var teamData = ClientQuestFile.exists() ? ClientQuestFile.INSTANCE.selfTeamData : null;
@@ -476,13 +543,13 @@ public final class FindEntityTask extends Task {
             }
 
             long now = level.getGameTime();
-            if (now - CLIENT_LAST_REQ_TICK > 20) {
-                CLIENT_LAST_REQ_TICK = now;
+            if (now - FindEntityTask.CLIENT_LAST_REQ_TICK > 20) {
+                FindEntityTask.CLIENT_LAST_REQ_TICK = now;
                 NetworkHelper.sendToServer(
-                        new MQTNearestEntityRequest(this.getId())
+                        new MQTNearestEntityRequest(getId())
                 );
             }
-            return CLIENT_NEAREST.getOrDefault(this.getId(), Double.POSITIVE_INFINITY);
+            return FindEntityTask.CLIENT_NEAREST.getOrDefault(getId(), Double.POSITIVE_INFINITY);
         } catch (Throwable t) {
             return Double.POSITIVE_INFINITY;
         }
@@ -525,7 +592,7 @@ public final class FindEntityTask extends Task {
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         entityTypeId = ResourceLocation.tryParse(nbt.getString("entity"));
-        entityTypeTag = parseTypeTag(nbt.getString("entityTypeTag"));
+        entityTypeTag = FindEntityTask.parseTypeTag(nbt.getString("entityTypeTag"));
         customName = nbt.getString("custom_name");
         scoreboardTags.clear();
         if (nbt.contains("scoreboard_tags")) {
@@ -536,7 +603,7 @@ public final class FindEntityTask extends Task {
             }
         } else if (nbt.contains("scoreboard_tags_csv")) {
             String csv = nbt.getString("scoreboard_tags_csv");
-            if (!csv.isBlank()) scoreboardTags.addAll(parseCsv(csv));
+            if (!csv.isBlank()) scoreboardTags.addAll(FindEntityTask.parseCsv(csv));
         }
         minTagsRequired = nbt.contains("min_tags_required") ? nbt.getInt("min_tags_required") : 0;
         nbtFilterSnbt = nbt.getString("nbt_filter_snbt");
@@ -546,7 +613,8 @@ public final class FindEntityTask extends Task {
         searchRadiusBlocks = nbt.contains("search_radius_blocks") ? Math.max(1, nbt.getInt("search_radius_blocks")) : 64;
 
         String s = nbt.getString("structure");
-        if (!s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s);
+        else structure = null;
         String d = nbt.getString("dimension");
         dimension = d.trim();
         String b = nbt.getString("biome");
@@ -574,7 +642,7 @@ public final class FindEntityTask extends Task {
     public void readNetData(RegistryFriendlyByteBuf buf) {
         super.readNetData(buf);
         entityTypeId = ResourceLocation.tryParse(buf.readUtf());
-        entityTypeTag = parseTypeTag(buf.readUtf());
+        entityTypeTag = FindEntityTask.parseTypeTag(buf.readUtf());
         customName = buf.readUtf();
         scoreboardTags.clear();
         int nTags = buf.readVarInt();
@@ -587,10 +655,12 @@ public final class FindEntityTask extends Task {
         targetRadiusBlocks = buf.readVarInt();
         searchRadiusBlocks = buf.readVarInt();
         String s = buf.readUtf();
-        if (!s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s);
+        else structure = null;
         dimension = buf.readUtf();
         biome = buf.readUtf();
     }
+
     @Environment(EnvType.CLIENT)
     public static String uiDistanceSuffix(FindEntityTask t) {
         var clientFile = ClientQuestFile.exists() ? ClientQuestFile.INSTANCE.selfTeamData : null;

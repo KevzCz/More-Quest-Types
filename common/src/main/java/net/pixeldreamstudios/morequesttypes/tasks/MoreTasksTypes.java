@@ -4,10 +4,18 @@ import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftbquests.api.FTBQuestsAPI;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import dev.ftb.mods.ftbquests.quest.task.TaskTypes;
-import net.pixeldreamstudios.morequesttypes.compat.*;
+import net.pixeldreamstudios.morequesttypes.compat.BlabberCompat;
+import net.pixeldreamstudios.morequesttypes.compat.EasyNPCCompat;
+import net.pixeldreamstudios.morequesttypes.compat.LevelZCompat;
+import net.pixeldreamstudios.morequesttypes.compat.OriginsCompat;
+import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
+import net.pixeldreamstudios.morequesttypes.compat.SGEconomyCompat;
+import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
 
 public final class MoreTasksTypes {
-    private MoreTasksTypes() {}
+    private MoreTasksTypes() {
+    }
+
     public static TaskType TIMER;
     public static TaskType KILL_ADVANCED;
     public static TaskType SKILLS_LEVEL;
@@ -29,124 +37,138 @@ public final class MoreTasksTypes {
     public static TaskType EASY_NPC_DIALOGUE;
     public static TaskType USE_BLOCK;
     public static TaskType FISHING_CATCH;
+    public static TaskType COMMAND;
+    public static TaskType PAY;
 
     public static void init() {
-        TIMER = TaskTypes.register(
+        MoreTasksTypes.TIMER = TaskTypes.register(
                 FTBQuestsAPI.rl("timer"),
                 TimerTask::new,
                 () -> Icon.getIcon("minecraft:item/clock_00")
         );
         if (SkillsCompat.isLoaded()) {
-            SKILLS_LEVEL = TaskTypes.register(
+            MoreTasksTypes.SKILLS_LEVEL = TaskTypes.register(
                     FTBQuestsAPI.rl("skills_level"),
                     SkillsLevelTask::new,
                     () -> Icon.getIcon("minecraft:item/experience_bottle")
             );
         }
-        if (BlabberCompat.isLoaded()){
-            DIALOGUE = TaskTypes.register(
+        if (BlabberCompat.isLoaded()) {
+            MoreTasksTypes.DIALOGUE = TaskTypes.register(
                     FTBQuestsAPI.rl("dialogue"),
                     DialogueTask::new,
                     () -> Icon.getIcon("blabber:icon.png")
             );
         }
         if (OriginsCompat.isLoaded()) {
-            ORIGIN = TaskTypes.register(
+            MoreTasksTypes.ORIGIN = TaskTypes.register(
                     FTBQuestsAPI.rl("origin"),
                     OriginTask::new,
                     () -> Icon.getIcon("origins:icon.png")
             );
         }
-        PLACE_BLOCK = TaskTypes.register(
+        MoreTasksTypes.PLACE_BLOCK = TaskTypes.register(
                 FTBQuestsAPI.rl("place_block"),
                 PlaceBlockTask::new,
                 () -> Icon.getIcon("minecraft:block/grass_block_side")
         );
-        KILL_ADVANCED = TaskTypes.register(
+        MoreTasksTypes.KILL_ADVANCED = TaskTypes.register(
                 FTBQuestsAPI.rl("kill_advanced"),
                 AdvancedKillTask::new,
                 () -> Icon.getIcon("minecraft:item/iron_sword")
         );
-        INTERACT_ENTITY = TaskTypes.register(
+        MoreTasksTypes.INTERACT_ENTITY = TaskTypes.register(
                 FTBQuestsAPI.rl("interact_entity"),
                 InteractEntityTask::new,
                 () -> Icon.getIcon("minecraft:item/lead")
         );
-        ATTRIBUTES = TaskTypes.register(
+        MoreTasksTypes.ATTRIBUTES = TaskTypes.register(
                 FTBQuestsAPI.rl("attributes"),
                 AttributesTask::new,
                 () -> Icon.getIcon("minecraft:item/iron_chestplate")
         );
-        DAMAGE = TaskTypes.register(
+        MoreTasksTypes.DAMAGE = TaskTypes.register(
                 FTBQuestsAPI.rl("damage"),
                 DamageTask::new,
                 () -> Icon.getIcon("minecraft:item/wooden_sword")
         );
-        USE_ITEM = TaskTypes.register(
+        MoreTasksTypes.USE_ITEM = TaskTypes.register(
                 FTBQuestsAPI.rl("use_item"),
                 UseItemTask::new,
                 () -> Icon.getIcon("minecraft:item/lead")
         );
-        HOLD_ITEM = TaskTypes.register(
+        MoreTasksTypes.HOLD_ITEM = TaskTypes.register(
                 FTBQuestsAPI.rl("hold_item"),
                 HoldItemTask::new,
                 () -> Icon.getIcon("minecraft:item/totem_of_undying")
         );
-        FIND_ENTITY = TaskTypes.register(
+        MoreTasksTypes.FIND_ENTITY = TaskTypes.register(
                 FTBQuestsAPI.rl("find_entity"),
                 FindEntityTask::new,
                 () -> Icon.getIcon("minecraft:item/spyglass")
         );
-        CHECK_QUEST = TaskTypes.register(
+        MoreTasksTypes.CHECK_QUEST = TaskTypes.register(
                 FTBQuestsAPI.rl("check_quest"),
                 CheckQuestTask::new,
                 () -> Icon.getIcon("ftbquests:item/book")
         );
-        BREAK_BLOCK = TaskTypes.register(
+        MoreTasksTypes.BREAK_BLOCK = TaskTypes.register(
                 FTBQuestsAPI.rl("break_block"),
                 BreakBlockTask::new,
                 () -> Icon.getIcon("minecraft:item/iron_pickaxe")
         );
-        POTION_EFFECT = TaskTypes.register(
+        MoreTasksTypes.POTION_EFFECT = TaskTypes.register(
                 FTBQuestsAPI.rl("potion_effect"),
                 PotionEffectTask::new,
                 () -> Icon.getIcon("minecraft:item/potion")
         );
-        TRADING = TaskTypes.register(
+        MoreTasksTypes.TRADING = TaskTypes.register(
                 FTBQuestsAPI.rl("trading"),
                 TradingTask::new,
                 () -> Icon.getIcon("minecraft:item/emerald")
         );
         if (LevelZCompat.isLoaded()) {
-            LEVELZ = TaskTypes.register(
+            MoreTasksTypes.LEVELZ = TaskTypes.register(
                     FTBQuestsAPI.rl("levelz"),
                     LevelZTask::new,
                     () -> Icon.getIcon("levelz:icon.png")
             );
         }
         if (ReskillableCompat.isLoaded()) {
-            RESKILLABLE = TaskTypes.register(
+            MoreTasksTypes.RESKILLABLE = TaskTypes.register(
                     FTBQuestsAPI.rl("reskillable"),
                     ReskillableTask::new,
                     () -> Icon.getIcon("minecraft:item/experience_bottle")
             );
         }
-        if (EasyNPCCompat.isLoaded()){
-            EASY_NPC_DIALOGUE = TaskTypes.register(
+        if (EasyNPCCompat.isLoaded()) {
+            MoreTasksTypes.EASY_NPC_DIALOGUE = TaskTypes.register(
                     FTBQuestsAPI.rl("easynpc_dialogue"),
                     EasyNPCDialogueTask::new,
                     () -> Icon.getIcon("easy_npc:block/easy_npc_spawner/boss_spawner")
             );
         }
-        USE_BLOCK = TaskTypes.register(
+        MoreTasksTypes.USE_BLOCK = TaskTypes.register(
                 FTBQuestsAPI.rl("use_block"),
                 UseBlockTask::new,
                 () -> Icon.getIcon("minecraft:item/oak_door")
         );
-        FISHING_CATCH = TaskTypes.register(
+        MoreTasksTypes.FISHING_CATCH = TaskTypes.register(
                 FTBQuestsAPI.rl("fishing_catch"),
                 FishingCatchTask::new,
                 () -> Icon.getIcon("minecraft:item/fishing_rod")
         );
+        MoreTasksTypes.COMMAND = TaskTypes.register(
+                FTBQuestsAPI.rl("command"),
+                CommandTask::new,
+                () -> Icon.getIcon("minecraft:block/command_block_back")
+        );
+        if (SGEconomyCompat.isLoaded()) {
+            MoreTasksTypes.PAY = TaskTypes.register(
+                    FTBQuestsAPI.rl("pay"),
+                    SGEconomyTask::new,
+                    () -> Icon.getIcon("minecraft:item/gold_ingot")
+            );
+        }
     }
 }

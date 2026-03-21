@@ -6,19 +6,36 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Map;
 
 public final class ReskillableCompat {
-    private ReskillableCompat() {}
+    private ReskillableCompat() {
+    }
 
     @ExpectPlatform
-    public static boolean isLoaded() { throw new AssertionError(); }
+    public static boolean isLoaded() {
+        throw new AssertionError();
+    }
 
     @ExpectPlatform
-    public static int getSkillLevel(ServerPlayer player, int skillIndex) { throw new AssertionError(); }
+    public static int getSkillLevel(ServerPlayer player, String skillId) {
+        throw new AssertionError();
+    }
 
     @ExpectPlatform
-    public static int getTotalSkillLevels(ServerPlayer player) { throw new AssertionError(); }
+    public static int getTotalSkillLevels(ServerPlayer player) {
+        throw new AssertionError();
+    }
 
     @ExpectPlatform
-    public static void setSkillLevel(ServerPlayer player, int skillIndex, int level) { throw new AssertionError(); }
+    public static void setSkillLevel(ServerPlayer player, String skillId, int level) {
+        throw new AssertionError();
+    }
+
     @ExpectPlatform
-    public static Map<Integer, String> getAvailableSkills() { throw new AssertionError(); }
+    public static Map<String, String> getAllSkills() {
+        throw new AssertionError();
+    }
+
+    @ExpectPlatform
+    public static String getSkillIcon(String skillId) {
+        throw new AssertionError();
+    }
 }

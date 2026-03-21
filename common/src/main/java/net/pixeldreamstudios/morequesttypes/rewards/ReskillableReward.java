@@ -16,14 +16,18 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public final class ReskillableReward extends Reward {
-    public enum OperationType { ADD, SET, REDUCE }
+    public enum OperationType {ADD, SET, REDUCE}
 
     private OperationType operationType = OperationType.ADD;
     private int amount = 1;
-    private int skillIndex = 0;
+    private String skillId = "mining";
 
     public ReskillableReward(long id, Quest quest) {
         super(id, quest);
@@ -36,20 +40,20 @@ public final class ReskillableReward extends Reward {
 
     @Override
     public void claim(ServerPlayer player, boolean notify) {
-        if (! ReskillableCompat.isLoaded()) return;
+        if (!ReskillableCompat.isLoaded()) return;
         if (amount == 0 && operationType != OperationType.SET) return;
 
         switch (operationType) {
             case ADD -> {
-                int current = ReskillableCompat.getSkillLevel(player, skillIndex);
-                ReskillableCompat.setSkillLevel(player, skillIndex, current + amount);
+                int current = ReskillableCompat.getSkillLevel(player, skillId);
+                ReskillableCompat.setSkillLevel(player, skillId, current + amount);
             }
             case SET -> {
-                ReskillableCompat.setSkillLevel(player, skillIndex, amount);
+                ReskillableCompat.setSkillLevel(player, skillId, amount);
             }
             case REDUCE -> {
-                int current = ReskillableCompat.getSkillLevel(player, skillIndex);
-                ReskillableCompat.setSkillLevel(player, skillIndex, Math.max(1, current - amount));
+                int current = ReskillableCompat.getSkillLevel(player, skillId);
+                ReskillableCompat.setSkillLevel(player, skillId, Math.max(1, current - amount));
             }
         }
     }
@@ -57,8 +61,8 @@ public final class ReskillableReward extends Reward {
     @Environment(EnvType.CLIENT)
     @Override
     public Component getAltTitle() {
-        Map<Integer, String> skills = ReskillableCompat.getAvailableSkills();
-        String skillName = skills.getOrDefault(skillIndex, "Unknown");
+        Map<String, String> skills = ReskillableCompat.getAllSkills();
+        String skillName = skills.getOrDefault(skillId, skillId);
         String opStr = operationType.name().toLowerCase(Locale.ROOT);
 
         return Component.translatable(
@@ -72,20 +76,25 @@ public final class ReskillableReward extends Reward {
     @Environment(EnvType.CLIENT)
     @Override
     public Icon getAltIcon() {
-        return getSkillIcon(skillIndex, this.getType());
+        return ReskillableReward.getSkillIcon(skillId, getType());
     }
 
     @Environment(EnvType.CLIENT)
-    private static Icon getSkillIcon(int skillIndex, RewardType rewardType) {
-        String iconName = switch (skillIndex) {
-            case 0 -> "mining";
-            case 1 -> "gathering";
-            case 2 -> "attack";
-            case 3 -> "defense";
-            case 4 -> "building";
-            case 5 -> "farming";
-            case 6 -> "agility";
-            case 7 -> "magic";
+    private static Icon getSkillIcon(String skillId, RewardType rewardType) {
+        if (skillId == null || skillId.isEmpty()) {
+            return rewardType.getIconSupplier();
+        }
+
+        String normalized = skillId.toLowerCase(Locale.ROOT);
+        String iconName = switch (normalized) {
+            case "mining" -> "mining";
+            case "gathering" -> "gathering";
+            case "attack" -> "attack";
+            case "defense" -> "defense";
+            case "building" -> "building";
+            case "farming" -> "farming";
+            case "agility" -> "agility";
+            case "magic" -> "magic";
             default -> null;
         };
 
@@ -98,15 +107,35 @@ public final class ReskillableReward extends Reward {
                 return rewardType.getIconSupplier();
             }
         }
+
+        if (ReskillableCompat.isLoaded()) {
+            try {
+                String customIconPath = ReskillableCompat.getSkillIcon(skillId);
+                if (customIconPath != null && !customIconPath.isEmpty()) {
+                    if (customIconPath.contains(":")) {
+                        String[] parts = customIconPath.split(":", 2);
+                        String namespace = parts[0];
+                        String path = parts[1];
+                        if (path.startsWith("textures/") && path.endsWith(".png")) {
+                            ResourceLocation iconLocation = ResourceLocation.fromNamespaceAndPath(namespace, path);
+                            return Icon.getIcon(iconLocation);
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
         return rewardType.getIconSupplier();
     }
+
 
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         nbt.putString("operation_type", operationType.name());
         nbt.putInt("amount", amount);
-        nbt.putInt("skill_index", skillIndex);
+        nbt.putString("skill_id", skillId);
     }
 
     @Override
@@ -118,13 +147,32 @@ public final class ReskillableReward extends Reward {
             operationType = OperationType.ADD;
         }
         amount = nbt.getInt("amount");
-        skillIndex = nbt.getInt("skill_index");
 
-        if (nbt.contains("kind") && ! nbt.contains("operation_type")) {
+        if (nbt.contains("skill_id")) {
+            skillId = nbt.getString("skill_id");
+        } else if (nbt.contains("skill_index")) {
+            int oldIndex = nbt.getInt("skill_index");
+            skillId = switch (oldIndex) {
+                case 0 -> "mining";
+                case 1 -> "gathering";
+                case 2 -> "attack";
+                case 3 -> "defense";
+                case 4 -> "building";
+                case 5 -> "farming";
+                case 6 -> "agility";
+                case 7 -> "magic";
+                default -> "mining";
+            };
+        } else {
+            skillId = "mining";
+        }
+
+        if (nbt.contains("kind") && !nbt.contains("operation_type")) {
             try {
                 String oldKind = nbt.getString("kind");
                 operationType = "SET".equals(oldKind) ? OperationType.SET : OperationType.ADD;
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
     }
 
@@ -133,7 +181,7 @@ public final class ReskillableReward extends Reward {
         super.writeNetData(buf);
         buf.writeEnum(operationType);
         buf.writeVarInt(amount);
-        buf.writeVarInt(skillIndex);
+        buf.writeUtf(skillId);
     }
 
     @Override
@@ -141,7 +189,7 @@ public final class ReskillableReward extends Reward {
         super.readNetData(buf);
         operationType = buf.readEnum(OperationType.class);
         amount = buf.readVarInt();
-        skillIndex = buf.readVarInt();
+        skillId = buf.readUtf();
     }
 
     @Environment(EnvType.CLIENT)
@@ -156,23 +204,23 @@ public final class ReskillableReward extends Reward {
         config.addInt("amount", amount, v -> amount = v, 1, 0, 1_000_000)
                 .setNameKey("morequesttypes.reward.reskillable.amount");
 
-        Map<Integer, String> skills = new LinkedHashMap<>();
-        skills.putAll(ReskillableCompat.getAvailableSkills());
+        Map<String, String> skills = new LinkedHashMap<>();
+        skills.putAll(ReskillableCompat.getAllSkills());
 
         if (skills.isEmpty()) {
-            skills.put(0, "No Skills Available");
+            skills.put("none", "No Skills Available");
         }
 
-        List<Integer> skillIds = new ArrayList<>(skills.keySet());
-        Integer currentSkillId = skillIds.contains(skillIndex) ? skillIndex : (skillIds.isEmpty() ? 0 : skillIds.get(0));
+        List<String> skillIds = new ArrayList<>(skills.keySet());
+        String currentSkillId = skillIds.contains(skillId) ? skillId : (skillIds.isEmpty() ? "none" : skillIds.get(0));
 
-        RewardType rewardType = this.getType();
-        var SKILL_MAP = NameMap.of(currentSkillId, skillIds.toArray(Integer[]::new))
-                .name(id -> Component.literal(skills.getOrDefault(id, "Unknown (" + id + ")")))
-                .icon(id -> getSkillIcon(id, rewardType))
+        RewardType rewardType = getType();
+        var SKILL_MAP = NameMap.of(currentSkillId, skillIds.toArray(String[]::new))
+                .name(id -> Component.literal(skills.getOrDefault(id, id)))
+                .icon(id -> ReskillableReward.getSkillIcon(id, rewardType))
                 .create();
 
-        config.addEnum("skill", currentSkillId, v -> skillIndex = v, SKILL_MAP)
+        config.addEnum("skill", currentSkillId, v -> skillId = v, SKILL_MAP)
                 .setNameKey("morequesttypes.reward.reskillable.skill");
     }
 }

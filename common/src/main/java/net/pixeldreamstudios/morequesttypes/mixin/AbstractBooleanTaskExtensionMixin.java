@@ -24,9 +24,9 @@ public abstract class AbstractBooleanTaskExtensionMixin {
 
     @Inject(method = "submitTask", at = @At("HEAD"), cancellable = true, remap = false)
     private void mqt$checkAllRequirements(TeamData teamData, ServerPlayer player, ItemStack craftedItem, CallbackInfo ci) {
-        AbstractBooleanTask task = (AbstractBooleanTask)(Object)this;
+        AbstractBooleanTask task = (AbstractBooleanTask) (Object) this;
 
-        if (! mqt$checkOriginRequirement(task, player)) {
+        if (!mqt$checkOriginRequirement(task, player)) {
             ci.cancel();
             return;
         }
@@ -48,9 +48,9 @@ public abstract class AbstractBooleanTaskExtensionMixin {
 
     @Unique
     private boolean mqt$checkOriginRequirement(AbstractBooleanTask task, ServerPlayer player) {
-        if (! OriginsCompat.isLoaded()) return true;
+        if (!OriginsCompat.isLoaded()) return true;
         if (!(task instanceof ITaskOriginExtension extension)) return true;
-        if (! extension.shouldCheckOrigin()) return true;
+        if (!extension.shouldCheckOrigin()) return true;
 
         return OriginsCompat.hasOrigin(player, extension.getRequiredOriginLayer(), extension.getRequiredOrigin());
     }
@@ -112,7 +112,7 @@ public abstract class AbstractBooleanTaskExtensionMixin {
         if (extension.getReskillableMode() == ITaskReskillableExtension.ReskillableMode.TOTAL_LEVEL) {
             playerValue = ReskillableCompat.getTotalSkillLevels(player);
         } else {
-            playerValue = ReskillableCompat.getSkillLevel(player, extension.getReskillableSkillIndex());
+            playerValue = ReskillableCompat.getSkillLevel(player, extension.getReskillableSkillId());
         }
 
         return extension.getReskillableComparison().compare(

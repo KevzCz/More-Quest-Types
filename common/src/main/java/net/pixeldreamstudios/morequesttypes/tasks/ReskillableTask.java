@@ -1,32 +1,43 @@
 package net.pixeldreamstudios.morequesttypes.tasks;
 
-import dev.ftb.mods.ftblibrary.config.*;
-import dev.ftb.mods.ftblibrary.icon.*;
-import dev.ftb.mods.ftblibrary.util.*;
-import dev.ftb.mods.ftbquests.quest.*;
-import dev.ftb.mods.ftbquests.quest.task.*;
-import net.fabricmc.api.*;
+import dev.ftb.mods.ftblibrary.config.ConfigGroup;
+import dev.ftb.mods.ftblibrary.config.NameMap;
+import dev.ftb.mods.ftblibrary.icon.Icon;
+import dev.ftb.mods.ftblibrary.util.TooltipList;
+import dev.ftb.mods.ftbquests.quest.Quest;
+import dev.ftb.mods.ftbquests.quest.TeamData;
+import dev.ftb.mods.ftbquests.quest.task.Task;
+import dev.ftb.mods.ftbquests.quest.task.TaskType;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.*;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.*;
-import net.minecraft.network.chat.*;
-import net.minecraft.resources.*;
-import net.minecraft.server.level.*;
-import net.minecraft.world.item.*;
-import net.pixeldreamstudios.morequesttypes.compat.*;
-import net.pixeldreamstudios.morequesttypes.util.*;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
+import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
+import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class ReskillableTask extends Task {
-    public enum Mode { SKILL_LEVEL, TOTAL_LEVEL }
+    public enum Mode {SKILL_LEVEL, TOTAL_LEVEL}
 
     private Mode mode = Mode.SKILL_LEVEL;
     private ComparisonMode comparisonMode = ComparisonMode.GREATER_OR_EQUAL;
     private int firstNumber = 10;
     private int secondNumber = 20;
-    private int skillIndex = 0;
+    private String skillId = "mining";
 
     public ReskillableTask(long id, Quest quest) {
         super(id, quest);
@@ -85,20 +96,25 @@ public class ReskillableTask extends Task {
     @Environment(EnvType.CLIENT)
     @Override
     public Icon getAltIcon() {
-        return getSkillIcon(skillIndex, this.getType());
+        return ReskillableTask.getSkillIcon(skillId, getType());
     }
 
     @Environment(EnvType.CLIENT)
-    private static Icon getSkillIcon(int skillIndex, TaskType taskType) {
-        String iconName = switch (skillIndex) {
-            case 0 -> "mining";
-            case 1 -> "gathering";
-            case 2 -> "attack";
-            case 3 -> "defense";
-            case 4 -> "building";
-            case 5 -> "farming";
-            case 6 -> "agility";
-            case 7 -> "magic";
+    private static Icon getSkillIcon(String skillId, TaskType taskType) {
+        if (skillId == null || skillId.isEmpty()) {
+            return taskType.getIconSupplier();
+        }
+
+        String normalized = skillId.toLowerCase(Locale.ROOT);
+        String iconName = switch (normalized) {
+            case "mining" -> "mining";
+            case "gathering" -> "gathering";
+            case "attack" -> "attack";
+            case "defense" -> "defense";
+            case "building" -> "building";
+            case "farming" -> "farming";
+            case "agility" -> "agility";
+            case "magic" -> "magic";
             default -> null;
         };
 
@@ -111,6 +127,25 @@ public class ReskillableTask extends Task {
                 return taskType.getIconSupplier();
             }
         }
+
+        if (ReskillableCompat.isLoaded()) {
+            try {
+                String customIconPath = ReskillableCompat.getSkillIcon(skillId);
+                if (customIconPath != null && !customIconPath.isEmpty()) {
+                    if (customIconPath.contains(":")) {
+                        String[] parts = customIconPath.split(":", 2);
+                        String namespace = parts[0];
+                        String path = parts[1];
+                        if (path.startsWith("textures/") && path.endsWith(".png")) {
+                            ResourceLocation iconLocation = ResourceLocation.fromNamespaceAndPath(namespace, path);
+                            return Icon.getIcon(iconLocation);
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
         return taskType.getIconSupplier();
     }
 
@@ -147,31 +182,31 @@ public class ReskillableTask extends Task {
             }
         }, 20, 0, 100000).setNameKey("morequesttypes.task.second_number");
 
-        Map<Integer, String> skills = new LinkedHashMap<>();
+        Map<String, String> skills = new LinkedHashMap<>();
         if (ReskillableCompat.isLoaded()) {
-            skills.putAll(ReskillableCompat.getAvailableSkills());
+            skills.putAll(ReskillableCompat.getAllSkills());
         }
-        
+
         if (skills.isEmpty()) {
-            skills.put(0, "No Skills Available");
+            skills.put("none", "No Skills Available");
         }
 
-        List<Integer> skillIds = new ArrayList<>(skills.keySet());
-        Integer currentSkillId = skillIds.contains(skillIndex) ? skillIndex : skillIds.get(0);
+        List<String> skillIds = new ArrayList<>(skills.keySet());
+        String currentSkillId = skillIds.contains(skillId) ? skillId : skillIds.get(0);
 
-        TaskType taskType = this.getType();
-        var SKILL_MAP = NameMap.of(currentSkillId, skillIds.toArray(Integer[]::new))
+        TaskType taskType = getType();
+        var SKILL_MAP = NameMap.of(currentSkillId, skillIds.toArray(String[]::new))
                 .name(id -> {
                     if (id == null) return Component.literal("Unknown");
-                    return Component.literal(skills.getOrDefault(id, "Unknown (" + id + ")"));
+                    return Component.literal(skills.getOrDefault(id, "Unknown"));
                 })
                 .icon(id -> {
                     if (id == null) return taskType.getIconSupplier();
-                    return getSkillIcon(id, taskType);
+                    return ReskillableTask.getSkillIcon(id, taskType);
                 })
                 .create();
 
-        config.addEnum("skill", currentSkillId, v -> skillIndex = v, SKILL_MAP)
+        config.addEnum("skill", currentSkillId, v -> skillId = v, SKILL_MAP)
                 .setNameKey("morequesttypes.task.reskillable.skill");
     }
 
@@ -182,7 +217,7 @@ public class ReskillableTask extends Task {
         nbt.putString("comparison_mode", comparisonMode.name());
         nbt.putInt("first_number", firstNumber);
         nbt.putInt("second_number", secondNumber);
-        nbt.putInt("skill_index", skillIndex);
+        nbt.putString("skill_id", skillId);
     }
 
     @Override
@@ -204,7 +239,25 @@ public class ReskillableTask extends Task {
         }
         firstNumber = Math.max(0, nbt.getInt("first_number"));
         secondNumber = Math.max(0, nbt.getInt("second_number"));
-        skillIndex = nbt.getInt("skill_index");
+
+        if (nbt.contains("skill_id")) {
+            skillId = nbt.getString("skill_id");
+        } else if (nbt.contains("skill_index")) {
+            int oldIndex = nbt.getInt("skill_index");
+            skillId = switch (oldIndex) {
+                case 0 -> "mining";
+                case 1 -> "gathering";
+                case 2 -> "attack";
+                case 3 -> "defense";
+                case 4 -> "building";
+                case 5 -> "farming";
+                case 6 -> "agility";
+                case 7 -> "magic";
+                default -> "mining";
+            };
+        } else {
+            skillId = "mining";
+        }
 
         if (comparisonMode.isRange() && secondNumber <= firstNumber) {
             secondNumber = firstNumber + 10;
@@ -223,7 +276,7 @@ public class ReskillableTask extends Task {
         buf.writeEnum(comparisonMode);
         buf.writeVarInt(firstNumber);
         buf.writeVarInt(secondNumber);
-        buf.writeVarInt(skillIndex);
+        buf.writeUtf(skillId);
     }
 
     @Override
@@ -233,7 +286,7 @@ public class ReskillableTask extends Task {
         comparisonMode = buf.readEnum(ComparisonMode.class);
         firstNumber = Math.max(0, buf.readVarInt());
         secondNumber = Math.max(0, buf.readVarInt());
-        skillIndex = buf.readVarInt();
+        skillId = buf.readUtf();
 
         if (comparisonMode.isRange() && secondNumber <= firstNumber) {
             secondNumber = firstNumber + 10;
@@ -266,7 +319,7 @@ public class ReskillableTask extends Task {
             if (mode == Mode.TOTAL_LEVEL) {
                 value = ReskillableCompat.getTotalSkillLevels(p);
             } else {
-                value = ReskillableCompat.getSkillLevel(p, skillIndex);
+                value = ReskillableCompat.getSkillLevel(p, skillId);
             }
             best = Math.max(best, value);
         }
@@ -292,8 +345,8 @@ public class ReskillableTask extends Task {
         if (mode == Mode.TOTAL_LEVEL) {
             list.add(Component.translatable("morequesttypes.task.reskillable.tooltip.total_comparison", compDesc));
         } else {
-            Map<Integer, String> skills = ReskillableCompat.getAvailableSkills();
-            String skillName = skills.getOrDefault(skillIndex, "Unknown");
+            Map<String, String> skills = ReskillableCompat.getAllSkills();
+            String skillName = skills.getOrDefault(skillId, skillId);
             list.add(Component.translatable("morequesttypes.task.reskillable.tooltip.skill_comparison", skillName, compDesc));
         }
     }

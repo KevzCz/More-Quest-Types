@@ -21,7 +21,12 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -63,7 +68,7 @@ public class AdvancedKillTask extends KillTask {
     private static NameMap<ResourceLocation> ENTITY_NAME_MAP;
     private static NameMap<String> ENTITY_TAG_MAP;
     private static final Map<ResourceLocation, Icon> ENTITY_ICONS = new HashMap<>();
-    private ResourceLocation entityTypeId = ZOMBIE;
+    private ResourceLocation entityTypeId = AdvancedKillTask.ZOMBIE;
     private TagKey<EntityType<?>> entityTypeTag = null;
     private long value = 1;
     private String customName = "";
@@ -78,17 +83,21 @@ public class AdvancedKillTask extends KillTask {
     private String dimension = "";
     private static final List<String> KNOWN_BIOMES = new ArrayList<>();
     private String biome = "";
+
     public AdvancedKillTask(long id, Quest quest) {
         super(id, quest);
     }
+
     @Override
     public TaskType getType() {
         return MoreTasksTypes.KILL_ADVANCED;
     }
+
     @Override
     public long getMaxProgress() {
         return value;
     }
+
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
@@ -113,7 +122,7 @@ public class AdvancedKillTask extends KillTask {
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         entityTypeId = ResourceLocation.tryParse(nbt.getString("entity"));
-        entityTypeTag = parseTypeTag(nbt.getString("entityTypeTag"));
+        entityTypeTag = AdvancedKillTask.parseTypeTag(nbt.getString("entityTypeTag"));
         value = nbt.getLong("value");
         customName = nbt.getString("custom_name");
         scoreboardTags.clear();
@@ -125,13 +134,14 @@ public class AdvancedKillTask extends KillTask {
             }
         } else if (nbt.contains("scoreboard_tags_csv")) {
             String csv = nbt.getString("scoreboard_tags_csv");
-            if (!csv.isBlank()) scoreboardTags.addAll(parseCsv(csv));
+            if (!csv.isBlank()) scoreboardTags.addAll(AdvancedKillTask.parseCsv(csv));
         }
         minTagsRequired = nbt.contains("min_tags_required") ? nbt.getInt("min_tags_required") : 0;
         nbtFilterSnbt = nbt.getString("nbt_filter_snbt");
         parseNbtFilter();
         String s = nbt.getString("structure");
-        if (!s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s);
+        else structure = null;
         String d = nbt.getString("dimension");
         dimension = d.trim();
         String b = nbt.getString("biome");
@@ -158,7 +168,7 @@ public class AdvancedKillTask extends KillTask {
     public void readNetData(RegistryFriendlyByteBuf buf) {
         super.readNetData(buf);
         entityTypeId = ResourceLocation.tryParse(buf.readUtf());
-        entityTypeTag = parseTypeTag(buf.readUtf());
+        entityTypeTag = AdvancedKillTask.parseTypeTag(buf.readUtf());
         value = buf.readVarLong();
         customName = buf.readUtf();
         scoreboardTags.clear();
@@ -171,16 +181,22 @@ public class AdvancedKillTask extends KillTask {
         nbtFilterSnbt = buf.readUtf();
         parseNbtFilter();
         String s = buf.readUtf();
-        if (!s.isEmpty()) setStructure(s); else structure = null;
+        if (!s.isEmpty()) setStructure(s);
+        else structure = null;
         dimension = buf.readUtf();
         biome = buf.readUtf();
     }
 
     private void parseNbtFilter() {
-        if (nbtFilterSnbt == null || nbtFilterSnbt.isBlank()) { nbtFilterParsed = null; return; }
+        if (nbtFilterSnbt == null || nbtFilterSnbt.isBlank()) {
+            nbtFilterParsed = null;
+            return;
+        }
         try {
             nbtFilterParsed = TagParser.parseTag(nbtFilterSnbt);
-        } catch (Exception ignored) { nbtFilterParsed = null; }
+        } catch (Exception ignored) {
+            nbtFilterParsed = null;
+        }
     }
 
     private static @Nullable TagKey<EntityType<?>> parseTypeTag(String tag) {
@@ -191,20 +207,23 @@ public class AdvancedKillTask extends KillTask {
     }
 
     public static void syncKnownStructureList(List<String> data) {
-        KNOWN_STRUCTURES.clear();
-        KNOWN_STRUCTURES.addAll(data);
+        AdvancedKillTask.KNOWN_STRUCTURES.clear();
+        AdvancedKillTask.KNOWN_STRUCTURES.addAll(data);
     }
 
     private void setStructure(String resLoc) {
-        if (resLoc == null || resLoc.isEmpty()) { this.structure = null; return; }
-        this.structure = resLoc.startsWith("#")
+        if (resLoc == null || resLoc.isEmpty()) {
+            structure = null;
+            return;
+        }
+        structure = resLoc.startsWith("#")
                 ? Either.right(TagKey.create(Registries.STRUCTURE, safeStructure(resLoc.substring(1))))
                 : Either.left(ResourceKey.create(Registries.STRUCTURE, safeStructure(resLoc)));
     }
 
     private String getStructure() {
-        if (this.structure == null) return "";
-        return this.structure.map(
+        if (structure == null) return "";
+        return structure.map(
                 key -> key.location().toString(),
                 tag -> "#" + tag.location()
         );
@@ -216,7 +235,7 @@ public class AdvancedKillTask extends KillTask {
     }
 
     private static void maybeRequestStructureSync() {
-        if (KNOWN_STRUCTURES.isEmpty()) {
+        if (AdvancedKillTask.KNOWN_STRUCTURES.isEmpty()) {
             NetworkHelper.sendToServer(
                     new MQTStructuresRequest()
             );
@@ -224,7 +243,7 @@ public class AdvancedKillTask extends KillTask {
     }
 
     private static void maybeRequestWorldSync() {
-        if (KNOWN_DIMENSIONS.isEmpty()) {
+        if (AdvancedKillTask.KNOWN_DIMENSIONS.isEmpty()) {
             NetworkHelper.sendToServer(
                     new MQTWorldsRequest()
             );
@@ -232,7 +251,7 @@ public class AdvancedKillTask extends KillTask {
     }
 
     private static void maybeRequestBiomeSync() {
-        if (KNOWN_BIOMES.isEmpty()) {
+        if (AdvancedKillTask.KNOWN_BIOMES.isEmpty()) {
             NetworkHelper.sendToServer(
                     new MQTBiomesRequest()
             );
@@ -240,13 +259,13 @@ public class AdvancedKillTask extends KillTask {
     }
 
     public static void syncKnownDimensionList(List<String> data) {
-        KNOWN_DIMENSIONS.clear();
-        KNOWN_DIMENSIONS.addAll(data);
+        AdvancedKillTask.KNOWN_DIMENSIONS.clear();
+        AdvancedKillTask.KNOWN_DIMENSIONS.addAll(data);
     }
 
     public static void syncKnownBiomeList(List<String> data) {
-        KNOWN_BIOMES.clear();
-        KNOWN_BIOMES.addAll(data);
+        AdvancedKillTask.KNOWN_BIOMES.clear();
+        AdvancedKillTask.KNOWN_BIOMES.addAll(data);
     }
 
     @Environment(EnvType.CLIENT)
@@ -254,11 +273,15 @@ public class AdvancedKillTask extends KillTask {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-        if (ENTITY_NAME_MAP == null) {
+        if (AdvancedKillTask.ENTITY_NAME_MAP == null) {
             var ids = new ArrayList<ResourceLocation>();
             BuiltInRegistries.ENTITY_TYPE.forEach(type -> {
-                if (type.create(FTBQuestsClient.getClientLevel()) instanceof LivingEntity) {
-                    ids.add(type.arch$registryName());
+                try {
+                    if (type.create(FTBQuestsClient.getClientLevel()) instanceof LivingEntity) {
+                        ids.add(type.arch$registryName());
+                    }
+                } catch (Exception e) {
+                    //Skip them
                 }
             });
             ids.sort((a, b) -> {
@@ -266,51 +289,56 @@ public class AdvancedKillTask extends KillTask {
                 var c2 = Component.translatable("entity." + b.toLanguageKey());
                 return c1.getString().compareTo(c2.getString());
             });
-            ENTITY_NAME_MAP = NameMap.of(ZOMBIE, ids)
+            AdvancedKillTask.ENTITY_NAME_MAP = NameMap.of(AdvancedKillTask.ZOMBIE, ids)
                     .nameKey(id -> "entity." + id.toLanguageKey())
                     .icon(AdvancedKillTask::iconForEntityType)
                     .create();
         }
 
-        if (ENTITY_TAG_MAP == null) {
+        if (AdvancedKillTask.ENTITY_TAG_MAP == null) {
             var list = new ArrayList<>(List.of(""));
             list.addAll(BuiltInRegistries.ENTITY_TYPE.getTags()
                     .map(p -> p.getFirst().location().toString())
                     .sorted()
                     .toList());
-            ENTITY_TAG_MAP = NameMap.of("minecraft:zombies", list).create();
+            AdvancedKillTask.ENTITY_TAG_MAP = NameMap.of("minecraft:zombies", list).create();
         }
 
-        config.addEnum("entity", entityTypeId, v -> entityTypeId = v, ENTITY_NAME_MAP, ZOMBIE);
-        config.addEnum("entity_type_tag", getTypeTagStr(), v -> entityTypeTag = parseTypeTag(v), ENTITY_TAG_MAP);
+        config.addEnum("entity", entityTypeId, v -> entityTypeId = v, AdvancedKillTask.ENTITY_NAME_MAP, AdvancedKillTask.ZOMBIE);
+        config.addEnum("entity_type_tag", getTypeTagStr(), v -> entityTypeTag = AdvancedKillTask.parseTypeTag(v), AdvancedKillTask.ENTITY_TAG_MAP);
         config.addLong("value", value, v -> value = v, 1L, 1L, Long.MAX_VALUE);
         config.addString("custom_name", customName, v -> customName = v, "");
         config.addList("scoreboard_tags", scoreboardTags, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.tags_csv");
         config.addInt("min_tags_required", minTagsRequired, v -> minTagsRequired = Math.max(0, v), 0, 0, 64)
                 .setNameKey("morequesttypes.task.min_tags");
-        config.addString("nbt_filter_snbt", nbtFilterSnbt, v -> { nbtFilterSnbt = v; parseNbtFilter(); }, "")
+        config.addString("nbt_filter_snbt", nbtFilterSnbt, v -> {
+                    nbtFilterSnbt = v;
+                    parseNbtFilter();
+                }, "")
                 .setNameKey("morequesttypes.task.nbt");
 
-        maybeRequestStructureSync();
+        AdvancedKillTask.maybeRequestStructureSync();
         List<String> structureChoices = new ArrayList<>();
         structureChoices.add("");
-        if (KNOWN_STRUCTURES.isEmpty()) structureChoices.add(DEFAULT_STRUCTURE.toString()); else structureChoices.addAll(KNOWN_STRUCTURES);
+        if (AdvancedKillTask.KNOWN_STRUCTURES.isEmpty())
+            structureChoices.add(AdvancedKillTask.DEFAULT_STRUCTURE.toString());
+        else structureChoices.addAll(AdvancedKillTask.KNOWN_STRUCTURES);
         var STRUCTURE_MAP = NameMap.of(getStructure(), structureChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "None" : s))
                 .create();
         config.addEnum("structure", getStructure(), this::setStructure, STRUCTURE_MAP)
                 .setNameKey("morequesttypes.task.structure");
 
-        maybeRequestWorldSync();
+        AdvancedKillTask.maybeRequestWorldSync();
         List<String> dimChoices = new ArrayList<>();
         dimChoices.add("");
-        if (KNOWN_DIMENSIONS.isEmpty()) {
+        if (AdvancedKillTask.KNOWN_DIMENSIONS.isEmpty()) {
             dimChoices.add("minecraft:overworld");
             dimChoices.add("minecraft:the_nether");
             dimChoices.add("minecraft:the_end");
         } else {
-            dimChoices.addAll(KNOWN_DIMENSIONS);
+            dimChoices.addAll(AdvancedKillTask.KNOWN_DIMENSIONS);
         }
         var DIMENSION_MAP = NameMap.of(dimension, dimChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
@@ -318,15 +346,15 @@ public class AdvancedKillTask extends KillTask {
         config.addEnum("dimension", dimension, v -> dimension = v, DIMENSION_MAP)
                 .setNameKey("morequesttypes.task.dimension");
 
-        maybeRequestBiomeSync();
+        AdvancedKillTask.maybeRequestBiomeSync();
         List<String> biomeChoices = new ArrayList<>();
         biomeChoices.add("");
-        if (KNOWN_BIOMES.isEmpty()) {
+        if (AdvancedKillTask.KNOWN_BIOMES.isEmpty()) {
             biomeChoices.add("minecraft:plains");
             biomeChoices.add("minecraft:forest");
             biomeChoices.add("minecraft:desert");
         } else {
-            biomeChoices.addAll(KNOWN_BIOMES);
+            biomeChoices.addAll(AdvancedKillTask.KNOWN_BIOMES);
         }
         var BIOME_MAP = NameMap.of(biome, biomeChoices)
                 .name(s -> Component.nullToEmpty((s == null || s.isEmpty()) ? "Any" : s))
@@ -340,7 +368,7 @@ public class AdvancedKillTask extends KillTask {
     }
 
     public static Icon iconForEntityType(ResourceLocation typeId) {
-        return ENTITY_ICONS.computeIfAbsent(typeId, k -> {
+        return AdvancedKillTask.ENTITY_ICONS.computeIfAbsent(typeId, k -> {
             EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(typeId);
             if (entityType.equals(EntityType.PLAYER)) return Icons.PLAYER;
             Item item = SpawnEggItem.byId(entityType);
@@ -358,9 +386,9 @@ public class AdvancedKillTask extends KillTask {
     @Override
     public void clearCachedData() {
         super.clearCachedData();
-        ENTITY_NAME_MAP = null;
-        ENTITY_TAG_MAP = null;
-        ENTITY_ICONS.clear();
+        AdvancedKillTask.ENTITY_NAME_MAP = null;
+        AdvancedKillTask.ENTITY_TAG_MAP = null;
+        AdvancedKillTask.ENTITY_ICONS.clear();
     }
 
     @Override
@@ -387,7 +415,8 @@ public class AdvancedKillTask extends KillTask {
         if (nbtFilterParsed != null) {
             var actual = new CompoundTag();
             e.saveWithoutId(actual);
-            if (!(nbtFilterParsed instanceof CompoundTag filter) || !nbtSubsetMatches(actual, filter)) return false;
+            if (!(nbtFilterParsed instanceof CompoundTag filter) || !AdvancedKillTask.nbtSubsetMatches(actual, filter))
+                return false;
         }
 
         if (structure != null || (dimension != null && !dimension.isEmpty()) || (biome != null && !biome.isEmpty())) {
@@ -400,7 +429,7 @@ public class AdvancedKillTask extends KillTask {
             ITaskDynamicDifficultyExtension ext = (ITaskDynamicDifficultyExtension) this;
             if (ext.shouldCheckDynamicDifficultyLevel() && DynamicDifficultyCompat.canHaveLevel(e)) {
                 int mobLevel = DynamicDifficultyCompat.getLevel(e);
-                if (! ComparisonManager.compare(mobLevel,
+                if (!ComparisonManager.compare(mobLevel,
                         ext.getDynamicDifficultyComparison(),
                         ext.getDynamicDifficultyFirst(),
                         ext.getDynamicDifficultySecond())) {
@@ -475,6 +504,7 @@ public class AdvancedKillTask extends KillTask {
         }
         return out;
     }
+
     private boolean nameMatchOK(LivingEntity e) {
         if (!customName.isEmpty()) {
             if (e instanceof Player p) return p.getGameProfile().getName().equals(customName);
@@ -491,7 +521,7 @@ public class AdvancedKillTask extends KillTask {
                 : Component.literal("#" + getTypeTagStr());
 
         MutableComponent baseTitle;
-        if (! customName.isEmpty()) {
+        if (!customName.isEmpty()) {
             baseTitle = Component.translatable("ftbquests.task.ftbquests.kill.title_named", formatMaxProgress(), name, Component.literal(customName));
         } else {
             baseTitle = Component.translatable("ftbquests.task.ftbquests.kill.title", formatMaxProgress(), name);
@@ -544,10 +574,10 @@ public class AdvancedKillTask extends KillTask {
     @Environment(EnvType.CLIENT)
     @Override
     public Icon getAltIcon() {
-        if (entityTypeTag == null) return iconForEntityType(entityTypeId);
+        if (entityTypeTag == null) return AdvancedKillTask.iconForEntityType(entityTypeId);
         List<Icon> icons = new ArrayList<>();
         BuiltInRegistries.ENTITY_TYPE.getTag(entityTypeTag).ifPresent(set -> set.forEach(holder ->
-                holder.unwrapKey().map(k -> icons.add(iconForEntityType(k.location())))));
+                holder.unwrapKey().map(k -> icons.add(AdvancedKillTask.iconForEntityType(k.location())))));
         return icons.isEmpty() ? Icons.BARRIER : IconAnimation.fromList(icons, false);
     }
 
@@ -557,7 +587,7 @@ public class AdvancedKillTask extends KillTask {
             for (String key : f.getAllKeys()) {
                 Tag fVal = f.get(key);
                 Tag aVal = a.get(key);
-                if (aVal == null || !nbtSubsetMatches(aVal, fVal)) return false;
+                if (aVal == null || !AdvancedKillTask.nbtSubsetMatches(aVal, fVal)) return false;
             }
             return true;
         }
@@ -567,7 +597,7 @@ public class AdvancedKillTask extends KillTask {
             outer:
             for (Tag fEl : fList) {
                 for (int j = 0; j < remaining.size(); j++) {
-                    if (nbtSubsetMatches(remaining.get(j), fEl)) {
+                    if (AdvancedKillTask.nbtSubsetMatches(remaining.get(j), fEl)) {
                         remaining.remove(j);
                         continue outer;
                     }
