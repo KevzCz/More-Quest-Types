@@ -11,6 +11,7 @@ import net.pixeldreamstudios.morequesttypes.compat.OriginsCompat;
 import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
 import net.pixeldreamstudios.morequesttypes.compat.SGEconomyCompat;
 import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
+import net.pixeldreamstudios.morequesttypes.compat.SpellEngineCompat;
 
 public final class MoreTasksTypes {
     private MoreTasksTypes() {
@@ -39,6 +40,11 @@ public final class MoreTasksTypes {
     public static TaskType FISHING_CATCH;
     public static TaskType COMMAND;
     public static TaskType PAY;
+    public static TaskType ITEM_ADVANCED;
+    public static TaskType RECEIVE_DAMAGE;
+    public static TaskType TAME_MOB;
+    public static TaskType CAST_SPELL;
+    public static TaskType SPELL_EQUIPPED;
 
     public static void init() {
         MoreTasksTypes.TIMER = TaskTypes.register(
@@ -77,6 +83,11 @@ public final class MoreTasksTypes {
                 AdvancedKillTask::new,
                 () -> Icon.getIcon("minecraft:item/iron_sword")
         );
+        MoreTasksTypes.ITEM_ADVANCED = TaskTypes.register(
+                FTBQuestsAPI.rl("item_advanced"),
+                AdvancedItemTask::new,
+                () -> Icon.getIcon("minecraft:item/nether_star")
+        );
         MoreTasksTypes.INTERACT_ENTITY = TaskTypes.register(
                 FTBQuestsAPI.rl("interact_entity"),
                 InteractEntityTask::new,
@@ -92,6 +103,28 @@ public final class MoreTasksTypes {
                 DamageTask::new,
                 () -> Icon.getIcon("minecraft:item/wooden_sword")
         );
+        MoreTasksTypes.RECEIVE_DAMAGE = TaskTypes.register(
+                FTBQuestsAPI.rl("receive_damage"),
+                ReceiveDamageTask::new,
+                () -> Icon.getIcon("minecraft:item/diamond_chestplate")
+        );
+        MoreTasksTypes.TAME_MOB = TaskTypes.register(
+                FTBQuestsAPI.rl("tame_mob"),
+                TameMobTask::new,
+                () -> Icon.getIcon("minecraft:item/bone")
+        );
+        if (SpellEngineCompat.isLoaded()) {
+            MoreTasksTypes.CAST_SPELL = TaskTypes.register(
+                    FTBQuestsAPI.rl("cast_spell"),
+                    CastSpellTask::new,
+                    () -> Icon.getIcon("minecraft:item/enchanted_book")
+            );
+            MoreTasksTypes.SPELL_EQUIPPED = TaskTypes.register(
+                    FTBQuestsAPI.rl("spell_equipped"),
+                    SpellEquippedTask::new,
+                    () -> Icon.getIcon("minecraft:item/enchanted_book")
+            );
+        }
         MoreTasksTypes.USE_ITEM = TaskTypes.register(
                 FTBQuestsAPI.rl("use_item"),
                 UseItemTask::new,

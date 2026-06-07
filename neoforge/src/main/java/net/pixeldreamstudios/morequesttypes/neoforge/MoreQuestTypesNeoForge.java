@@ -12,6 +12,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
 import net.pixeldreamstudios.morequesttypes.client.MoreQuestTypesClient;
 import net.pixeldreamstudios.morequesttypes.commands.MoreQuestTypesCommands;
+import net.pixeldreamstudios.morequesttypes.compat.SpellEngineCompat;
 import net.pixeldreamstudios.morequesttypes.network.MQTNetwork;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.AttributeRewardManager;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.EquipmentBonusManager;
@@ -25,6 +26,7 @@ public final class MoreQuestTypesNeoForge {
 
         MoreQuestTypes.init();
         MQTNetwork.init();
+        SpellEngineCompat.registerCastHooks();
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             initClient();

@@ -5,9 +5,13 @@ import net.minecraft.core.component.*;
 import net.minecraft.core.registries.*;
 import net.minecraft.resources.*;
 import net.minecraft.server.level.*;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.*;
+import net.pixeldreamstudios.morequesttypes.compat.SpellEngineCompat;
+import net.pixeldreamstudios.morequesttypes.event.SpellCastEventBuffer;
 import net.spell_engine.api.spell.container.*;
+import net.spell_engine.api.spell.event.SpellEvents;
 import net.spell_engine.api.spell.registry.*;
 import net.spell_engine.client.util.*;
 import net.spell_engine.internals.container.*;
@@ -263,6 +267,63 @@ public final class SpellEngineCompatImpl {
             return container.spell_ids().contains(spellId.toString());
         } catch (Throwable t) {
             return false;
+        }
+    }
+
+    public static Collection<ResourceLocation> getPlayerEquippedSpellIds(ServerPlayer player) {
+        if (!isLoaded() || player == null) return List.of();
+        try {
+            LinkedHashSet<ResourceLocation> ids = new LinkedHashSet<>();
+            var result = SpellContainerSource.getSpellsOf(player);
+            for (var holder : result.actives()) {
+                holder.unwrapKey().map(ResourceKey::location).ifPresent(ids::add);
+            }
+            for (var holder : result.passives()) {
+                holder.unwrapKey().map(ResourceKey::location).ifPresent(ids::add);
+            }
+            for (var source : result.sources()) {
+                if (source.container() == null) continue;
+                for (String id : source.container().spell_ids()) {
+                    ids.add(ResourceLocation.parse(id));
+                }
+            }
+            return ids;
+        } catch (Throwable t) {
+            return List.of();
+        }
+    }
+
+    public static List<SpellEngineCompat.InstalledSpellContainer> getPlayerInstalledSpellContainers(ServerPlayer player) {
+        if (!isLoaded() || player == null) return List.of();
+        try {
+            Map<String, SpellContainer> serverSide = ((SpellContainerSource.Owner) player).serverSideSpellContainers();
+            List<SpellEngineCompat.InstalledSpellContainer> result = new ArrayList<>();
+            for (var entry : serverSide.entrySet()) {
+                SpellContainer container = entry.getValue();
+                if (container == null) continue;
+                List<ResourceLocation> spells = container.spell_ids().stream()
+                        .map(ResourceLocation::parse)
+                        .toList();
+                String contentType = container.access() == null ? "MAGIC" : container.access().name();
+                result.add(new SpellEngineCompat.InstalledSpellContainer(entry.getKey(), contentType, spells));
+            }
+            return result;
+        } catch (Throwable t) {
+            return List.of();
+        }
+    }
+
+    public static void registerCastHooks() {
+        if (!isLoaded()) return;
+        try {
+            SpellEvents.SPELL_CAST.register(args -> {
+                if (!(args.caster() instanceof ServerPlayer sp)) return;
+                ResourceLocation spellId = args.spell().unwrapKey().map(ResourceKey::location).orElse(null);
+                if (spellId == null) return;
+                List<Entity> targets = args.targets() == null ? List.of() : List.copyOf(args.targets());
+                SpellCastEventBuffer.push(sp.getUUID(), spellId, targets, sp.level().getGameTime());
+            });
+        } catch (Throwable ignored) {
         }
     }
 }

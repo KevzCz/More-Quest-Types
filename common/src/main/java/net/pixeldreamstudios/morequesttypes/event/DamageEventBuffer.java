@@ -1,5 +1,6 @@
 package net.pixeldreamstudios.morequesttypes.event;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
@@ -18,6 +19,8 @@ public final class DamageEventBuffer {
     public record Hit(
             Entity victim,
             ItemStack stack,
+            ResourceLocation damageType,
+            Entity source,
             long gameTime,
             long amountBaselineRounded,
             long amountFinalRounded,
@@ -30,8 +33,8 @@ public final class DamageEventBuffer {
         }
     }
 
-    public static void push(UUID attacker, Entity victim, ItemStack stack, long gameTime,
-                            long baselineRounded, long finalRounded,
+    public static void push(UUID attacker, Entity victim, ItemStack stack, ResourceLocation damageType,
+                            Entity source, long gameTime, long baselineRounded, long finalRounded,
                             float prevHealth, float newHealth, int damageSeq) {
 
         var byTick = BUCKETS.computeIfAbsent(attacker, k -> new ConcurrentHashMap<>());
@@ -41,7 +44,9 @@ public final class DamageEventBuffer {
 
         mapForTick.putIfAbsent(key, new Hit(
                 victim,
-                stack == null ?  ItemStack.EMPTY : stack.copy(),
+                stack == null ? ItemStack.EMPTY : stack.copy(),
+                damageType,
+                source,
                 gameTime,
                 Math.max(0L, baselineRounded),
                 Math.max(0L, finalRounded),

@@ -9,8 +9,10 @@ import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.IconAnimation;
 import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.icon.ItemIcon;
+import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import dev.ftb.mods.ftbquests.client.FTBQuestsClient;
 import dev.ftb.mods.ftbquests.quest.Quest;
+import dev.ftb.mods.ftbquests.quest.QuestObjectBase;
 import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.task.KillTask;
 import dev.ftb.mods.ftbquests.quest.task.TaskType;
@@ -45,6 +47,7 @@ import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.pixeldreamstudios.morequesttypes.accessor.LivingEntityLastDamageAccess;
 import net.pixeldreamstudios.morequesttypes.api.ITaskDungeonDifficultyExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskDynamicDifficultyExtension;
 import net.pixeldreamstudios.morequesttypes.compat.DungeonDifficultyCompat;
@@ -76,6 +79,9 @@ public class AdvancedKillTask extends KillTask {
     private int minTagsRequired = 0;
     private String nbtFilterSnbt = "";
     private transient Tag nbtFilterParsed = null;
+    private ItemStack killWeaponFilter = ItemStack.EMPTY;
+    private String killWeaponTagStr = "";
+    private transient TagKey<Item> killWeaponTag;
     private static final ResourceLocation DEFAULT_STRUCTURE = ResourceLocation.withDefaultNamespace("mineshaft");
     private static final List<String> KNOWN_STRUCTURES = new ArrayList<>();
     private Either<ResourceKey<Structure>, TagKey<Structure>> structure = null;
@@ -112,6 +118,8 @@ public class AdvancedKillTask extends KillTask {
         }
         nbt.putInt("min_tags_required", minTagsRequired);
         if (!nbtFilterSnbt.isEmpty()) nbt.putString("nbt_filter_snbt", nbtFilterSnbt);
+        if (!killWeaponFilter.isEmpty()) nbt.put("kill_weapon", saveItemSingleLine(killWeaponFilter.copyWithCount(1)));
+        if (!killWeaponTagStr.isEmpty()) nbt.putString("kill_weapon_tag", killWeaponTagStr);
         String s = getStructure();
         if (!s.isEmpty()) nbt.putString("structure", s);
         if (!dimension.isEmpty()) nbt.putString("dimension", dimension);
@@ -139,6 +147,12 @@ public class AdvancedKillTask extends KillTask {
         minTagsRequired = nbt.contains("min_tags_required") ? nbt.getInt("min_tags_required") : 0;
         nbtFilterSnbt = nbt.getString("nbt_filter_snbt");
         parseNbtFilter();
+        killWeaponFilter = nbt.contains("kill_weapon")
+                ? QuestObjectBase.itemOrMissingFromNBT(nbt.get("kill_weapon"), provider)
+                : ItemStack.EMPTY;
+        if (!killWeaponFilter.isEmpty()) killWeaponFilter.setCount(1);
+        killWeaponTagStr = nbt.getString("kill_weapon_tag");
+        resolveKillWeaponTag();
         String s = nbt.getString("structure");
         if (!s.isEmpty()) setStructure(s);
         else structure = null;
@@ -159,6 +173,8 @@ public class AdvancedKillTask extends KillTask {
         for (String s : scoreboardTags) buf.writeUtf(s == null ? "" : s);
         buf.writeVarInt(minTagsRequired);
         buf.writeUtf(nbtFilterSnbt);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, killWeaponFilter);
+        buf.writeUtf(killWeaponTagStr);
         buf.writeUtf(getStructure());
         buf.writeUtf(dimension);
         buf.writeUtf(biome);
@@ -180,6 +196,10 @@ public class AdvancedKillTask extends KillTask {
         minTagsRequired = buf.readVarInt();
         nbtFilterSnbt = buf.readUtf();
         parseNbtFilter();
+        killWeaponFilter = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
+        if (!killWeaponFilter.isEmpty()) killWeaponFilter.setCount(1);
+        killWeaponTagStr = buf.readUtf();
+        resolveKillWeaponTag();
         String s = buf.readUtf();
         if (!s.isEmpty()) setStructure(s);
         else structure = null;
@@ -318,6 +338,27 @@ public class AdvancedKillTask extends KillTask {
                 }, "")
                 .setNameKey("morequesttypes.task.nbt");
 
+        config.add(
+                "kill_weapon",
+                new ConfigIconItemStack(),
+                killWeaponFilter,
+                v -> {
+                    killWeaponFilter = v.copy();
+                    if (!killWeaponFilter.isEmpty()) killWeaponFilter.setCount(1);
+                },
+                ItemStack.EMPTY
+        ).setNameKey("morequesttypes.task.kill_advanced.kill_weapon");
+
+        var ITEM_TAG_MAP = NameMap.of("",
+                BuiltInRegistries.ITEM.getTags()
+                        .map(p -> p.getFirst().location().toString())
+                        .sorted()
+                        .toArray(String[]::new)).create();
+        config.addEnum("kill_weapon_tag", killWeaponTagStr, v -> {
+            killWeaponTagStr = v;
+            resolveKillWeaponTag();
+        }, ITEM_TAG_MAP).setNameKey("morequesttypes.task.kill_advanced.kill_weapon_tag");
+
         AdvancedKillTask.maybeRequestStructureSync();
         List<String> structureChoices = new ArrayList<>();
         structureChoices.add("");
@@ -419,6 +460,8 @@ public class AdvancedKillTask extends KillTask {
                 return false;
         }
 
+        if (!killWeaponMatches(e)) return false;
+
         if (structure != null || (dimension != null && !dimension.isEmpty()) || (biome != null && !biome.isEmpty())) {
             if (!(e.level() instanceof ServerLevel level)) return false;
             if (structure != null && !isInsideStructureOrTag(level, e.blockPosition())) return false;
@@ -503,6 +546,26 @@ public class AdvancedKillTask extends KillTask {
             if (!s.isEmpty()) out.add(s);
         }
         return out;
+    }
+
+    private boolean killWeaponMatches(LivingEntity victim) {
+        if (killWeaponTag == null && killWeaponFilter.isEmpty()) return true;
+        ItemStack weapon = ItemStack.EMPTY;
+        if (victim instanceof LivingEntityLastDamageAccess access) {
+            weapon = access.mqt$getLastDamageWeapon();
+        }
+        if (killWeaponTag != null) return !weapon.isEmpty() && weapon.is(killWeaponTag);
+        return !weapon.isEmpty() && ItemStack.isSameItemSameComponents(weapon, killWeaponFilter);
+    }
+
+    private void resolveKillWeaponTag() {
+        if (killWeaponTagStr == null || killWeaponTagStr.isBlank()) {
+            killWeaponTag = null;
+            return;
+        }
+        String s = killWeaponTagStr.startsWith("#") ? killWeaponTagStr.substring(1) : killWeaponTagStr;
+        ResourceLocation rl = ResourceLocation.tryParse(s);
+        killWeaponTag = (rl != null) ? TagKey.create(Registries.ITEM, rl) : null;
     }
 
     private boolean nameMatchOK(LivingEntity e) {

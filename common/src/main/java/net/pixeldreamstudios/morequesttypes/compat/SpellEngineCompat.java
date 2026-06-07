@@ -72,4 +72,21 @@ public final class SpellEngineCompat {
         throw new AssertionError();
     }
 
+    @ExpectPlatform
+    public static Collection<ResourceLocation> getPlayerEquippedSpellIds(ServerPlayer player) {
+        throw new AssertionError();
+    }
+
+    @ExpectPlatform
+    public static void registerCastHooks() {
+        throw new AssertionError();
+    }
+
+    public record InstalledSpellContainer(String key, String contentType, List<ResourceLocation> spells) {}
+
+    @ExpectPlatform
+    public static List<InstalledSpellContainer> getPlayerInstalledSpellContainers(ServerPlayer player) {
+        throw new AssertionError();
+    }
+
 }

@@ -6,11 +6,14 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.pixeldreamstudios.morequesttypes.api.ITaskLevelZExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskOriginExtension;
+import net.pixeldreamstudios.morequesttypes.api.ITaskPlayerSpellsExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskReskillableExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskSkillsExtension;
+import net.pixeldreamstudios.morequesttypes.compat.SpellEngineCompat;
 import net.pixeldreamstudios.morequesttypes.compat.LevelZCompat;
 import net.pixeldreamstudios.morequesttypes.compat.OriginsCompat;
 import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
@@ -29,6 +32,39 @@ public class TaskRequirementTooltipHelper {
         hasAnyRequirement |= TaskRequirementTooltipHelper.addSkillsRequirement(list, task, hasAnyRequirement);
         hasAnyRequirement |= TaskRequirementTooltipHelper.addLevelZRequirement(list, task, hasAnyRequirement);
         hasAnyRequirement |= TaskRequirementTooltipHelper.addReskillableRequirement(list, task, hasAnyRequirement);
+        TaskRequirementTooltipHelper.addPlayerSpellsRequirement(list, task, hasAnyRequirement);
+    }
+
+    private static void addPlayerSpellsRequirement(TooltipList list, Task task, boolean alreadyHasRequirement) {
+        if (!SpellEngineCompat.isLoaded()) {
+            return;
+        }
+        if (!(task instanceof ITaskPlayerSpellsExtension extension)) {
+            return;
+        }
+        if (!extension.shouldCheckPlayerSpells()) {
+            return;
+        }
+        if (extension.getRequiredPlayerSpells().isEmpty()) {
+            return;
+        }
+
+        if (!alreadyHasRequirement) {
+            list.blankLine();
+        }
+
+        MutableComponent modeLine;
+        if (extension.getPlayerSpellsMatchMode() == ITaskPlayerSpellsExtension.MatchMode.ALL) {
+            modeLine = Component.translatable("morequesttypes.quest.requirement.player_spells.mode_all");
+        } else if (extension.getPlayerSpellsRequiredCount() > 0) {
+            modeLine = Component.translatable("morequesttypes.quest.requirement.player_spells.mode_required",
+                    extension.getPlayerSpellsRequiredCount());
+        } else {
+            modeLine = Component.translatable("morequesttypes.quest.requirement.player_spells.mode_any");
+        }
+        list.add(modeLine.withStyle(ChatFormatting.GOLD));
+        SpellTooltipHelper.addSpellLines(list, extension.getRequiredPlayerSpells(),
+                Component.translatable("morequesttypes.quest.requirement.player_spells.none"));
     }
 
     private static boolean addOriginRequirement(TooltipList list, Task task, boolean alreadyHasRequirement) {

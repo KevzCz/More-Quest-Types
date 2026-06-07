@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
 import net.pixeldreamstudios.morequesttypes.commands.MoreQuestTypesCommands;
 import net.pixeldreamstudios.morequesttypes.fabric.network.FabricMQTNetwork;
+import net.pixeldreamstudios.morequesttypes.compat.SpellEngineCompat;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.AttributeRewardManager;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.EquipmentBonusManager;
 import net.pixeldreamstudios.morequesttypes.rewards.manager.SpellRewardManager;
@@ -26,6 +27,7 @@ public final class MoreQuestTypesFabric implements ModInitializer {
         PlaceBlockHooksFabric.register();
         UseBlockHooksFabric.register();
         CommandHooksFabric.register();
+        SpellEngineCompat.registerCastHooks();
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             MoreQuestTypesCommands.register(dispatcher);

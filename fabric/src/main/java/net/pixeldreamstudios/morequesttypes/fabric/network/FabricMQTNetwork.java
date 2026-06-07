@@ -46,6 +46,7 @@ public class FabricMQTNetwork {
         PayloadTypeRegistry.playS2C().register(QuestEntityDataSyncPacket.TYPE, QuestEntityDataSyncPacket.STREAM_CODEC);
 
         PayloadTypeRegistry.playS2C().register(LookAtMessage.TYPE, LookAtMessage.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(MQTLastReceivedDamagePacket.TYPE, MQTLastReceivedDamagePacket.STREAM_CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(MQTStructuresRequest.TYPE,
                 (payload, fabricContext) -> MQTStructuresRequest.handle(payload, wrapServer(fabricContext)));
@@ -131,6 +132,9 @@ public class FabricMQTNetwork {
 
         ClientPlayNetworking.registerGlobalReceiver(LookAtMessage.TYPE,
                 (payload, context) -> LookAtMessage.handle(payload, wrapClient(context)));
+
+        ClientPlayNetworking.registerGlobalReceiver(MQTLastReceivedDamagePacket.TYPE,
+                (payload, context) -> MQTLastReceivedDamagePacket.handle(payload, wrapClient(context)));
     }
 
     @Environment(EnvType.CLIENT)

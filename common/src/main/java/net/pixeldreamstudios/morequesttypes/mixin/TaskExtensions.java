@@ -14,9 +14,11 @@ import net.pixeldreamstudios.morequesttypes.api.ITaskDynamicDifficultyExtension;
 import net.pixeldreamstudios.morequesttypes.compat.DungeonDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.tasks.AdvancedKillTask;
+import net.pixeldreamstudios.morequesttypes.tasks.CastSpellTask;
 import net.pixeldreamstudios.morequesttypes.tasks.DamageTask;
 import net.pixeldreamstudios.morequesttypes.tasks.FindEntityTask;
 import net.pixeldreamstudios.morequesttypes.tasks.InteractEntityTask;
+import net.pixeldreamstudios.morequesttypes.tasks.ReceiveDamageTask;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -295,6 +297,8 @@ public abstract class TaskExtensions implements ITaskDynamicDifficultyExtension,
         return self instanceof AdvancedKillTask
                 || self instanceof FindEntityTask
                 || self instanceof InteractEntityTask
-                || self instanceof DamageTask;
+                || self instanceof DamageTask
+                || self instanceof ReceiveDamageTask
+                || self instanceof CastSpellTask;
     }
 }

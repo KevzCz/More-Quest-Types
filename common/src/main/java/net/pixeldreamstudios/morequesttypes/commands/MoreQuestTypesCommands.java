@@ -70,19 +70,20 @@ public final class MoreQuestTypesCommands {
 
     private static final SuggestionProvider<CommandSourceStack> ITEM_TASK_SUGGESTIONS = (ctx, builder) ->
             SharedSuggestionProvider.suggest(
-                    Arrays.asList("item", "hold_item", "use_item"),
+                    Arrays.asList("item", "item_advanced", "hold_item", "use_item"),
                     builder
             );
 
     private static final SuggestionProvider<CommandSourceStack> BLOCK_TASK_SUGGESTIONS = (ctx, builder) ->
             SharedSuggestionProvider.suggest(
-                    Arrays.asList("item", "break_block", "use_item", "hold_item"),
+                    Arrays.asList("item", "item_advanced", "break_block", "use_item", "hold_item"),
                     builder
             );
 
     private static final SuggestionProvider<CommandSourceStack> MOB_TASK_SUGGESTIONS = (ctx, builder) ->
             SharedSuggestionProvider.suggest(
-                    Arrays.asList("kill", "advanced_kill", "find_entity", "interact_entity", "damage"),
+                    Arrays.asList("kill", "advanced_kill", "find_entity", "interact_entity", "damage",
+                            "receive_damage", "tame_mob", "cast_spell", "spell_equipped"),
                     builder
             );
 
@@ -96,6 +97,7 @@ public final class MoreQuestTypesCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         EquipmentAttributeCommand.register(dispatcher);
+        SpellCommand.register(dispatcher);
         dispatcher.register(
                 Commands.literal("morequesttypes")
                         .requires(stack -> stack.hasPermission(2))
@@ -755,6 +757,13 @@ public final class MoreQuestTypesCommands {
                 itemTask.setConsumeItems(Tristate.FALSE);
                 task = itemTask;
             }
+            case "item_advanced", "advanced_item" -> {
+                AdvancedItemTask advancedItemTask = new AdvancedItemTask(file.newID(), quest);
+                advancedItemTask.onCreated();
+                advancedItemTask.setStackAndCount(stack, 1);
+                advancedItemTask.setConsumeItems(Tristate.FALSE);
+                task = advancedItemTask;
+            }
             case "hold_item" -> {
                 HoldItemTask holdTask = new HoldItemTask(file.newID(), quest);
                 holdTask.onCreated();
@@ -875,6 +884,52 @@ public final class MoreQuestTypesCommands {
 
                 damageTask.readData(taskData, source.registryAccess());
                 task = damageTask;
+            }
+            case "receive_damage" -> {
+                ReceiveDamageTask receiveTask = new ReceiveDamageTask(file.newID(), quest);
+                receiveTask.onCreated();
+
+                CompoundTag taskData = new CompoundTag();
+                receiveTask.writeData(taskData, source.registryAccess());
+
+                taskData.putString("source_entity", entityId.toString());
+                taskData.putBoolean("any_entity", false);
+                taskData.putLong("value", 100L);
+                taskData.putString("mode", "TOTAL");
+
+                receiveTask.readData(taskData, source.registryAccess());
+                task = receiveTask;
+            }
+            case "tame_mob", "tame" -> {
+                TameMobTask tameTask = new TameMobTask(file.newID(), quest);
+                tameTask.onCreated();
+
+                CompoundTag taskData = new CompoundTag();
+                tameTask.writeData(taskData, source.registryAccess());
+
+                taskData.putString("entity", entityId.toString());
+                taskData.putLong("value", 1L);
+
+                tameTask.readData(taskData, source.registryAccess());
+                task = tameTask;
+            }
+            case "cast_spell" -> {
+                CastSpellTask castTask = new CastSpellTask(file.newID(), quest);
+                castTask.onCreated();
+
+                CompoundTag taskData = new CompoundTag();
+                castTask.writeData(taskData, source.registryAccess());
+                castTask.readData(taskData, source.registryAccess());
+                task = castTask;
+            }
+            case "spell_equipped" -> {
+                SpellEquippedTask equippedTask = new SpellEquippedTask(file.newID(), quest);
+                equippedTask.onCreated();
+
+                CompoundTag taskData = new CompoundTag();
+                equippedTask.writeData(taskData, source.registryAccess());
+                equippedTask.readData(taskData, source.registryAccess());
+                task = equippedTask;
             }
             default -> throw INVALID_TASK_TYPE.create();
         }

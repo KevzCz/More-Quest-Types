@@ -191,13 +191,7 @@ public final class SummonReward extends Reward {
                 entity.setCustomNameVisible(true);
             }
 
-            if (!customNbtSnbt.isEmpty()) {
-                try {
-                    CompoundTag parsedNbt = TagParser.parseTag(customNbtSnbt);
-                    entity.load(parsedNbt);
-                } catch (Exception e) {
-                }
-            }
+            CompoundTag customNbt = parseSummonCustomNbt();
 
             if (entity instanceof LivingEntity living) {
                 if (!helmet.isEmpty()) living.setItemSlot(EquipmentSlot.HEAD, helmet.copy());
@@ -240,6 +234,8 @@ public final class SummonReward extends Reward {
 
                 applyAggro(mob, player, level, spawnPos);
             }
+
+            applySummonCustomNbt(entity, customNbt);
 
             if (!scoreboardTags.isEmpty()) {
                 for (String tag : scoreboardTags.split(",")) {
@@ -829,5 +825,41 @@ public final class SummonReward extends Reward {
     @Override
     public boolean getExcludeFromClaimAll() {
         return true;
+    }
+
+    private CompoundTag parseSummonCustomNbt() {
+        if (customNbtSnbt == null || customNbtSnbt.isBlank()) {
+            return null;
+        }
+        try {
+            CompoundTag tag = TagParser.parseTag(customNbtSnbt.trim());
+            sanitizeSummonCustomNbt(tag);
+            return tag;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private void sanitizeSummonCustomNbt(CompoundTag tag) {
+        tag.remove("MQTData");
+        tag.remove("Pos");
+        tag.remove("Motion");
+        tag.remove("Rotation");
+        tag.remove("UUID");
+        tag.remove("Dimension");
+        tag.remove("PortalCooldown");
+        tag.remove("Passengers");
+        tag.remove("id");
+    }
+
+    private void applySummonCustomNbt(Entity entity, CompoundTag nbt) {
+        if (nbt == null || nbt.isEmpty()) {
+            return;
+        }
+        if (entity instanceof LivingEntity living) {
+            living.readAdditionalSaveData(nbt);
+        } else {
+            entity.load(nbt);
+        }
     }
 }

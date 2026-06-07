@@ -20,6 +20,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.pixeldreamstudios.morequesttypes.compat.SpellEngineCompat;
+import net.pixeldreamstudios.morequesttypes.util.SpellDisplayHelper;
 
 import java.util.List;
 import java.util.Objects;
@@ -45,7 +46,8 @@ public final class SpellReward extends Reward {
     public void claim(ServerPlayer player, boolean notify) {
         try {
             applyToPlayer(player);
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     public void applyToPlayer(ServerPlayer player) {
@@ -53,7 +55,8 @@ public final class SpellReward extends Reward {
         if (!SpellEngineCompat.isLoaded()) return;
         try {
             SpellEngineCompat.installSpells(player, baseKey(), List.of(spellId));
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     public void removeFromPlayer(ServerPlayer player) {
@@ -61,7 +64,8 @@ public final class SpellReward extends Reward {
         if (!SpellEngineCompat.isLoaded()) return;
         try {
             SpellEngineCompat.uninstallSpells(player, baseKey());
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     @Environment(EnvType.CLIENT)
@@ -78,18 +82,10 @@ public final class SpellReward extends Reward {
     public Icon getAltIcon() {
         try {
             if (spellId != null && SpellEngineCompat.isLoaded()) {
-                ResourceLocation tex = SpellEngineCompat.getSpellIconTexture(spellId);
-                if (tex != null) {
-                    try {
-                        return Icon.getIcon(tex);
-                    } catch (Throwable t) {
-                        try {
-                            return Icon.getIcon(tex.toString());
-                        } catch (Throwable ignored) {}
-                    }
-                }
+                return SpellDisplayHelper.spellIcon(spellId, super.getAltIcon());
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         return super.getAltIcon();
     }
@@ -117,7 +113,8 @@ public final class SpellReward extends Reward {
                     list.add(Component.translatable("morequesttypes.reward.toggle_hint").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     @Environment(EnvType.CLIENT)
@@ -185,6 +182,9 @@ public final class SpellReward extends Reward {
     public boolean isLocked() {
         return locked;
     }
+
     @Override
-    public boolean getExcludeFromClaimAll() { return true; }
+    public boolean getExcludeFromClaimAll() {
+        return true;
+    }
 }

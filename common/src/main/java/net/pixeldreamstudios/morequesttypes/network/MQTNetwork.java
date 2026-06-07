@@ -119,5 +119,11 @@ public class MQTNetwork {
                 LookAtMessage.STREAM_CODEC,
                 LookAtMessage::handle
         );
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.S2C,
+                MQTLastReceivedDamagePacket.TYPE,
+                MQTLastReceivedDamagePacket.STREAM_CODEC,
+                MQTLastReceivedDamagePacket::handle
+        );
     }
 }

@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "LivingEntityLastDamageMixin",
+    "TamableAnimalTameMixin",
     "QuestExtensions",
     "RewardExtensions",
     "TaskExtensions",
@@ -12,6 +13,7 @@
     "ItemTaskSubmitMixin",
     "AbstractBooleanTaskExtensionMixin",
     "TaskExtensionsPlayerLeveling",
+    "TaskExtensionsSpellEngine",
     "TeamDataPlayerLevelingMixin",
     "MerchantResultSlotMixin",
     "accessor.SkillsClientModAccessor",

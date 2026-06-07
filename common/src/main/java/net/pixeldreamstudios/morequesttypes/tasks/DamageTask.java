@@ -45,6 +45,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.pixeldreamstudios.morequesttypes.api.ITaskDungeonDifficultyExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskDynamicDifficultyExtension;
+import net.pixeldreamstudios.morequesttypes.config.MultiSelectListConfig;
 import net.pixeldreamstudios.morequesttypes.compat.DungeonDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.compat.DynamicDifficultyCompat;
 import net.pixeldreamstudios.morequesttypes.event.DamageEventBuffer;
@@ -54,6 +55,7 @@ import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
 import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonManager;
 import net.pixeldreamstudios.morequesttypes.util.ComparisonMode;
+import net.pixeldreamstudios.morequesttypes.util.DamageTypeHelper;
 import org.spongepowered.asm.mixin.Unique;
 
 import java.util.ArrayList;
@@ -75,6 +77,7 @@ public final class DamageTask extends Task {
     private ItemStack heldItemFilter = ItemStack.EMPTY;
     private String heldItemTagStr = "";
     private transient TagKey<Item> heldItemTag;
+    private final List<String> damageTypes = new ArrayList<>();
     private Mode mode = Mode.TOTAL;
     private long value = 100L;
     private static final ResourceLocation DEFAULT_STRUCTURE = ResourceLocation.withDefaultNamespace("mineshaft");
@@ -202,6 +205,7 @@ public final class DamageTask extends Task {
         for (var h : hits) {
             Entity e = h.victim();
             if (!(e instanceof LivingEntity le)) continue;
+            if (!damageTypeMatches(h.damageType())) continue;
             if (!entityMatches(le)) continue;
             if (!heldItemMatches(h.stack())) continue;
 
@@ -335,6 +339,12 @@ public final class DamageTask extends Task {
         return true;
     }
 
+    private boolean damageTypeMatches(ResourceLocation type) {
+        if (damageTypes.isEmpty()) return true;
+        if (type == null) return false;
+        return damageTypes.contains(type.toString());
+    }
+
     private boolean heldItemMatches(ItemStack stack) {
         if (heldItemTag != null) return !stack.isEmpty() && stack.is(heldItemTag);
         if (heldItemFilter.isEmpty()) return true;
@@ -384,6 +394,20 @@ public final class DamageTask extends Task {
     @Override
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
+
+        config.add("damage_types", new MultiSelectListConfig(
+                () -> DamageTypeHelper.clientDamageTypeChoices(FTBQuestsClient.getClientLevel()),
+                "morequesttypes.task.damage.damage_types",
+                id -> {
+                    ResourceLocation rl = ResourceLocation.tryParse(id);
+                    return rl == null
+                            ? Component.literal(id)
+                            : Component.translatable("damage_type." + rl.getNamespace() + "." + rl.getPath());
+                }
+        ), damageTypes, v -> {
+            damageTypes.clear();
+            if (v != null) damageTypes.addAll(v);
+        }, new ArrayList<>()).setNameKey("morequesttypes.task.damage.damage_types");
 
         config.addBool("any_entity", anyEntity, v -> anyEntity = v, false)
                 .setNameKey("morequesttypes.task.damage.any_entity");
@@ -511,6 +535,11 @@ public final class DamageTask extends Task {
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         if (anyEntity) nbt.putBoolean("any_entity", true);
+        if (!damageTypes.isEmpty()) {
+            ListTag damageTypeList = new ListTag();
+            for (String s : damageTypes) damageTypeList.add(StringTag.valueOf(s));
+            nbt.put("damage_types", damageTypeList);
+        }
         nbt.putString("entity", entityTypeId.toString());
         if (entityTypeTag != null) nbt.putString("entityTypeTag", entityTypeTag.location().toString());
         if (!customName.isEmpty()) nbt.putString("custom_name", customName);
@@ -539,6 +568,14 @@ public final class DamageTask extends Task {
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
         anyEntity = nbt.getBoolean("any_entity");
+        damageTypes.clear();
+        if (nbt.contains("damage_types")) {
+            var list = nbt.getList("damage_types", Tag.TAG_STRING);
+            for (int i = 0; i < list.size(); i++) {
+                String s = list.getString(i);
+                if (!s.isBlank()) damageTypes.add(s.trim());
+            }
+        }
         entityTypeId = ResourceLocation.tryParse(nbt.getString("entity"));
         entityTypeTag = DamageTask.parseTypeTag(nbt.getString("entityTypeTag"));
         customName = nbt.getString("custom_name");
@@ -583,6 +620,8 @@ public final class DamageTask extends Task {
     public void writeNetData(RegistryFriendlyByteBuf buf) {
         super.writeNetData(buf);
         buf.writeBoolean(anyEntity);
+        buf.writeVarInt(damageTypes.size());
+        for (String s : damageTypes) buf.writeUtf(s == null ? "" : s);
         buf.writeUtf(entityTypeId.toString());
         buf.writeUtf(entityTypeTag == null ? "" : entityTypeTag.location().toString());
         buf.writeUtf(customName);
@@ -607,6 +646,12 @@ public final class DamageTask extends Task {
     public void readNetData(RegistryFriendlyByteBuf buf) {
         super.readNetData(buf);
         anyEntity = buf.readBoolean();
+        damageTypes.clear();
+        int nDamageTypes = buf.readVarInt();
+        for (int i = 0; i < nDamageTypes; i++) {
+            String s = buf.readUtf();
+            if (!s.isBlank()) damageTypes.add(s.trim());
+        }
         entityTypeId = ResourceLocation.tryParse(buf.readUtf());
         entityTypeTag = DamageTask.parseTypeTag(buf.readUtf());
         customName = buf.readUtf();

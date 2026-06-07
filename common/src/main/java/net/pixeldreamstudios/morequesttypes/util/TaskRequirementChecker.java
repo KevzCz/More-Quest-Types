@@ -7,10 +7,16 @@ import net.pixeldreamstudios.morequesttypes.api.ITaskLevelZExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskOriginExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskReskillableExtension;
 import net.pixeldreamstudios.morequesttypes.api.ITaskSkillsExtension;
+import net.pixeldreamstudios.morequesttypes.api.ITaskPlayerSpellsExtension;
 import net.pixeldreamstudios.morequesttypes.compat.LevelZCompat;
 import net.pixeldreamstudios.morequesttypes.compat.OriginsCompat;
 import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
 import net.pixeldreamstudios.morequesttypes.compat.SkillsCompat;
+import net.pixeldreamstudios.morequesttypes.compat.SpellEngineCompat;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TaskRequirementChecker {
 
@@ -28,6 +34,10 @@ public class TaskRequirementChecker {
         }
 
         if (!TaskRequirementChecker.checkReskillableRequirement(task, player)) {
+            return false;
+        }
+
+        if (!TaskRequirementChecker.checkPlayerSpellsRequirement(task, player)) {
             return false;
         }
 
@@ -93,6 +103,48 @@ public class TaskRequirementChecker {
                 extension.getLevelZFirstNumber(),
                 extension.getLevelZSecondNumber()
         );
+    }
+
+    private static boolean checkPlayerSpellsRequirement(Task task, ServerPlayer player) {
+        if (!SpellEngineCompat.isLoaded()) {
+            return true;
+        }
+        if (!(task instanceof ITaskPlayerSpellsExtension extension)) {
+            return true;
+        }
+        if (!extension.shouldCheckPlayerSpells()) {
+            return true;
+        }
+        if (extension.getRequiredPlayerSpells().isEmpty()) {
+            return true;
+        }
+
+        Collection<ResourceLocation> equipped = SpellEngineCompat.getPlayerEquippedSpellIds(player);
+        Set<String> equippedIds = new HashSet<>();
+        for (ResourceLocation spell : equipped) {
+            equippedIds.add(spell.toString());
+        }
+
+        long needed = computePlayerSpellsNeeded(extension);
+        long matched = extension.getRequiredPlayerSpells().stream()
+                .filter(equippedIds::contains)
+                .count();
+        return matched >= needed;
+    }
+
+    private static long computePlayerSpellsNeeded(ITaskPlayerSpellsExtension extension) {
+        int total = extension.getRequiredPlayerSpells().size();
+        if (total == 0) {
+            return 1L;
+        }
+        if (extension.getPlayerSpellsMatchMode() == ITaskPlayerSpellsExtension.MatchMode.ALL) {
+            return total;
+        }
+        long requiredCount = extension.getPlayerSpellsRequiredCount();
+        if (requiredCount == 0) {
+            return 1L;
+        }
+        return Math.min(requiredCount, total);
     }
 
     private static boolean checkReskillableRequirement(Task task, ServerPlayer player) {

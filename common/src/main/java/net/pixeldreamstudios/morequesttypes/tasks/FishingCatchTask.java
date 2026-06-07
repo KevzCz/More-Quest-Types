@@ -2,7 +2,6 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
-import dev.ftb.mods.ftblibrary.config.StringConfig;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.IconAnimation;
 import dev.ftb.mods.ftblibrary.icon.ItemIcon;
@@ -20,10 +19,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.nbt.TagParser;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -37,6 +34,8 @@ import net.pixeldreamstudios.morequesttypes.event.FishingCatchEventBuffer;
 import net.pixeldreamstudios.morequesttypes.network.MQTBiomesRequest;
 import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
 import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
+import net.pixeldreamstudios.morequesttypes.config.ItemNbtConfigPanels;
+import net.pixeldreamstudios.morequesttypes.util.ItemNbtMatcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +48,7 @@ public final class FishingCatchTask extends Task {
     private transient TagKey<Item> itemTag;
     private ItemMatchingSystem.ComponentMatchType matchComponents = ItemMatchingSystem.ComponentMatchType.NONE;
     private final List<String> nbtFilters = new ArrayList<>();
+    private final List<String> nbtIgnorePaths = new ArrayList<>();
     private String dimension = "";
     private String biome = "";
     private static final List<String> KNOWN_DIMENSIONS = new ArrayList<>();
@@ -114,98 +114,10 @@ public final class FishingCatchTask extends Task {
         }
 
         if (!nbtFilters.isEmpty()) {
-            List<String> processed = processPlaceholders(nbtFilters, playerUuid, playerName);
-            return checkNbtFilters(stack, processed, provider);
+            return ItemNbtMatcher.matches(stack, nbtFilters, nbtIgnorePaths, playerUuid, playerName, provider);
         }
 
         return true;
-    }
-
-    private List<String> processPlaceholders(List<String> entries, UUID playerUuid, String playerName) {
-        List<String> processed = new ArrayList<>();
-        for (String entry : entries) {
-            String result = entry
-                    .replace("{player_uuid}", playerUuid.toString())
-                    .replace("{player_name}", playerName)
-                    .replace("{player_uuid_array}", uuidToIntArray(playerUuid));
-            processed.add(result);
-        }
-        return processed;
-    }
-
-    private String uuidToIntArray(UUID uuid) {
-        long mostSigBits = uuid.getMostSignificantBits();
-        long leastSigBits = uuid.getLeastSignificantBits();
-
-        int[] ints = new int[4];
-        ints[0] = (int) (mostSigBits >> 32);
-        ints[1] = (int) mostSigBits;
-        ints[2] = (int) (leastSigBits >> 32);
-        ints[3] = (int) leastSigBits;
-
-        return "[I;" + ints[0] + "," + ints[1] + "," + ints[2] + "," + ints[3] + "]";
-    }
-
-    private boolean checkNbtFilters(ItemStack stack, List<String> filters, HolderLookup.Provider provider) {
-        try {
-            CompoundTag fullTag = (CompoundTag) stack.save(provider);
-
-            for (String filterSnbt : filters) {
-                if (filterSnbt == null || filterSnbt.isBlank()) continue;
-
-                String cleanFilter = filterSnbt.trim();
-                if (cleanFilter.startsWith("\"") && cleanFilter.endsWith("\"")) {
-                    cleanFilter = cleanFilter.substring(1, cleanFilter.length() - 1);
-                }
-
-                try {
-                    Tag parsedFilter = TagParser.parseTag(cleanFilter);
-                    if (parsedFilter instanceof CompoundTag filterCompound) {
-                        if (!containsPartialNbt(fullTag, filterCompound)) {
-                            return false;
-                        }
-                    }
-                } catch (Exception e) {
-                    return false;
-                }
-            }
-
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean containsPartialNbt(CompoundTag itemTag, CompoundTag filter) {
-        for (String key : filter.getAllKeys()) {
-            Tag filterValue = filter.get(key);
-            Tag itemValue = itemTag.get(key);
-
-            if (itemValue == null) return false;
-
-            if (filterValue instanceof CompoundTag filterCompound && itemValue instanceof CompoundTag itemCompound) {
-                if (!containsPartialNbt(itemCompound, filterCompound)) {
-                    return false;
-                }
-            } else if (filterValue instanceof CompoundTag && itemValue instanceof CompoundTag) {
-                if (!containsPartialNbt((CompoundTag) itemValue, (CompoundTag) filterValue)) {
-                    return false;
-                }
-            } else if (filterValue instanceof CompoundTag) {
-                return false;
-            } else if (!tagsEqual(itemValue, filterValue)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean tagsEqual(Tag a, Tag b) {
-        if (a instanceof CompoundTag ca && b instanceof CompoundTag cb) {
-            if (cb.isEmpty()) return true;
-            return containsPartialNbt(ca, cb);
-        }
-        return NbtUtils.compareNbt(a, b, true);
     }
 
     private boolean insideLocationFilters(ServerLevel level, BlockPos pos) {
@@ -292,8 +204,7 @@ public final class FishingCatchTask extends Task {
         config.addEnum("match_components", matchComponents, v -> matchComponents = v, COMP_MATCH)
                 .setNameKey("morequesttypes.task.match_components");
 
-        config.addList("nbt_filters", nbtFilters, new StringConfig(), "")
-                .setNameKey("morequesttypes.task.nbt_filters");
+        ItemNbtConfigPanels.addNbtMatching(config, nbtFilters, nbtIgnorePaths, itemFilter);
 
         maybeRequestWorldSync();
         List<String> dimChoices = new ArrayList<>();
@@ -342,6 +253,11 @@ public final class FishingCatchTask extends Task {
             for (String s : nbtFilters) list.add(StringTag.valueOf(s));
             nbt.put("nbt_filters", list);
         }
+        if (!nbtIgnorePaths.isEmpty()) {
+            ListTag list = new ListTag();
+            for (String s : nbtIgnorePaths) list.add(StringTag.valueOf(s));
+            nbt.put("nbt_ignore_paths", list);
+        }
         if (!dimension.isEmpty()) nbt.putString("dimension", dimension);
         if (!biome.isEmpty()) nbt.putString("biome", biome);
     }
@@ -358,6 +274,9 @@ public final class FishingCatchTask extends Task {
         nbtFilters.clear();
         ListTag list = nbt.getList("nbt_filters", Tag.TAG_STRING);
         for (int i = 0; i < list.size(); i++) nbtFilters.add(list.getString(i));
+        nbtIgnorePaths.clear();
+        ListTag ignore = nbt.getList("nbt_ignore_paths", Tag.TAG_STRING);
+        for (int i = 0; i < ignore.size(); i++) nbtIgnorePaths.add(ignore.getString(i));
         dimension = nbt.getString("dimension");
         biome = nbt.getString("biome");
     }
@@ -371,6 +290,8 @@ public final class FishingCatchTask extends Task {
         buf.writeEnum(matchComponents);
         buf.writeVarInt(nbtFilters.size());
         for (String s : nbtFilters) buf.writeUtf(s);
+        buf.writeVarInt(nbtIgnorePaths.size());
+        for (String s : nbtIgnorePaths) buf.writeUtf(s);
         buf.writeUtf(dimension);
         buf.writeUtf(biome);
     }
@@ -387,6 +308,9 @@ public final class FishingCatchTask extends Task {
         nbtFilters.clear();
         int n = buf.readVarInt();
         for (int i = 0; i < n; i++) nbtFilters.add(buf.readUtf());
+        nbtIgnorePaths.clear();
+        int ignoreCount = buf.readVarInt();
+        for (int i = 0; i < ignoreCount; i++) nbtIgnorePaths.add(buf.readUtf());
         dimension = buf.readUtf();
         biome = buf.readUtf();
     }

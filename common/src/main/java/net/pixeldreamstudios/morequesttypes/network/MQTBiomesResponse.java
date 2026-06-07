@@ -42,6 +42,8 @@ public record MQTBiomesResponse(List<String> data) implements CustomPacketPayloa
                 HoldItemTask.syncKnownBiomeList(data);
                 FindEntityTask.syncKnownBiomeList(data);
                 TradingTask.syncKnownBiomeList(data);
+                ReceiveDamageTask.syncKnownBiomeList(data);
+                CastSpellTask.syncKnownBiomeList(data);
         });
     }
 }
