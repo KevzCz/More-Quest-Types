@@ -18,14 +18,14 @@ public final class ItemNbtConfigPanels {
     }
 
     public static void addNbtMatching(ConfigGroup config, List<String> nbtFilters, List<String> nbtIgnorePaths, ItemStack previewItem) {
-        ItemNbtMatcherConfig.setDefaultPreview(previewItem);
-
         ItemNbtFilterData data = ItemNbtFilterData.fromLists(nbtFilters, nbtIgnorePaths);
-        if (!previewItem.isEmpty()) {
+        if (!previewItem.isEmpty()
+                && (data.previewItem.isEmpty() || data.previewItem.getItem() != previewItem.getItem())) {
             data.previewItem = previewItem.copyWithCount(1);
         }
 
         ItemNbtMatcherConfig configValue = new ItemNbtMatcherConfig();
+        configValue.setInitialPreview(previewItem);
         config.add("nbt_matching", configValue, data, newData -> newData.applyTo(nbtFilters, nbtIgnorePaths), data)
                 .setNameKey("morequesttypes.config.item_nbt_matching");
     }

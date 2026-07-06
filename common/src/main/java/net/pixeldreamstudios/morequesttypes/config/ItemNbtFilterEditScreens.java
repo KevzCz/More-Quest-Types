@@ -16,6 +16,8 @@ import net.pixeldreamstudios.morequesttypes.util.ItemNbtFilterRepair;
 
 import net.pixeldreamstudios.morequesttypes.util.NbtPathUtil;
 
+import java.util.function.Supplier;
+
 
 
 @Environment(EnvType.CLIENT)
@@ -28,12 +30,16 @@ public final class ItemNbtFilterEditScreens {
 
 
 
+    public static void open(Supplier<ItemStack> previewSupplier, FilterEditState state, ConfigCallback callback) {
+        ItemStack preview = previewSupplier.get();
+        ItemStack snapshot = preview == null || preview.isEmpty() ? ItemStack.EMPTY : preview.copy();
+        restoreFromPersisted(snapshot, state);
+        new ItemNbtFilterEditScreen(previewSupplier, state, callback).openGui();
+    }
+
     public static void open(ItemStack previewStack, FilterEditState state, ConfigCallback callback) {
-
-        restoreFromPersisted(previewStack, state);
-
-        new ItemNbtFilterEditScreen(previewStack, state, callback).openGui();
-
+        ItemStack snapshot = previewStack == null || previewStack.isEmpty() ? ItemStack.EMPTY : previewStack.copy();
+        open(() -> snapshot, state, callback);
     }
 
 

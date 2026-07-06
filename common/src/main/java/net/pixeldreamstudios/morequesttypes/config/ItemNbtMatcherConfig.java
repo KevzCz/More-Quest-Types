@@ -1,39 +1,33 @@
 package net.pixeldreamstudios.morequesttypes.config;
 
 import dev.ftb.mods.ftblibrary.config.ConfigCallback;
-import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.ConfigValue;
-import dev.ftb.mods.ftblibrary.config.StringConfig;
-import dev.ftb.mods.ftblibrary.config.ui.EditConfigScreen;
 import dev.ftb.mods.ftblibrary.icon.Color4I;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.Widget;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.ftb.mods.ftbquests.client.ConfigIconItemStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.pixeldreamstudios.morequesttypes.util.ItemNbtFilterData;
-import net.pixeldreamstudios.morequesttypes.util.ItemNbtFilterRepair;
 import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
 public class ItemNbtMatcherConfig extends ConfigValue<ItemNbtFilterData> {
-    private static ItemStack cachedPreviewItem = ItemStack.EMPTY;
-
-    public static void setDefaultPreview(ItemStack stack) {
-        cachedPreviewItem = stack != null ? stack.copy() : ItemStack.EMPTY;
-        if (!cachedPreviewItem.isEmpty()) {
-            cachedPreviewItem.setCount(1);
-        }
-    }
+    private ItemStack initialPreview = ItemStack.EMPTY;
 
     public ItemNbtMatcherConfig() {
+    }
+
+    public void setInitialPreview(ItemStack stack) {
+        initialPreview = stack != null ? stack.copy() : ItemStack.EMPTY;
+        if (!initialPreview.isEmpty()) {
+            initialPreview.setCount(1);
+        }
     }
 
     @Override
@@ -79,72 +73,19 @@ public class ItemNbtMatcherConfig extends ConfigValue<ItemNbtFilterData> {
         }
 
         ItemNbtFilterData current = getValue() != null ? getValue().copy() : new ItemNbtFilterData();
-        if (current.previewItem.isEmpty() && !cachedPreviewItem.isEmpty()) {
-            current.previewItem = cachedPreviewItem.copy();
+        if (!initialPreview.isEmpty()
+                && (current.previewItem.isEmpty() || current.previewItem.getItem() != initialPreview.getItem())) {
+            current.previewItem = initialPreview.copy();
         }
 
-        ConfigGroup mainGroup = new ConfigGroup("item_nbt_matching", accepted -> {
+        new ItemNbtMatcherEditScreen(current, initialPreview, accepted -> {
             if (accepted) {
                 setValue(current);
                 callback.save(true);
             } else {
                 callback.save(false);
             }
-        });
-
-        ConfigGroup previewGroup = mainGroup.getOrCreateSubgroup("preview");
-        previewGroup.setNameKey("morequesttypes.config.item_nbt_matching.preview");
-
-        ConfigIconItemStack previewConfig = new ConfigIconItemStack();
-        previewGroup.add("preview_item", previewConfig, current.previewItem, stack -> {
-            current.previewItem = stack.copy();
-            if (!current.previewItem.isEmpty()) {
-                current.previewItem.setCount(1);
-            }
-            cachedPreviewItem = current.previewItem.copy();
-        }, ItemStack.EMPTY).setNameKey("morequesttypes.config.item_nbt_matching.preview_item");
-
-        ItemStack previewStack = resolvePreviewStack(current);
-        restorePersistedFilters(current, previewStack);
-
-        ConfigGroup filtersGroup = mainGroup.getOrCreateSubgroup("filters");
-        filtersGroup.setNameKey("morequesttypes.config.item_nbt_matching.filters");
-        filtersGroup.addList("filter_entries", current.filters, new ItemNbtFilterEntryConfig(() -> resolvePreviewStack(current)), new ItemNbtFilterData.FilterEntry())
-                .setNameKey("morequesttypes.config.item_nbt_matching.filter_entries");
-
-        ConfigGroup ignoreGroup = mainGroup.getOrCreateSubgroup("ignore");
-        ignoreGroup.setNameKey("morequesttypes.config.item_nbt_matching.ignore");
-
-        if (!previewStack.isEmpty()) {
-            ignoreGroup.addList("ignore_paths", current.ignorePaths, new NbtPathRewardConfig.PathSelectorConfig(previewStack), "")
-                    .setNameKey("morequesttypes.config.item_nbt_matching.ignore_paths");
-        } else {
-            ignoreGroup.addList("ignore_paths", current.ignorePaths, new StringConfig(), "")
-                    .setNameKey("morequesttypes.config.item_nbt_matching.ignore_paths");
-        }
-
-        new EditConfigScreen(mainGroup).openGui();
-    }
-
-    private static void restorePersistedFilters(ItemNbtFilterData data, ItemStack previewStack) {
-        for (ItemNbtFilterData.FilterEntry entry : data.filters) {
-            ItemNbtFilterRepair.repair(entry, previewStack);
-        }
-    }
-
-    private ItemStack resolvePreviewStack(ItemNbtFilterData data) {
-        if (!data.previewItem.isEmpty()) {
-            return data.previewItem;
-        }
-        if (!cachedPreviewItem.isEmpty()) {
-            return cachedPreviewItem;
-        }
-        var player = Minecraft.getInstance().player;
-        if (player == null) {
-            return ItemStack.EMPTY;
-        }
-        ItemStack main = player.getMainHandItem();
-        return main.isEmpty() ? player.getOffhandItem() : main;
+        }).openGui();
     }
 
     @Override

@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Environment(EnvType.CLIENT)
 public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPathData> {
@@ -303,21 +304,34 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
 
     @Environment(EnvType.CLIENT)
     public static class PathSelectorConfig extends ConfigValue<String> {
-        private final ItemStack previewStack;
-        private final List<String> allPaths;
+        private final Supplier<ItemStack> previewSupplier;
+        private final List<String> allPaths = new ArrayList<>();
 
         public PathSelectorConfig(ItemStack previewStack) {
-            this.previewStack = previewStack;
-            this.allPaths = new ArrayList<>();
-            extractAllPaths();
+            this(() -> previewStack == null ? ItemStack.EMPTY : previewStack);
         }
 
-        private void extractAllPaths() {
-            if (previewStack.isEmpty()) return;
+        public PathSelectorConfig(Supplier<ItemStack> previewSupplier) {
+            this.previewSupplier = previewSupplier;
+        }
+
+        private ItemStack currentPreview() {
+            ItemStack stack = previewSupplier.get();
+            return stack == null || stack.isEmpty() ? ItemStack.EMPTY : stack;
+        }
+
+        private void refreshPaths() {
+            allPaths.clear();
+            ItemStack previewStack = currentPreview();
+            if (previewStack.isEmpty()) {
+                return;
+            }
 
             try {
                 var player = Minecraft.getInstance().player;
-                if (player == null) return;
+                if (player == null) {
+                    return;
+                }
 
                 CompoundTag fullTag = (CompoundTag) previewStack.save(player.level().registryAccess());
 
@@ -325,7 +339,7 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
 
                 CompoundTag components = fullTag.getCompound("components");
                 collectAllPaths(components, "", allPaths);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
         }
 
@@ -364,6 +378,8 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
             if (!getCanEdit()) {
                 return;
             }
+
+            refreshPaths();
 
             String currentPath = getValue() != null ? getValue() : "";
 
@@ -406,6 +422,12 @@ public class NbtPathRewardConfig extends ConfigValue<NbtPathRewardConfig.NbtPath
             try {
                 var player = Minecraft.getInstance().player;
                 if (player == null) {
+                    new EditConfigScreen(contentsGroup).openGui();
+                    return;
+                }
+
+                ItemStack previewStack = currentPreview();
+                if (previewStack.isEmpty()) {
                     new EditConfigScreen(contentsGroup).openGui();
                     return;
                 }

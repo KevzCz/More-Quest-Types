@@ -13,6 +13,8 @@ import java.util.List;
 
 public final class ItemNbtFilterData {
 
+    public static final String PREVIEW_FILTER_PREFIX = "#preview:";
+
     public final List<FilterEntry> filters = new ArrayList<>();
 
     public final List<String> ignorePaths = new ArrayList<>();
@@ -46,19 +48,22 @@ public final class ItemNbtFilterData {
         ItemNbtFilterData data = new ItemNbtFilterData();
 
         if (filterLines != null) {
-
             for (String raw : filterLines) {
+                if (raw == null || raw.isBlank()) {
+                    continue;
+                }
+                if (isPreviewLine(raw)) {
+                    data.previewItem = ItemNbtPreviewStorage.decode(
+                            raw.substring(PREVIEW_FILTER_PREFIX.length()));
+                    continue;
+                }
 
                 FilterEntry entry = FilterEntry.decode(raw);
-
                 if (entry != null) {
                     ItemNbtFilterRepair.repairColonSplitPattern(entry);
                     data.filters.add(entry);
-
                 }
-
             }
-
         }
 
         if (ignorePathLines != null) {
@@ -103,16 +108,20 @@ public final class ItemNbtFilterData {
 
 
 
+    public static boolean isPreviewLine(String line) {
+        return line != null && line.startsWith(PREVIEW_FILTER_PREFIX);
+    }
+
     public void applyTo(List<String> filterLines, List<String> ignorePathLines) {
-
         filterLines.clear();
-
+        if (!previewItem.isEmpty()) {
+            ItemNbtPreviewStorage.encode(previewItem).ifPresent(encoded ->
+                    filterLines.add(PREVIEW_FILTER_PREFIX + encoded));
+        }
         filterLines.addAll(toFilterLines());
 
         ignorePathLines.clear();
-
         ignorePathLines.addAll(ignorePaths);
-
     }
 
 

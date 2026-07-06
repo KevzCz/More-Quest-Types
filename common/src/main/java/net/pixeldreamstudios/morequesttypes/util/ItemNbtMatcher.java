@@ -102,7 +102,7 @@ public final class ItemNbtMatcher {
     }
 
     public static boolean matches(ItemStack stack, Options options, HolderLookup.Provider provider) {
-        if (options.filters == null || options.filters.isEmpty()) {
+        if (activeFilters(options.filters).isEmpty()) {
             return true;
         }
         if (stack.isEmpty()) {
@@ -117,13 +117,14 @@ public final class ItemNbtMatcher {
     }
 
     public static boolean matchesTag(CompoundTag tag, Options options) {
-        if (options.filters == null || options.filters.isEmpty()) {
+        List<String> filters = activeFilters(options.filters);
+        if (filters.isEmpty()) {
             return true;
         }
         try {
             CompoundTag working = tag.copy();
             applyIgnorePaths(working, options.ignorePaths);
-            return evaluateFilters(working, processPlaceholders(options.filters, options.playerUuid, options.playerName), options.mode);
+            return evaluateFilters(working, processPlaceholders(filters, options.playerUuid, options.playerName), options.mode);
         } catch (Exception ignored) {
             return false;
         }
@@ -155,6 +156,20 @@ public final class ItemNbtMatcher {
             return true;
         }
         return NbtUtils.compareNbt(filter, actual, false) && NbtUtils.compareNbt(actual, filter, false);
+    }
+
+    private static List<String> activeFilters(List<String> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return List.of();
+        }
+        List<String> active = new ArrayList<>();
+        for (String raw : filters) {
+            if (raw == null || raw.isBlank() || ItemNbtFilterData.isPreviewLine(raw)) {
+                continue;
+            }
+            active.add(raw);
+        }
+        return active;
     }
 
     private static boolean evaluateFilters(CompoundTag tag, List<String> filters, MatchMode mode) {

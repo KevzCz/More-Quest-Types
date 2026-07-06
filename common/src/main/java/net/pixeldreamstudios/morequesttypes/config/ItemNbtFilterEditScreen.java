@@ -25,6 +25,7 @@ import net.pixeldreamstudios.morequesttypes.util.NbtPathUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Environment(EnvType.CLIENT)
 public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFilterEditScreen.FilterContentPanel> {
@@ -36,11 +37,11 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
     private static final int SECTION_GAP = 10;
     private static final int MAX_PATHS = 100;
     private static final int ACCENT = 4;
-    private static final int BOTTOM_SCROLL_PAD = 14;
+    private static final int BOTTOM_SCROLL_PAD = 48;
     private static final int FOOTER_BUTTON_ROW = 27;
 
     private final Component title;
-    private final ItemStack previewStack;
+    private final Supplier<ItemStack> previewSupplier;
     private final ItemNbtFilterEditScreens.FilterEditState state;
     private final ConfigCallback callback;
 
@@ -53,16 +54,22 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
     private WrappedLabelWidget encodedPreviewLabel;
     private PreviewBlockWidget previewBlock;
     private final List<PathSelectButton> pathButtons = new ArrayList<>();
+    private FilterContentPanel contentPanel;
 
     public ItemNbtFilterEditScreen(
-            ItemStack previewStack,
+            Supplier<ItemStack> previewSupplier,
             ItemNbtFilterEditScreens.FilterEditState state,
             ConfigCallback callback
     ) {
-        this.previewStack = previewStack;
+        this.previewSupplier = previewSupplier;
         this.state = state;
         this.callback = callback;
         this.title = Component.translatable("morequesttypes.config.item_nbt_filter_entry.title");
+    }
+
+    private ItemStack previewStack() {
+        ItemStack stack = previewSupplier.get();
+        return stack == null || stack.isEmpty() ? ItemStack.EMPTY : stack.copy();
     }
 
     public Component getTitle() {
@@ -73,12 +80,12 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
     public boolean onInit() {
         if (state.entry.type == ItemNbtFilterData.FilterEntry.Type.SNBT) {
             if (!state.snbtManual) {
-                ItemNbtFilterEditScreens.syncFromPath(previewStack, state, false);
+                ItemNbtFilterEditScreens.syncFromPath(previewStack(), state, false);
             }
         } else if (state.entry.type != ItemNbtFilterData.FilterEntry.Type.KEY_EXISTS
                 && state.matchValue.isBlank()
                 && !state.entry.path.isBlank()) {
-            ItemNbtFilterEditScreens.syncFromPath(previewStack, state, false);
+            ItemNbtFilterEditScreens.syncFromPath(previewStack(), state, false);
         }
         showScrollBar(true);
         return setSizeProportional(0.56f, 0.88f);
@@ -106,13 +113,14 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
 
     @Override
     protected FilterContentPanel createMainPanel() {
-        return new FilterContentPanel(this);
+        contentPanel = new FilterContentPanel(this);
+        return contentPanel;
     }
 
     @Override
     protected void doAccept() {
         readFields();
-        ItemNbtFilterEditScreens.finalizeState(previewStack, state);
+        ItemNbtFilterEditScreens.finalizeState(previewStack(), state);
         callback.save(true);
         closeGui(true);
     }
@@ -149,8 +157,8 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
     void selectPath(String path) {
         state.entry.path = path;
         state.snbtManual = false;
-        ItemNbtFilterEditScreens.syncFromPath(previewStack, state, true);
-        ItemNbtFilterEditScreens.finalizeState(previewStack, state);
+        ItemNbtFilterEditScreens.syncFromPath(previewStack(), state, true);
+        ItemNbtFilterEditScreens.finalizeState(previewStack(), state);
 
         if (pathBox != null) {
             pathBox.setText(state.entry.path);
@@ -165,8 +173,8 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
             return;
         }
         state.snbtManual = false;
-        state.matchValue = NbtPathUtil.defaultEditableValue(previewStack, state.entry.path);
-        state.snbtPreview = NbtPathUtil.snbtForPathWithValue(previewStack, state.entry.path, state.matchValue);
+        state.matchValue = NbtPathUtil.defaultEditableValue(previewStack(), state.entry.path);
+        state.snbtPreview = NbtPathUtil.snbtForPathWithValue(previewStack(), state.entry.path, state.matchValue);
         applyMatchValueToWidgets();
         updatePreviewLabels();
     }
@@ -185,7 +193,7 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
 
     void onMatchValueEdited() {
         if (state.entry.type == ItemNbtFilterData.FilterEntry.Type.SNBT && !state.snbtManual) {
-            state.snbtPreview = NbtPathUtil.snbtForPathWithValue(previewStack, state.entry.path, state.matchValue);
+            state.snbtPreview = NbtPathUtil.snbtForPathWithValue(previewStack(), state.entry.path, state.matchValue);
             if (snbtBox != null) {
                 snbtBox.setText(state.snbtPreview);
             }
@@ -200,8 +208,8 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
     }
 
     void updatePreviewLabels() {
-        ItemNbtFilterEditScreens.finalizeState(previewStack, state);
-        Tag tag = state.entry.path.isBlank() ? null : NbtPathUtil.getTagAtPath(previewStack, state.entry.path);
+        ItemNbtFilterEditScreens.finalizeState(previewStack(), state);
+        Tag tag = state.entry.path.isBlank() ? null : NbtPathUtil.getTagAtPath(previewStack(), state.entry.path);
         if (valuePreviewLabel != null) {
             valuePreviewLabel.setText(previewLine(
                     "morequesttypes.config.item_nbt_matching.value_preview", NbtPathUtil.formatTagValue(tag)));
@@ -215,9 +223,16 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
             String encoded = state.entry.encode().isBlank() ? "(incomplete)" : state.entry.encode();
             encodedPreviewLabel.setText(previewLine("morequesttypes.config.item_nbt_matching.encoded_preview", encoded));
         }
-        if (previewBlock != null) {
-            previewBlock.refreshBounds();
+        refreshWidgets();
+    }
+
+    @Override
+    public boolean mouseScrolled(double scroll) {
+        FilterContentPanel main = contentPanel;
+        if (main != null && main.scrollPanel(scroll)) {
+            return true;
         }
+        return super.mouseScrolled(scroll);
     }
 
     private static boolean parseBooleanValue(String value) {
@@ -294,7 +309,7 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
                         ItemNbtFilterData.FilterEntry.Type[] values = ItemNbtFilterData.FilterEntry.Type.values();
                         state.entry.type = values[(state.entry.type.ordinal() + 1) % values.length];
                         state.snbtManual = false;
-                        ItemNbtFilterEditScreens.syncFromPath(previewStack, state, true);
+                        ItemNbtFilterEditScreens.syncFromPath(previewStack(), state, true);
                     }
             )));
 
@@ -315,8 +330,8 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
             layout.add(gap());
             layout.add(section("morequesttypes.config.item_nbt_matching.section_path"));
 
-            if (!previewStack.isEmpty()) {
-                List<String> paths = NbtPathUtil.extractDisplayPaths(previewStack);
+            if (!previewStack().isEmpty()) {
+                List<String> paths = NbtPathUtil.extractDisplayPaths(previewStack());
                 if (!paths.isEmpty()) {
                     layout.add(entry(new WrappedHintLabel(this,
                             Component.translatable("morequesttypes.config.item_nbt_matching.path_browser_hint"))));
@@ -410,8 +425,8 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
             layout.add(gap());
             layout.add(section("morequesttypes.config.item_nbt_matching.section_preview"));
 
-            ItemNbtFilterEditScreens.finalizeState(previewStack, state);
-            Tag tag = state.entry.path.isBlank() ? null : NbtPathUtil.getTagAtPath(previewStack, state.entry.path);
+            ItemNbtFilterEditScreens.finalizeState(previewStack(), state);
+            Tag tag = state.entry.path.isBlank() ? null : NbtPathUtil.getTagAtPath(previewStack(), state.entry.path);
             valuePreviewLabel = new WrappedLabelWidget(this, previewLine(
                     "morequesttypes.config.item_nbt_matching.value_preview", NbtPathUtil.formatTagValue(tag)));
             rawPreviewLabel = new WrappedLabelWidget(this, previewLine(
@@ -422,7 +437,7 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
                     "morequesttypes.config.item_nbt_matching.encoded_preview", encoded));
 
             previewBlock = new PreviewBlockWidget(this, valuePreviewLabel, rawPreviewLabel, encodedPreviewLabel);
-            layout.add(entry(previewBlock, ROW * 3 + PAD * 2));
+            layout.add(entry(previewBlock, ROW));
 
             layout.add(gap());
             layout.add(new LayoutEntry(null, BOTTOM_SCROLL_PAD));
@@ -453,7 +468,7 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
 
         @Override
         public boolean mouseScrolled(double scroll) {
-            if (isMouseOver() && scrollPanel(scroll)) {
+            if (scrollPanel(scroll)) {
                 return true;
             }
             return super.mouseScrolled(scroll);
@@ -570,7 +585,7 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
 
         @Override
         public void addMouseOverText(TooltipList list) {
-            String value = NbtPathUtil.pathValueLabel(previewStack, path);
+            String value = NbtPathUtil.pathValueLabel(previewStack(), path);
             list.add(Component.literal(path));
             list.add(Component.translatable("morequesttypes.config.item_nbt_matching.select_path_hint")
                     .withStyle(ChatFormatting.GRAY));
@@ -600,7 +615,7 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
             }
             Color4I.rgb(60, 60, 68).draw(graphics, x, y + h - 1, w, 1);
 
-            String value = NbtPathUtil.pathValueLabel(previewStack, path);
+            String value = NbtPathUtil.pathValueLabel(previewStack(), path);
             int valueWidth = Math.min(theme.getStringWidth(value), w / 3);
             int pathMax = w - valueWidth - 20;
             String pathText = truncate(theme, path, pathMax);
@@ -704,6 +719,10 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
         }
 
         void refreshBounds() {
+            ItemNbtFilterEditScreen screen = (ItemNbtFilterEditScreen) getGui();
+            if (screen != null) {
+                screen.refreshWidgets();
+            }
         }
 
         @Override

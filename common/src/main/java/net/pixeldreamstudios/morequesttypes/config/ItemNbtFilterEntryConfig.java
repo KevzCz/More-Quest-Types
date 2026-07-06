@@ -145,19 +145,20 @@ public class ItemNbtFilterEntryConfig extends ConfigValue<ItemNbtFilterData.Filt
 
 
 
-        ItemStack previewStack = previewStackSupplier.get();
-
         ItemNbtFilterData.FilterEntry current = getValue() != null ? getValue().copy() : new ItemNbtFilterData.FilterEntry();
-        ItemNbtFilterRepair.repair(current, previewStack);
+        ItemStack initialPreview = previewStackSupplier.get();
+        if (!initialPreview.isEmpty()) {
+            ItemNbtFilterRepair.repair(current, initialPreview);
+        }
 
         ItemNbtFilterEditScreens.FilterEditState state = new ItemNbtFilterEditScreens.FilterEditState(current);
 
-
-
-        ItemNbtFilterEditScreens.open(previewStack, state, accepted -> {
-
+        ItemNbtFilterEditScreens.open(previewStackSupplier, state, accepted -> {
             if (accepted) {
-
+                ItemStack previewStack = previewStackSupplier.get();
+                if (!previewStack.isEmpty()) {
+                    previewStack = previewStack.copy();
+                }
                 ItemNbtFilterEditScreens.finalizeState(previewStack, state);
                 ItemNbtFilterRepair.repair(state.entry, previewStack);
 
