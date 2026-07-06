@@ -37,6 +37,7 @@ public final class EquipmentAttributeCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("mqt")
+                .requires(stack -> stack.hasPermission(2))
                 .then(Commands.literal("equipment_attribute")
                         .then(Commands.literal("add")
                                 .then(Commands.argument("targets", EntityArgument.players())
