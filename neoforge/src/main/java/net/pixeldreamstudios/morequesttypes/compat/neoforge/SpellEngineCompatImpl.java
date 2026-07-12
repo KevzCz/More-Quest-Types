@@ -13,7 +13,6 @@ import net.pixeldreamstudios.morequesttypes.event.SpellCastEventBuffer;
 import net.spell_engine.api.spell.container.*;
 import net.spell_engine.api.spell.event.SpellEvents;
 import net.spell_engine.api.spell.registry.*;
-import net.spell_engine.client.util.*;
 import net.spell_engine.internals.container.*;
 
 import java.util.*;
@@ -127,11 +126,7 @@ public final class SpellEngineCompatImpl {
 
     public static ResourceLocation getSpellIconTexture(ResourceLocation spellId) {
         if (!isLoaded() || spellId == null) return null;
-        try {
-            return SpellRender.iconTexture(spellId);
-        } catch (Throwable t) {
-            return null;
-        }
+        return SpellEngineCompatClientImpl.getSpellIconTexture(spellId);
     }
 
     public static List<ResourceLocation> getItemSpells(ItemStack stack) {

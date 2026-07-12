@@ -1,6 +1,7 @@
 package net.pixeldreamstudios.morequesttypes.compat.fabric;
 
 import dev.architectury.platform.*;
+import net.fabricmc.api.EnvType;
 import net.minecraft.core.component.*;
 import net.minecraft.core.registries.*;
 import net.minecraft.resources.*;
@@ -13,7 +14,6 @@ import net.pixeldreamstudios.morequesttypes.event.SpellCastEventBuffer;
 import net.spell_engine.api.spell.container.*;
 import net.spell_engine.api.spell.event.SpellEvents;
 import net.spell_engine.api.spell.registry.*;
-import net.spell_engine.client.util.*;
 import net.spell_engine.internals.container.*;
 
 import net.minecraft.resources.ResourceKey;
@@ -266,12 +266,10 @@ public final class SpellEngineCompatImpl {
     }
 
     public static ResourceLocation getSpellIconTexture(ResourceLocation spellId) {
-        if (!SpellEngineCompatImpl.isLoaded() || spellId == null) return null;
-        try {
-            return SpellRender.iconTexture(spellId);
-        } catch (Throwable t) {
+        if (!SpellEngineCompatImpl.isLoaded() || spellId == null || Platform.getEnv() != EnvType.CLIENT) {
             return null;
         }
+        return SpellEngineCompatClientImpl.getSpellIconTexture(spellId);
     }
 
     public static Collection<ResourceLocation> getPlayerEquippedSpellIds(ServerPlayer player) {

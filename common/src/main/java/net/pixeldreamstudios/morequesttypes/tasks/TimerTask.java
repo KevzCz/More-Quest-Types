@@ -17,8 +17,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class TimerTask extends Task {
     private double durationSeconds = 10.0D;
+    private boolean useRealTime = false;
+    private final Map<UUID, Long> fallbackStartMs = new HashMap<>();
 
     public TimerTask(long id, Quest quest) {
         super(id, quest);
@@ -28,6 +35,13 @@ public class TimerTask extends Task {
         return Math.max(1L, Math.round(durationSeconds * 20.0D));
     }
 
+    private long startMs(TeamData teamData) {
+        Date started = teamData.getStartedTime(getQuest().id).orElse(null);
+        if (started != null) return started.getTime();
+        Long fallback = fallbackStartMs.get(teamData.getTeamId());
+        return fallback != null ? fallback : -1L;
+    }
+
     @Override
     public TaskType getType() {
         return MoreTasksTypes.TIMER;
@@ -35,7 +49,7 @@ public class TimerTask extends Task {
 
     @Override
     public long getMaxProgress() {
-        return maxTicks();
+        return useRealTime ? Math.max(1L, Math.round(durationSeconds)) : maxTicks();
     }
 
     @Override
@@ -50,8 +64,9 @@ public class TimerTask extends Task {
 
     @Override
     public String formatProgress(TeamData teamData, long progress) {
-        long remainingTicks = Math.max(0L, maxTicks() - progress);
-        double remainingSeconds = remainingTicks / 20.0D;
+        double remainingSeconds = useRealTime
+                ? Math.max(0.0D, durationSeconds - progress)
+                : Math.max(0L, maxTicks() - progress) / 20.0D;
         return StringUtils.formatDouble(remainingSeconds, true) + "s";
     }
 
@@ -70,11 +85,30 @@ public class TimerTask extends Task {
             return;
         }
 
+        if (useRealTime) {
+            submitRealTime(teamData);
+            return;
+        }
+
         long current = teamData.getProgress(this);
         long next = current + 1L;
         long max = maxTicks();
 
         teamData.setProgress(this, Math.min(next, max));
+    }
+
+    private void submitRealTime(TeamData teamData) {
+        long start = startMs(teamData);
+        if (start < 0L) {
+            start = System.currentTimeMillis();
+            fallbackStartMs.put(teamData.getTeamId(), start);
+        }
+
+        long elapsedSeconds = Math.max(0L, (System.currentTimeMillis() - start) / 1000L);
+        long next = Math.min(getMaxProgress(), elapsedSeconds);
+        if (next != teamData.getProgress(this)) {
+            teamData.setProgress(this, next);
+        }
     }
 
     @Override
@@ -87,8 +121,9 @@ public class TimerTask extends Task {
     @Environment(EnvType.CLIENT)
     public void addMouseOverText(TooltipList list, TeamData teamData) {
         long p = teamData.getProgress(this);
-        long remaining = Math.max(0L, maxTicks() - p);
-        double remainS = remaining / 20.0D;
+        double remainS = useRealTime
+                ? Math.max(0.0D, durationSeconds - p)
+                : Math.max(0L, maxTicks() - p) / 20.0D;
         list.add(Component.translatable("morequesttypes.task.timer.remaining", StringUtils.formatDouble(remainS, true) + "s"));
     }
 
@@ -109,12 +144,20 @@ public class TimerTask extends Task {
                 0.05D,
                 86400.0D
         ).setNameKey("morequesttypes.task.timer.duration");
+
+        config.addBool(
+                "use_real_time",
+                useRealTime,
+                v -> useRealTime = v,
+                false
+        ).setNameKey("morequesttypes.task.timer.use_real_time");
     }
 
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
         nbt.putDouble("duration_seconds", durationSeconds);
+        if (useRealTime) nbt.putBoolean("use_real_time", true);
     }
 
     @Override
@@ -123,18 +166,21 @@ public class TimerTask extends Task {
         if (nbt.contains("duration_seconds")) {
             durationSeconds = Math.max(0.05D, nbt.getDouble("duration_seconds"));
         }
+        useRealTime = nbt.getBoolean("use_real_time");
     }
 
     @Override
     public void writeNetData(RegistryFriendlyByteBuf buffer) {
         super.writeNetData(buffer);
         buffer.writeDouble(durationSeconds);
+        buffer.writeBoolean(useRealTime);
     }
 
     @Override
     public void readNetData(RegistryFriendlyByteBuf buffer) {
         super.readNetData(buffer);
         durationSeconds = Math.max(0.05D, buffer.readDouble());
+        useRealTime = buffer.readBoolean();
     }
 
     @Override

@@ -38,10 +38,13 @@ import net.pixeldreamstudios.morequesttypes.config.ItemNbtConfigPanels;
 import net.pixeldreamstudios.morequesttypes.util.ItemNbtMatcher;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public final class FishingCatchTask extends Task {
+    private final Map<UUID, Long> lastProcessedTick = new HashMap<>();
     private long value = 1;
     private ItemStack itemFilter = ItemStack.EMPTY;
     private String itemTagStr = "";
@@ -81,15 +84,20 @@ public final class FishingCatchTask extends Task {
         long cur = teamData.getProgress(this);
         if (cur >= getMaxProgress()) return;
 
-        var events = FishingCatchEventBuffer.snapshotLatest(player.getUUID());
+        UUID playerId = player.getUUID();
+        long since = lastProcessedTick.getOrDefault(playerId, -1L);
+        var events = FishingCatchEventBuffer.eventsSince(playerId, since);
         if (events.isEmpty()) return;
 
+        long newestTick = since;
         int inc = 0;
         for (var ev : events) {
+            if (ev.gameTime() > newestTick) newestTick = ev.gameTime();
             if (matches(player, ev)) {
                 inc++;
             }
         }
+        lastProcessedTick.put(playerId, newestTick);
 
         if (inc <= 0) return;
 

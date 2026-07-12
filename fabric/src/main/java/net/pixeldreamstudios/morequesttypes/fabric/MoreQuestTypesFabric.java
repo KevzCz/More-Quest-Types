@@ -1,5 +1,6 @@
 package net.pixeldreamstudios.morequesttypes.fabric;
 
+import dev.architectury.event.events.common.LifecycleEvent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
@@ -18,7 +19,7 @@ public final class MoreQuestTypesFabric implements ModInitializer {
     public void onInitialize() {
         MQTDataComponents.init();
         EquipmentBonusManager.init(() -> MQTDataComponents.EQUIPMENT_BONUSES);
-        MoreQuestTypes.init();
+        LifecycleEvent.SETUP.register(MoreQuestTypes::init);
         FabricMQTNetwork.init();
         InteractEntityHooksFabric.register();
         UseItemHooksFabric.register();

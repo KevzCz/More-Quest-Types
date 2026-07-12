@@ -1,5 +1,6 @@
 package net.pixeldreamstudios.morequesttypes.neoforge;
 
+import dev.architectury.event.events.common.LifecycleEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -24,7 +25,7 @@ public final class MoreQuestTypesNeoForge {
         MQTDataComponents.DATA_COMPONENTS.register(modBus);
         EquipmentBonusManager.init(MQTDataComponents.EQUIPMENT_BONUSES);
 
-        MoreQuestTypes.init();
+        LifecycleEvent.SETUP.register(MoreQuestTypes::init);
         MQTNetwork.init();
         SpellEngineCompat.registerCastHooks();
 

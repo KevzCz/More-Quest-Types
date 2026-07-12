@@ -35,9 +35,13 @@ import net.pixeldreamstudios.morequesttypes.network.MQTWorldsRequest;
 import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public final class UseBlockTask extends Task {
+    private final Map<UUID, Long> lastProcessedTick = new HashMap<>();
     private long value = 1;
     private ItemStack blockFilter = ItemStack.EMPTY;
     private String blockId = "";
@@ -75,15 +79,20 @@ public final class UseBlockTask extends Task {
         long cur = teamData.getProgress(this);
         if (cur >= getMaxProgress()) return;
 
-        var events = UseBlockEventBuffer.snapshotLatest(player.getUUID());
+        UUID playerId = player.getUUID();
+        long since = lastProcessedTick.getOrDefault(playerId, -1L);
+        var events = UseBlockEventBuffer.eventsSince(playerId, since);
         if (events.isEmpty()) return;
 
+        long newestTick = since;
         int inc = 0;
         for (var ev : events) {
+            if (ev.gameTime() > newestTick) newestTick = ev.gameTime();
             if (matches(player.serverLevel(), ev.pos(), ev.state())) {
                 inc++;
             }
         }
+        lastProcessedTick.put(playerId, newestTick);
 
         if (inc <= 0) return;
 

@@ -30,6 +30,21 @@ public final class SpellDisplayHelper {
     }
 
     @Environment(EnvType.CLIENT)
+    public static List<String> availableSpellIdsOnClient() {
+        try {
+            var minecraft = Minecraft.getInstance();
+            if (minecraft.level != null) {
+                return SpellEngineCompat.getAllSpells(minecraft.level).stream()
+                        .map(ResourceLocation::toString)
+                        .sorted()
+                        .toList();
+            }
+        } catch (Throwable ignored) {
+        }
+        return List.of();
+    }
+
+    @Environment(EnvType.CLIENT)
     public static Icon spellListIcon(List<String> spellIds) {
         return spellListIcon(spellIds, ENCHANTED_BOOK);
     }

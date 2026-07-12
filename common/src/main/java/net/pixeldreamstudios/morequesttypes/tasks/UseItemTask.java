@@ -43,11 +43,14 @@ import net.pixeldreamstudios.morequesttypes.network.NetworkHelper;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public final class UseItemTask extends Task {
     public enum HandMode { ANY, MAIN_HAND, OFF_HAND }
+    private final Map<UUID, Long> lastProcessedTick = new HashMap<>();
     private long value = 1;
     private HandMode handMode = HandMode.ANY;
     private boolean anyItem = false;
@@ -78,8 +81,16 @@ public final class UseItemTask extends Task {
         long cur = teamData.getProgress(this);
         if (cur >= getMaxProgress()) return;
 
-        var events = UseItemEventBuffer.snapshotLatest(player.getUUID());
+        UUID playerId = player.getUUID();
+        long since = lastProcessedTick.getOrDefault(playerId, -1L);
+        var events = UseItemEventBuffer.eventsSince(playerId, since);
         if (events.isEmpty()) return;
+
+        long newestTick = since;
+        for (var ev : events) {
+            if (ev.gameTime() > newestTick) newestTick = ev.gameTime();
+        }
+        lastProcessedTick.put(playerId, newestTick);
 
         int inc = (handMode == HandMode.ANY) ? countAny(events, player) : countExact(events, player);
         if (inc <= 0) return;

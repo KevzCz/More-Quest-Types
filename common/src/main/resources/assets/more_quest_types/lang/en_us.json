@@ -308,6 +308,8 @@
   "morequesttypes.task.timer.duration": "Duration (seconds)",
   "morequesttypes.task.timer.duration.tooltip": "How long the timer must run for the task to complete.",
   "morequesttypes.task.timer.remaining": "Remaining: %s",
+  "morequesttypes.task.timer.use_real_time": "Use real time",
+  "morequesttypes.task.timer.use_real_time.tooltip": "If the world is kept running, even offline player's time will progress.",
   "morequesttypes.task.timer.title": "Timer",
   "morequesttypes.reward.status": "Status: %s",
   "morequesttypes.reward.status.on": "On",

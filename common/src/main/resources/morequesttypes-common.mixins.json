@@ -5,6 +5,7 @@
   "mixins": [
     "LivingEntityLastDamageMixin",
     "TamableAnimalTameMixin",
+    "UseItemBlockResultMixin",
     "QuestExtensions",
     "RewardExtensions",
     "TaskExtensions",
@@ -13,7 +14,6 @@
     "ItemTaskSubmitMixin",
     "AbstractBooleanTaskExtensionMixin",
     "TaskExtensionsPlayerLeveling",
-    "TaskExtensionsSpellEngine",
     "TeamDataPlayerLevelingMixin",
     "MerchantResultSlotMixin",
     "accessor.SkillsClientModAccessor",
