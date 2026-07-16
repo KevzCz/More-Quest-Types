@@ -45,6 +45,7 @@ public final class MoreTasksTypes {
     public static TaskType TAME_MOB;
     public static TaskType CAST_SPELL;
     public static TaskType SPELL_EQUIPPED;
+    public static TaskType PLAYER_TAG;
 
     public static void init() {
         MoreTasksTypes.TIMER = TaskTypes.register(
@@ -144,6 +145,11 @@ public final class MoreTasksTypes {
                 FTBQuestsAPI.rl("check_quest"),
                 CheckQuestTask::new,
                 () -> Icon.getIcon("ftbquests:item/book")
+        );
+        MoreTasksTypes.PLAYER_TAG = TaskTypes.register(
+                FTBQuestsAPI.rl("player_tag"),
+                PlayerTagTask::new,
+                () -> Icon.getIcon("minecraft:item/name_tag")
         );
         MoreTasksTypes.BREAK_BLOCK = TaskTypes.register(
                 FTBQuestsAPI.rl("break_block"),

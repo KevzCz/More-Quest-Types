@@ -997,6 +997,10 @@ public final class MoreQuestTypesCommands {
 
             teamData.clearRepeatCooldown(quest);
 
+            if (teamData instanceof net.pixeldreamstudios.morequesttypes.api.ITeamDataCompletionCountAccess acc) {
+                acc.mqt$clearCompletionCount(quest.getId());
+            }
+
             teamData.markDirty();
         });
 

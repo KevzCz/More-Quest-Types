@@ -11,6 +11,7 @@
     "TaskExtensions",
     "TaskExtensionsOrigins",
     "TeamDataOriginMixin",
+    "TeamDataCompletionCountAccessor",
     "ItemTaskSubmitMixin",
     "AbstractBooleanTaskExtensionMixin",
     "TaskExtensionsPlayerLeveling",

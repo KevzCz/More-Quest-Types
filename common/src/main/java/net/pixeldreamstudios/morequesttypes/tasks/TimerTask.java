@@ -26,6 +26,7 @@ public class TimerTask extends Task {
     private double durationSeconds = 10.0D;
     private boolean useRealTime = false;
     private final Map<UUID, Long> fallbackStartMs = new HashMap<>();
+    private final Map<UUID, Long> lastWrittenProgress = new HashMap<>();
 
     public TimerTask(long id, Quest quest) {
         super(id, quest);
@@ -36,10 +37,10 @@ public class TimerTask extends Task {
     }
 
     private long startMs(TeamData teamData) {
-        Date started = teamData.getStartedTime(getQuest().id).orElse(null);
-        if (started != null) return started.getTime();
         Long fallback = fallbackStartMs.get(teamData.getTeamId());
-        return fallback != null ? fallback : -1L;
+        if (fallback != null) return fallback;
+        Date started = teamData.getStartedTime(getQuest().id).orElse(null);
+        return started != null ? started.getTime() : -1L;
     }
 
     @Override
@@ -98,17 +99,33 @@ public class TimerTask extends Task {
     }
 
     private void submitRealTime(TeamData teamData) {
+        UUID teamId = teamData.getTeamId();
+        long currentProgress = teamData.getProgress(this);
+        long max = getMaxProgress();
         long start = startMs(teamData);
-        if (start < 0L) {
+
+        Long lastWritten = lastWrittenProgress.get(teamId);
+
+        boolean invalid = start < 0L || currentProgress < 0L || currentProgress > max
+                || (lastWritten != null && currentProgress != lastWritten);
+
+        if (invalid) {
             start = System.currentTimeMillis();
-            fallbackStartMs.put(teamData.getTeamId(), start);
+            fallbackStartMs.put(teamId, start);
+            currentProgress = 0L;
+            if (teamData.getProgress(this) != 0L) {
+                teamData.setProgress(this, 0L);
+            }
+            lastWrittenProgress.put(teamId, 0L);
+            return;
         }
 
         long elapsedSeconds = Math.max(0L, (System.currentTimeMillis() - start) / 1000L);
-        long next = Math.min(getMaxProgress(), elapsedSeconds);
-        if (next != teamData.getProgress(this)) {
+        long next = Math.min(max, elapsedSeconds);
+        if (next != currentProgress) {
             teamData.setProgress(this, next);
         }
+        lastWrittenProgress.put(teamId, next);
     }
 
     @Override
@@ -188,6 +205,6 @@ public class TimerTask extends Task {
     public Component getAltTitle() {
         String timeLabel = StringUtils.formatDouble(durationSeconds, true) + "s";
         String typeName = getType().getDisplayName().getString();
-        return Component.literal( timeLabel + " " + typeName);
+        return Component.literal(timeLabel + " " + typeName);
     }
 }

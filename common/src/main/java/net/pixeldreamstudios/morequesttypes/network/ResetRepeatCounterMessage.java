@@ -47,6 +47,10 @@ public record ResetRepeatCounterMessage(long questId) implements CustomPacketPay
 
                         teamData.clearRepeatCooldown(quest);
 
+                        if (teamData instanceof net.pixeldreamstudios.morequesttypes.api.ITeamDataCompletionCountAccess acc) {
+                            acc.mqt$clearCompletionCount(quest.getId());
+                        }
+
                         teamData.markDirty();
 
                         dev.ftb.mods.ftblibrary.util.NetworkHelper.sendTo(
