@@ -11,6 +11,9 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.pixeldreamstudios.morequesttypes.MoreQuestTypes;
+import net.pixeldreamstudios.morequesttypes.api.ITeamDataCompletionCountAccess;
+import net.pixeldreamstudios.morequesttypes.compat.PerPlayerQuestsBridge;
+import net.pixeldreamstudios.morequesttypes.compat.PerPlayerQuestsCompat;
 
 public record ResetRepeatCounterMessage(long questId) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ResetRepeatCounterMessage> TYPE =
@@ -31,7 +34,7 @@ public record ResetRepeatCounterMessage(long questId) implements CustomPacketPay
 
     @Override
     public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+        return ResetRepeatCounterMessage.TYPE;
     }
 
     public static void handle(ResetRepeatCounterMessage message, NetworkManager.PacketContext context) {
@@ -43,12 +46,18 @@ public record ResetRepeatCounterMessage(long questId) implements CustomPacketPay
 
                         ProgressChange progressChange = new ProgressChange(quest, player.getUUID());
                         progressChange.setReset(true);
-                        quest.forceProgress(teamData, progressChange);
+                        ServerQuestFile.INSTANCE.withPlayerContext(player, () ->
+                                quest.forceProgress(teamData, progressChange));
 
-                        teamData.clearRepeatCooldown(quest);
-
-                        if (teamData instanceof net.pixeldreamstudios.morequesttypes.api.ITeamDataCompletionCountAccess acc) {
-                            acc.mqt$clearCompletionCount(quest.getId());
+                        if (PerPlayerQuestsCompat.isLoaded()
+                                && PerPlayerQuestsBridge.isPerPlayer(quest)) {
+                            PerPlayerQuestsBridge
+                                    .clearRepeatStateForPlayer(teamData, quest, player.getUUID());
+                        } else {
+                            teamData.clearRepeatCooldown(quest);
+                            if (teamData instanceof ITeamDataCompletionCountAccess acc) {
+                                acc.mqt$clearCompletionCount(quest.getId());
+                            }
                         }
 
                         teamData.markDirty();

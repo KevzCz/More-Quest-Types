@@ -3,8 +3,8 @@ package net.pixeldreamstudios.morequesttypes.tasks;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.config.StringConfig;
-import dev.ftb.mods.ftblibrary.util.TooltipList;
 import dev.ftb.mods.ftblibrary.icon.Icon;
+import dev.ftb.mods.ftblibrary.util.TooltipList;
 import dev.ftb.mods.ftbquests.quest.BaseQuestFile;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.QuestObjectBase;
@@ -14,6 +14,7 @@ import dev.ftb.mods.ftbquests.quest.task.TaskType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -24,25 +25,52 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.pixeldreamstudios.morequesttypes.compat.PerPlayerQuestsBridge;
+import net.pixeldreamstudios.morequesttypes.compat.PerPlayerQuestsCompat;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class CheckQuestTask extends Task {
-    public enum Mode { ANY, ALL }
+    public enum Mode {ANY, ALL}
+
     private final List<String> selectors = new ArrayList<>();
     private Mode mode = Mode.ANY;
     private long requiredCount = 0;
+    private boolean perPlayerCheck = false;
     private transient List<Long> cachedTargetIds = Collections.emptyList();
-    public CheckQuestTask(long id, Quest quest) { super(id, quest); }
-    @Override public TaskType getType() { return MoreTasksTypes.CHECK_QUEST; }
-    @Override public long getMaxProgress() {
+
+    public CheckQuestTask(long id, Quest quest) {
+        super(id, quest);
+    }
+
+    @Override
+    public TaskType getType() {
+        return MoreTasksTypes.CHECK_QUEST;
+    }
+
+    @Override
+    public long getMaxProgress() {
         int total = cachedTargetIds == null ? 0 : cachedTargetIds.size();
         long needed = computeNeeded(total);
         return Math.max(1, needed);
     }
-    @Override public boolean hideProgressNumbers() { return false; }
-    @Override public int autoSubmitOnPlayerTick() { return 1; }
+
+    @Override
+    public boolean hideProgressNumbers() {
+        return false;
+    }
+
+    @Override
+    public int autoSubmitOnPlayerTick() {
+        return 1;
+    }
+
     @Override
     public void submitTask(TeamData teamData, ServerPlayer player, ItemStack craftedItem) {
         if (teamData.isCompleted(this)) return;
@@ -59,20 +87,25 @@ public final class CheckQuestTask extends Task {
             return;
         }
 
+        boolean self = perPlayerCheck && PerPlayerQuestsCompat.isLoaded();
         long completed = cachedTargetIds.stream()
                 .map(teamData.getFile()::getBase)
                 .filter(Objects::nonNull)
-                .filter(obj -> (obj instanceof Task t && teamData.isCompleted(t)) ||
+                .filter(obj -> self
+                        ? PerPlayerQuestsBridge.isCompletedForPlayer(teamData, obj, player.getUUID())
+                        : (obj instanceof Task t && teamData.isCompleted(t)) ||
                         (obj instanceof Quest q && teamData.isCompleted(q)))
                 .count();
 
         long next = Math.min(needed, completed);
         if (teamData.getProgress(this) != next) teamData.setProgress(this, next);
     }
+
     private long computeNeeded(int totalResolved) {
         if (mode == Mode.ALL || requiredCount == 0) return Math.max(1, totalResolved);
         return Math.min(requiredCount, Math.max(1, totalResolved));
     }
+
     private List<Long> resolveTargets(BaseQuestFile file) {
         if (file == null) return Collections.emptyList();
 
@@ -105,7 +138,9 @@ public final class CheckQuestTask extends Task {
         String modeText = (mode == Mode.ALL || requiredCount == 0)
                 ? Component.translatable("morequesttypes.task.check_quest.mode.all").getString()
                 : Component.translatable("morequesttypes.task.check_quest.mode.required", requiredCount).getString();
-        return Component.translatable("morequesttypes.task.check_quest.title", modeText);
+        return perPlayerCheck && PerPlayerQuestsCompat.isLoaded()
+                ? Component.translatable("morequesttypes.task.check_quest.title_self", modeText)
+                : Component.translatable("morequesttypes.task.check_quest.title", modeText);
     }
 
     @Environment(EnvType.CLIENT)
@@ -136,13 +171,22 @@ public final class CheckQuestTask extends Task {
 
         list.add(reqText.copy().withStyle(ChatFormatting.YELLOW));
 
+        boolean self = perPlayerCheck && PerPlayerQuestsCompat.isLoaded();
+        if (self) {
+            list.add(Component.translatable("morequesttypes.task.check_quest.per_player_note")
+                    .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.ITALIC));
+        }
+        var localPlayer = self ? Minecraft.getInstance().player : null;
+
         BaseQuestFile file = getQuestFile();
         int shown = 0;
         for (Long id : cachedTargetIds) {
             QuestObjectBase qob = file.getBase(id);
             if (qob == null) continue;
 
-            boolean done = (qob instanceof Task t && teamData.isCompleted(t))
+            boolean done = self
+                    ? localPlayer != null && PerPlayerQuestsBridge.isCompletedForPlayer(teamData, qob, localPlayer.getUUID())
+                    : (qob instanceof Task t && teamData.isCompleted(t))
                     || (qob instanceof Quest q && teamData.isCompleted(q));
 
             Component title = qob.getTitle();
@@ -170,7 +214,10 @@ public final class CheckQuestTask extends Task {
         super.fillConfigGroup(config);
 
         var MODES = NameMap.of(Mode.ANY, Mode.values()).create();
-        config.addEnum("mode", mode, v -> { mode = v; cachedTargetIds = Collections.emptyList(); }, MODES)
+        config.addEnum("mode", mode, v -> {
+                    mode = v;
+                    cachedTargetIds = Collections.emptyList();
+                }, MODES)
                 .setNameKey("morequesttypes.task.check_quest.mode");
 
         config.addLong("required", requiredCount, v -> requiredCount = Math.max(0, v), 0L, 0L, Long.MAX_VALUE)
@@ -178,6 +225,14 @@ public final class CheckQuestTask extends Task {
 
         config.addList("targets", selectors, new StringConfig(), "")
                 .setNameKey("morequesttypes.task.check_quest.targets");
+
+        if (PerPlayerQuestsCompat.isLoaded()) {
+            config.addBool("per_player_check", perPlayerCheck, v -> {
+                        perPlayerCheck = v;
+                        cachedTargetIds = Collections.emptyList();
+                    }, false)
+                    .setNameKey("morequesttypes.task.check_quest.per_player_check");
+        }
     }
 
     @Override
@@ -188,18 +243,24 @@ public final class CheckQuestTask extends Task {
         var list = new ListTag();
         for (String s : selectors) list.add(StringTag.valueOf(s));
         nbt.put("targets", list);
+        if (perPlayerCheck) nbt.putBoolean("per_player_check", true);
     }
 
     @Override
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
-        try { mode = Mode.valueOf(nbt.getString("mode")); } catch (Throwable ignored) { mode = Mode.ANY; }
+        try {
+            mode = Mode.valueOf(nbt.getString("mode"));
+        } catch (Throwable ignored) {
+            mode = Mode.ANY;
+        }
         requiredCount = Math.max(0, nbt.getLong("required"));
 
         selectors.clear();
         var list = nbt.getList("targets", Tag.TAG_STRING);
         for (int i = 0; i < list.size(); i++) selectors.add(list.getString(i));
 
+        perPlayerCheck = nbt.getBoolean("per_player_check");
         cachedTargetIds = Collections.emptyList();
     }
 
@@ -210,6 +271,7 @@ public final class CheckQuestTask extends Task {
         buf.writeVarLong(requiredCount);
         buf.writeVarInt(selectors.size());
         for (String s : selectors) buf.writeUtf(s);
+        buf.writeBoolean(perPlayerCheck);
     }
 
     @Override
@@ -220,6 +282,7 @@ public final class CheckQuestTask extends Task {
         selectors.clear();
         int n = buf.readVarInt();
         for (int i = 0; i < n; i++) selectors.add(buf.readUtf());
+        perPlayerCheck = buf.readBoolean();
         cachedTargetIds = Collections.emptyList();
     }
 }

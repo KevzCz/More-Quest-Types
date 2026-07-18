@@ -14,7 +14,11 @@ import dev.ftb.mods.ftblibrary.util.NetworkHelper;
 import dev.ftb.mods.ftbquests.net.CreateObjectResponseMessage;
 import dev.ftb.mods.ftbquests.net.EditObjectResponseMessage;
 import dev.ftb.mods.ftbquests.net.SyncTranslationMessageToClient;
-import dev.ftb.mods.ftbquests.quest.*;
+import dev.ftb.mods.ftbquests.quest.Chapter;
+import dev.ftb.mods.ftbquests.quest.Quest;
+import dev.ftb.mods.ftbquests.quest.QuestObjectBase;
+import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
+import dev.ftb.mods.ftbquests.quest.TeamData;
 import dev.ftb.mods.ftbquests.quest.task.AdvancementTask;
 import dev.ftb.mods.ftbquests.quest.task.ItemTask;
 import dev.ftb.mods.ftbquests.quest.task.KillTask;
@@ -44,10 +48,20 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.Block;
 import net.pixeldreamstudios.morequesttypes.api.IQuestExtension;
+import net.pixeldreamstudios.morequesttypes.api.ITeamDataCompletionCountAccess;
+import net.pixeldreamstudios.morequesttypes.compat.PerPlayerQuestsBridge;
+import net.pixeldreamstudios.morequesttypes.compat.PerPlayerQuestsCompat;
 import net.pixeldreamstudios.morequesttypes.network.LookAtMessage;
 import net.pixeldreamstudios.morequesttypes.tasks.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class MoreQuestTypesCommands {
@@ -105,13 +119,13 @@ public final class MoreQuestTypesCommands {
                                 .then(Commands.argument("players", EntityArgument.players())
                                         .then(Commands.literal("complete")
                                                 .then(Commands.argument("quest_object", StringArgumentType.string())
-                                                        .executes(ctx -> applyProgress(ctx.getSource(),
+                                                        .executes(ctx -> MoreQuestTypesCommands.applyProgress(ctx.getSource(),
                                                                 EntityArgument.getPlayers(ctx, "players"),
                                                                 false,
                                                                 StringArgumentType.getString(ctx, "quest_object")))))
                                         .then(Commands.literal("reset")
                                                 .then(Commands.argument("quest_object", StringArgumentType.string())
-                                                        .executes(ctx -> applyProgress(ctx.getSource(),
+                                                        .executes(ctx -> MoreQuestTypesCommands.applyProgress(ctx.getSource(),
                                                                 EntityArgument.getPlayers(ctx, "players"),
                                                                 true,
                                                                 StringArgumentType.getString(ctx, "quest_object")))))
@@ -120,7 +134,7 @@ public final class MoreQuestTypesCommands {
                         .then(Commands.literal("refresh_chapter")
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .then(Commands.argument("chapter_id", StringArgumentType.string())
-                                                .executes(ctx -> refreshChapter(
+                                                .executes(ctx -> MoreQuestTypesCommands.refreshChapter(
                                                         ctx.getSource(),
                                                         EntityArgument.getPlayer(ctx, "player"),
                                                         StringArgumentType.getString(ctx, "chapter_id")))
@@ -130,7 +144,7 @@ public final class MoreQuestTypesCommands {
                         .then(Commands.literal("reset_repeat_counter")
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .then(Commands.argument("quest_id", StringArgumentType.string())
-                                                .executes(ctx -> resetRepeatCounter(
+                                                .executes(ctx -> MoreQuestTypesCommands.resetRepeatCounter(
                                                         ctx.getSource(),
                                                         EntityArgument.getPlayer(ctx, "player"),
                                                         StringArgumentType.getString(ctx, "quest_id")))
@@ -139,13 +153,13 @@ public final class MoreQuestTypesCommands {
                         )
                         .then(Commands.literal("link_quest")
                                 .then(Commands.argument("quest_id", StringArgumentType.string())
-                                        .executes(ctx -> linkQuestToItem(
+                                        .executes(ctx -> MoreQuestTypesCommands.linkQuestToItem(
                                                 ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "quest_id")))
                                 )
                         )
-                        .then(buildLookAtCommand())
-                        .then(buildGenerateChapterCommand())
+                        .then(MoreQuestTypesCommands.buildLookAtCommand())
+                        .then(MoreQuestTypesCommands.buildGenerateChapterCommand())
         );
     }
 
@@ -153,7 +167,7 @@ public final class MoreQuestTypesCommands {
         return Commands.literal("look_at")
                 .then(Commands.literal("quest")
                         .then(Commands.argument("quest_id", StringArgumentType.string())
-                                .executes(ctx -> lookAtQuest(
+                                .executes(ctx -> MoreQuestTypesCommands.lookAtQuest(
                                         ctx.getSource(),
                                         StringArgumentType.getString(ctx, "quest_id")))
                         )
@@ -162,7 +176,7 @@ public final class MoreQuestTypesCommands {
                         .then(Commands.argument("chapter_id", StringArgumentType.string())
                                 .then(Commands.argument("x", DoubleArgumentType.doubleArg())
                                         .then(Commands.argument("y", DoubleArgumentType.doubleArg())
-                                                .executes(ctx -> lookAtPosition(
+                                                .executes(ctx -> MoreQuestTypesCommands.lookAtPosition(
                                                         ctx.getSource(),
                                                         StringArgumentType.getString(ctx, "chapter_id"),
                                                         DoubleArgumentType.getDouble(ctx, "x"),
@@ -176,9 +190,9 @@ public final class MoreQuestTypesCommands {
     private static int lookAtQuest(CommandSourceStack source, String questId) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
 
-        QuestObjectBase object = getQuestObjectForString(questId);
+        QuestObjectBase object = MoreQuestTypesCommands.getQuestObjectForString(questId);
         if (!(object instanceof Quest quest)) {
-            throw NO_OBJECT.create(questId);
+            throw MoreQuestTypesCommands.NO_OBJECT.create(questId);
         }
 
         CompoundTag nbt = new CompoundTag();
@@ -202,9 +216,9 @@ public final class MoreQuestTypesCommands {
     private static int lookAtPosition(CommandSourceStack source, String chapterId, double x, double y) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
 
-        QuestObjectBase object = getQuestObjectForString(chapterId);
+        QuestObjectBase object = MoreQuestTypesCommands.getQuestObjectForString(chapterId);
         if (!(object instanceof Chapter chapter)) {
-            throw NO_OBJECT.create(chapterId);
+            throw MoreQuestTypesCommands.NO_OBJECT.create(chapterId);
         }
 
         CompoundTag nbt = new CompoundTag();
@@ -228,20 +242,20 @@ public final class MoreQuestTypesCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> buildGenerateChapterCommand() {
         return Commands.literal("generate_chapter")
                 .then(Commands.literal("advancements")
-                        .executes(ctx -> generateAdvancementChapter(ctx.getSource(), ""))
+                        .executes(ctx -> MoreQuestTypesCommands.generateAdvancementChapter(ctx.getSource(), ""))
                         .then(Commands.argument("mod_id", StringArgumentType.string())
-                                .suggests(MOD_ID_SUGGESTIONS)
-                                .executes(ctx -> generateAdvancementChapter(
+                                .suggests(MoreQuestTypesCommands.MOD_ID_SUGGESTIONS)
+                                .executes(ctx -> MoreQuestTypesCommands.generateAdvancementChapter(
                                         ctx.getSource(),
                                         StringArgumentType.getString(ctx, "mod_id")))
                         )
                 )
                 .then(Commands.literal("items")
                         .then(Commands.argument("mod_id", StringArgumentType.string())
-                                .suggests(MOD_ID_SUGGESTIONS)
+                                .suggests(MoreQuestTypesCommands.MOD_ID_SUGGESTIONS)
                                 .then(Commands.argument("task_type", StringArgumentType.word())
-                                        .suggests(ITEM_TASK_SUGGESTIONS)
-                                        .executes(ctx -> generateItemChapter(
+                                        .suggests(MoreQuestTypesCommands.ITEM_TASK_SUGGESTIONS)
+                                        .executes(ctx -> MoreQuestTypesCommands.generateItemChapter(
                                                 ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "mod_id"),
                                                 StringArgumentType.getString(ctx, "task_type")))
@@ -250,10 +264,10 @@ public final class MoreQuestTypesCommands {
                 )
                 .then(Commands.literal("blocks")
                         .then(Commands.argument("mod_id", StringArgumentType.string())
-                                .suggests(MOD_ID_SUGGESTIONS)
+                                .suggests(MoreQuestTypesCommands.MOD_ID_SUGGESTIONS)
                                 .then(Commands.argument("task_type", StringArgumentType.word())
-                                        .suggests(BLOCK_TASK_SUGGESTIONS)
-                                        .executes(ctx -> generateBlockChapter(
+                                        .suggests(MoreQuestTypesCommands.BLOCK_TASK_SUGGESTIONS)
+                                        .executes(ctx -> MoreQuestTypesCommands.generateBlockChapter(
                                                 ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "mod_id"),
                                                 StringArgumentType.getString(ctx, "task_type")))
@@ -262,10 +276,10 @@ public final class MoreQuestTypesCommands {
                 )
                 .then(Commands.literal("all")
                         .then(Commands.argument("mod_id", StringArgumentType.string())
-                                .suggests(MOD_ID_SUGGESTIONS)
+                                .suggests(MoreQuestTypesCommands.MOD_ID_SUGGESTIONS)
                                 .then(Commands.argument("item_task_type", StringArgumentType.word())
-                                        .suggests(ITEM_TASK_SUGGESTIONS)
-                                        .executes(ctx -> generateAllChapter(
+                                        .suggests(MoreQuestTypesCommands.ITEM_TASK_SUGGESTIONS)
+                                        .executes(ctx -> MoreQuestTypesCommands.generateAllChapter(
                                                 ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "mod_id"),
                                                 StringArgumentType.getString(ctx, "item_task_type")))
@@ -274,10 +288,10 @@ public final class MoreQuestTypesCommands {
                 )
                 .then(Commands.literal("mobs")
                         .then(Commands.argument("mod_id", StringArgumentType.string())
-                                .suggests(MOD_ID_SUGGESTIONS)
+                                .suggests(MoreQuestTypesCommands.MOD_ID_SUGGESTIONS)
                                 .then(Commands.argument("task_type", StringArgumentType.word())
-                                        .suggests(MOB_TASK_SUGGESTIONS)
-                                        .executes(ctx -> generateMobChapter(
+                                        .suggests(MoreQuestTypesCommands.MOB_TASK_SUGGESTIONS)
+                                        .executes(ctx -> MoreQuestTypesCommands.generateMobChapter(
                                                 ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "mod_id"),
                                                 StringArgumentType.getString(ctx, "task_type")))
@@ -291,8 +305,8 @@ public final class MoreQuestTypesCommands {
                                         builder
                                 ))
                                 .then(Commands.argument("task_type", StringArgumentType.word())
-                                        .suggests(ITEM_TASK_SUGGESTIONS)
-                                        .executes(ctx -> generateItemTagChapter(
+                                        .suggests(MoreQuestTypesCommands.ITEM_TASK_SUGGESTIONS)
+                                        .executes(ctx -> MoreQuestTypesCommands.generateItemTagChapter(
                                                 ctx.getSource(),
                                                 ResourceLocationArgument.getId(ctx, "tag"),
                                                 StringArgumentType.getString(ctx, "task_type")))
@@ -306,8 +320,8 @@ public final class MoreQuestTypesCommands {
                                         builder
                                 ))
                                 .then(Commands.argument("task_type", StringArgumentType.word())
-                                        .suggests(MOB_TASK_SUGGESTIONS)
-                                        .executes(ctx -> generateEntityTagChapter(
+                                        .suggests(MoreQuestTypesCommands.MOB_TASK_SUGGESTIONS)
+                                        .executes(ctx -> MoreQuestTypesCommands.generateEntityTagChapter(
                                                 ctx.getSource(),
                                                 ResourceLocationArgument.getId(ctx, "tag"),
                                                 StringArgumentType.getString(ctx, "task_type")))
@@ -348,7 +362,7 @@ public final class MoreQuestTypesCommands {
                 ? "All Advancements [" + advancements.size() + "]"
                 : "Advancements from " + modId + " [" + advancements.size() + "]";
 
-        Chapter chapter = createChapter(file, title, new ItemStack(Items.KNOWLEDGE_BOOK), source);
+        Chapter chapter = MoreQuestTypesCommands.createChapter(file, title, new ItemStack(Items.KNOWLEDGE_BOOK), source);
 
         int col = 0, row = 0;
         String currentMod = "";
@@ -364,7 +378,7 @@ public final class MoreQuestTypesCommands {
                 row++;
             }
 
-            Quest quest = createQuest(file, chapter, col, row, "", source);
+            Quest quest = MoreQuestTypesCommands.createQuest(file, chapter, col, row, "", source);
 
             AdvancementTask advTask =
                     new AdvancementTask(file.newID(), quest);
@@ -381,7 +395,7 @@ public final class MoreQuestTypesCommands {
             col++;
         }
 
-        finalizeChapter(file, source);
+        MoreQuestTypesCommands.finalizeChapter(file, source);
         source.sendSuccess(() -> Component.literal("Generated advancement chapter with " + advancements.size() + " quests!").withStyle(ChatFormatting.GREEN), false);
         return Command.SINGLE_SUCCESS;
     }
@@ -406,7 +420,7 @@ public final class MoreQuestTypesCommands {
             return 0;
         }
 
-        Chapter chapter = createChapter(file, "Items from " + modId + " [" + items.size() + "]", new ItemStack(Items.CHEST), source);
+        Chapter chapter = MoreQuestTypesCommands.createChapter(file, "Items from " + modId + " [" + items.size() + "]", new ItemStack(Items.CHEST), source);
 
         int col = 0, row = 0;
 
@@ -417,15 +431,15 @@ public final class MoreQuestTypesCommands {
             }
 
             ItemStack stack = new ItemStack(item);
-            Quest quest = createQuest(file, chapter, col, row, "", source);
+            Quest quest = MoreQuestTypesCommands.createQuest(file, chapter, col, row, "", source);
             quest.setRawIcon(stack);
 
-            createItemTask(file, quest, stack, taskType, source);
+            MoreQuestTypesCommands.createItemTask(file, quest, stack, taskType, source);
 
             col++;
         }
 
-        finalizeChapter(file, source);
+        MoreQuestTypesCommands.finalizeChapter(file, source);
         source.sendSuccess(() -> Component.literal("Generated item chapter with " + items.size() + " quests!").withStyle(ChatFormatting.GREEN), false);
         return Command.SINGLE_SUCCESS;
     }
@@ -450,7 +464,7 @@ public final class MoreQuestTypesCommands {
             return 0;
         }
 
-        Chapter chapter = createChapter(file, "Blocks from " + modId + " [" + blocks.size() + "]", new ItemStack(Items.BRICKS), source);
+        Chapter chapter = MoreQuestTypesCommands.createChapter(file, "Blocks from " + modId + " [" + blocks.size() + "]", new ItemStack(Items.BRICKS), source);
 
         int col = 0, row = 0;
 
@@ -463,19 +477,19 @@ public final class MoreQuestTypesCommands {
             ItemStack stack = new ItemStack(block.asItem());
             if (stack.isEmpty()) continue;
 
-            Quest quest = createQuest(file, chapter, col, row, "", source);
+            Quest quest = MoreQuestTypesCommands.createQuest(file, chapter, col, row, "", source);
             quest.setRawIcon(stack);
 
             if ("break_block".equals(taskType)) {
-                createBreakBlockTask(file, quest, block, source);
+                MoreQuestTypesCommands.createBreakBlockTask(file, quest, block, source);
             } else {
-                createItemTask(file, quest, stack, taskType, source);
+                MoreQuestTypesCommands.createItemTask(file, quest, stack, taskType, source);
             }
 
             col++;
         }
 
-        finalizeChapter(file, source);
+        MoreQuestTypesCommands.finalizeChapter(file, source);
         source.sendSuccess(() -> Component.literal("Generated block chapter with " + blocks.size() + " quests!").withStyle(ChatFormatting.GREEN), false);
         return Command.SINGLE_SUCCESS;
     }
@@ -517,7 +531,7 @@ public final class MoreQuestTypesCommands {
             return 0;
         }
 
-        Chapter chapter = createChapter(file, "All from " + modId + " [" + total + "]", new ItemStack(Items.BEACON), source);
+        Chapter chapter = MoreQuestTypesCommands.createChapter(file, "All from " + modId + " [" + total + "]", new ItemStack(Items.BEACON), source);
 
         int col = 0, row = 0;
 
@@ -528,10 +542,10 @@ public final class MoreQuestTypesCommands {
             }
 
             ItemStack stack = new ItemStack(item);
-            Quest quest = createQuest(file, chapter, col, row, "", source);
+            Quest quest = MoreQuestTypesCommands.createQuest(file, chapter, col, row, "", source);
             quest.setRawIcon(stack);
 
-            createItemTask(file, quest, stack, itemTaskType, source);
+            MoreQuestTypesCommands.createItemTask(file, quest, stack, itemTaskType, source);
 
             col++;
         }
@@ -546,7 +560,7 @@ public final class MoreQuestTypesCommands {
                     row++;
                 }
 
-                Quest quest = createQuest(file, chapter, col, row, "", source);
+                Quest quest = MoreQuestTypesCommands.createQuest(file, chapter, col, row, "", source);
 
                 AdvancementTask advTask =
                         new AdvancementTask(file.newID(), quest);
@@ -564,7 +578,7 @@ public final class MoreQuestTypesCommands {
             }
         }
 
-        finalizeChapter(file, source);
+        MoreQuestTypesCommands.finalizeChapter(file, source);
         source.sendSuccess(() -> Component.literal("Generated combined chapter with " + total + " quests!").withStyle(ChatFormatting.GREEN), false);
         return Command.SINGLE_SUCCESS;
     }
@@ -589,7 +603,7 @@ public final class MoreQuestTypesCommands {
             return 0;
         }
 
-        Chapter chapter = createChapter(file, "Mobs from " + modId + " [" + entityTypes.size() + "]", new ItemStack(Items.IRON_SWORD), source);
+        Chapter chapter = MoreQuestTypesCommands.createChapter(file, "Mobs from " + modId + " [" + entityTypes.size() + "]", new ItemStack(Items.IRON_SWORD), source);
 
         int col = 0, row = 0;
 
@@ -600,14 +614,14 @@ public final class MoreQuestTypesCommands {
             }
 
             ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
-            Quest quest = createQuest(file, chapter, col, row, "", source);
+            Quest quest = MoreQuestTypesCommands.createQuest(file, chapter, col, row, "", source);
 
-            createMobTask(file, quest, entityId, taskType, source);
+            MoreQuestTypesCommands.createMobTask(file, quest, entityId, taskType, source);
 
             col++;
         }
 
-        finalizeChapter(file, source);
+        MoreQuestTypesCommands.finalizeChapter(file, source);
         source.sendSuccess(() -> Component.literal("Generated mob chapter with " + entityTypes.size() + " quests!").withStyle(ChatFormatting.GREEN), false);
         return Command.SINGLE_SUCCESS;
     }
@@ -637,7 +651,7 @@ public final class MoreQuestTypesCommands {
             return 0;
         }
 
-        Chapter chapter = createChapter(file, "Items in #" + tagId + " [" + items.size() + "]", new ItemStack(Items.NAME_TAG), source);
+        Chapter chapter = MoreQuestTypesCommands.createChapter(file, "Items in #" + tagId + " [" + items.size() + "]", new ItemStack(Items.NAME_TAG), source);
 
         int col = 0, row = 0;
 
@@ -648,15 +662,15 @@ public final class MoreQuestTypesCommands {
             }
 
             ItemStack stack = new ItemStack(item);
-            Quest quest = createQuest(file, chapter, col, row, "", source);
+            Quest quest = MoreQuestTypesCommands.createQuest(file, chapter, col, row, "", source);
             quest.setRawIcon(stack);
 
-            createItemTask(file, quest, stack, taskType, source);
+            MoreQuestTypesCommands.createItemTask(file, quest, stack, taskType, source);
 
             col++;
         }
 
-        finalizeChapter(file, source);
+        MoreQuestTypesCommands.finalizeChapter(file, source);
         source.sendSuccess(() -> Component.literal("Generated tag chapter with " + items.size() + " quests!").withStyle(ChatFormatting.GREEN), false);
         return Command.SINGLE_SUCCESS;
     }
@@ -686,7 +700,7 @@ public final class MoreQuestTypesCommands {
             return 0;
         }
 
-        Chapter chapter = createChapter(file, "Entities in #" + tagId + " [" + entityTypes.size() + "]", new ItemStack(Items.LEAD), source);
+        Chapter chapter = MoreQuestTypesCommands.createChapter(file, "Entities in #" + tagId + " [" + entityTypes.size() + "]", new ItemStack(Items.LEAD), source);
 
         int col = 0, row = 0;
 
@@ -697,14 +711,14 @@ public final class MoreQuestTypesCommands {
             }
 
             ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
-            Quest quest = createQuest(file, chapter, col, row, "", source);
+            Quest quest = MoreQuestTypesCommands.createQuest(file, chapter, col, row, "", source);
 
-            createMobTask(file, quest, entityId, taskType, source);
+            MoreQuestTypesCommands.createMobTask(file, quest, entityId, taskType, source);
 
             col++;
         }
 
-        finalizeChapter(file, source);
+        MoreQuestTypesCommands.finalizeChapter(file, source);
         source.sendSuccess(() -> Component.literal("Generated entity tag chapter with " + entityTypes.size() + " quests!").withStyle(ChatFormatting.GREEN), false);
         return Command.SINGLE_SUCCESS;
     }
@@ -791,7 +805,7 @@ public final class MoreQuestTypesCommands {
                 useTask.readData(taskData, source.registryAccess());
                 task = useTask;
             }
-            default -> throw INVALID_TASK_TYPE.create();
+            default -> throw MoreQuestTypesCommands.INVALID_TASK_TYPE.create();
         }
 
         NetworkHelper.sendToAll(source.getServer(), CreateObjectResponseMessage.create(task, null));
@@ -931,7 +945,7 @@ public final class MoreQuestTypesCommands {
                 equippedTask.readData(taskData, source.registryAccess());
                 task = equippedTask;
             }
-            default -> throw INVALID_TASK_TYPE.create();
+            default -> throw MoreQuestTypesCommands.INVALID_TASK_TYPE.create();
         }
 
         NetworkHelper.sendToAll(source.getServer(), CreateObjectResponseMessage.create(task, null));
@@ -956,9 +970,9 @@ public final class MoreQuestTypesCommands {
             return 0;
         }
 
-        QuestObjectBase object = getQuestObjectForString(questId);
+        QuestObjectBase object = MoreQuestTypesCommands.getQuestObjectForString(questId);
         if (!(object instanceof Quest quest)) {
-            throw NO_OBJECT.create(questId);
+            throw MoreQuestTypesCommands.NO_OBJECT.create(questId);
         }
 
         heldItem.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
@@ -973,10 +987,10 @@ public final class MoreQuestTypesCommands {
     }
 
     private static int resetRepeatCounter(CommandSourceStack source, ServerPlayer player, String questId) throws CommandSyntaxException {
-        QuestObjectBase object = getQuestObjectForString(questId);
+        QuestObjectBase object = MoreQuestTypesCommands.getQuestObjectForString(questId);
 
         if (!(object instanceof Quest quest)) {
-            throw NO_OBJECT.create(questId);
+            throw MoreQuestTypesCommands.NO_OBJECT.create(questId);
         }
 
         if (!quest.canBeRepeated()) {
@@ -993,12 +1007,18 @@ public final class MoreQuestTypesCommands {
         ServerQuestFile.INSTANCE.getTeamData(player).ifPresent(teamData -> {
             ProgressChange progressChange = new ProgressChange(quest, player.getUUID());
             progressChange.setReset(true);
-            quest.forceProgress(teamData, progressChange);
+            ServerQuestFile.INSTANCE.withPlayerContext(player, () ->
+                    quest.forceProgress(teamData, progressChange));
 
-            teamData.clearRepeatCooldown(quest);
-
-            if (teamData instanceof net.pixeldreamstudios.morequesttypes.api.ITeamDataCompletionCountAccess acc) {
-                acc.mqt$clearCompletionCount(quest.getId());
+            if (PerPlayerQuestsCompat.isLoaded()
+                    && PerPlayerQuestsBridge.isPerPlayer(quest)) {
+                PerPlayerQuestsBridge
+                        .clearRepeatStateForPlayer(teamData, quest, player.getUUID());
+            } else {
+                teamData.clearRepeatCooldown(quest);
+                if (teamData instanceof ITeamDataCompletionCountAccess acc) {
+                    acc.mqt$clearCompletionCount(quest.getId());
+                }
             }
 
             teamData.markDirty();
@@ -1015,7 +1035,7 @@ public final class MoreQuestTypesCommands {
     private static QuestObjectBase getQuestObjectForString(String idStr) throws CommandSyntaxException {
         ServerQuestFile file = ServerQuestFile.INSTANCE;
         if (file == null) {
-            throw NO_FILE.create();
+            throw MoreQuestTypesCommands.NO_FILE.create();
         }
 
         if (idStr.startsWith("#")) {
@@ -1025,23 +1045,23 @@ public final class MoreQuestTypesCommands {
                     return qob;
                 }
             }
-            throw NO_OBJECT.create(idStr);
+            throw MoreQuestTypesCommands.NO_OBJECT.create(idStr);
         } else {
             long id = QuestObjectBase.parseHexId(idStr)
-                    .orElseThrow(() -> INVALID_ID.create(idStr));
+                    .orElseThrow(() -> MoreQuestTypesCommands.INVALID_ID.create(idStr));
             QuestObjectBase qob = file.getBase(id);
             if (qob == null) {
-                throw NO_OBJECT.create(idStr);
+                throw MoreQuestTypesCommands.NO_OBJECT.create(idStr);
             }
             return qob;
         }
     }
 
     private static int refreshChapter(CommandSourceStack source, ServerPlayer player, String chapterId) throws CommandSyntaxException {
-        QuestObjectBase object = getQuestObjectForString(chapterId);
+        QuestObjectBase object = MoreQuestTypesCommands.getQuestObjectForString(chapterId);
 
         if (!(object instanceof Chapter chapter)) {
-            throw NO_OBJECT.create(chapterId);
+            throw MoreQuestTypesCommands.NO_OBJECT.create(chapterId);
         }
 
         NetworkHelper.sendTo(
@@ -1068,7 +1088,7 @@ public final class MoreQuestTypesCommands {
             return 0;
         }
 
-        List<QuestObjectBase> targets = resolveTargets(file, idOrTag);
+        List<QuestObjectBase> targets = MoreQuestTypesCommands.resolveTargets(file, idOrTag);
 
         if (targets.isEmpty()) {
             source.sendFailure(Component.literal("No matching quest/task for: " + idOrTag));
@@ -1078,7 +1098,7 @@ public final class MoreQuestTypesCommands {
         for (ServerPlayer player : players) {
             file.getTeamData(player).ifPresent(team -> {
                 for (QuestObjectBase target : targets) {
-                    applyToObject(team, player, target, reset);
+                    MoreQuestTypesCommands.applyToObject(team, player, target, reset);
                 }
             });
         }
@@ -1101,7 +1121,7 @@ public final class MoreQuestTypesCommands {
             return all;
         } else {
             long id = QuestObjectBase.parseHexId(idOrTag)
-                    .orElseThrow(() -> INVALID_ID.create(idOrTag));
+                    .orElseThrow(() -> MoreQuestTypesCommands.INVALID_ID.create(idOrTag));
             QuestObjectBase qob = file.getBase(id);
             return (qob == null) ? List.of() : List.of(qob);
         }

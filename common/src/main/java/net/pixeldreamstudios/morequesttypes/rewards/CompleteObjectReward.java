@@ -16,6 +16,8 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.pixeldreamstudios.morequesttypes.compat.PerPlayerQuestsBridge;
+import net.pixeldreamstudios.morequesttypes.compat.PerPlayerQuestsCompat;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -24,6 +26,7 @@ import java.util.Set;
 
 public final class CompleteObjectReward extends Reward {
     private final List<String> targets = new ArrayList<>();
+    private boolean applyToWholeTeam = false;
 
     public CompleteObjectReward(long id, Quest q) { super(id, q); }
     @Override public RewardType getType() { return MoreRewardTypes.COMPLETE_OBJECT; }
@@ -40,9 +43,17 @@ public final class CompleteObjectReward extends Reward {
             if (resolved.isEmpty()) {
                 resolved = List.of(getQuest());
             }
-            for (QuestObjectBase obj : resolved) {
-                applyToObject(team, obj);
-            }
+            List<QuestObjectBase> finalResolved = resolved;
+            file.withPlayerContext(player, () -> {
+                for (QuestObjectBase obj : finalResolved) {
+                    if (applyToWholeTeam && PerPlayerQuestsCompat.isLoaded()
+                            && obj instanceof Quest quest && PerPlayerQuestsBridge.isPerPlayer(quest)) {
+                        PerPlayerQuestsBridge.completeForWholeTeam(team, quest);
+                    } else {
+                        applyToObject(team, obj);
+                    }
+                }
+            });
         });
     }
 
@@ -85,6 +96,10 @@ public final class CompleteObjectReward extends Reward {
         super.fillConfigGroup(config);
         config.addList("targets", targets, new StringConfig(), "")
                 .setNameKey("morequesttypes.reward.complete_object.targets");
+        if (PerPlayerQuestsCompat.isLoaded()) {
+            config.addBool("apply_to_whole_team", applyToWholeTeam, v -> applyToWholeTeam = v, false)
+                    .setNameKey("morequesttypes.reward.complete_object.apply_to_whole_team");
+        }
     }
 
     @Override
@@ -95,6 +110,7 @@ public final class CompleteObjectReward extends Reward {
             for (String s : targets) list.add(StringTag.valueOf(s));
             nbt.put("targets", list);
         }
+        if (applyToWholeTeam) nbt.putBoolean("apply_to_whole_team", true);
     }
 
     @Override
@@ -109,6 +125,7 @@ public final class CompleteObjectReward extends Reward {
             String single = nbt.getString("target");
             if (!single.isBlank()) targets.add(single);
         }
+        applyToWholeTeam = nbt.getBoolean("apply_to_whole_team");
     }
 
     @Override
@@ -116,6 +133,7 @@ public final class CompleteObjectReward extends Reward {
         super.writeNetData(buffer);
         buffer.writeVarInt(targets.size());
         for (String s : targets) buffer.writeUtf(s);
+        buffer.writeBoolean(applyToWholeTeam);
     }
 
     @Override
@@ -124,6 +142,7 @@ public final class CompleteObjectReward extends Reward {
         targets.clear();
         int n = buffer.readVarInt();
         for (int i = 0; i < n; i++) targets.add(buffer.readUtf());
+        applyToWholeTeam = buffer.readBoolean();
     }
 
 }
