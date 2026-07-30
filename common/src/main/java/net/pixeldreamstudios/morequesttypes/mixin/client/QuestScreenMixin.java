@@ -1,6 +1,7 @@
 package net.pixeldreamstudios.morequesttypes.mixin.client;
 
 import dev.ftb.mods.ftblibrary.icon.Icons;
+import dev.ftb.mods.ftblibrary.ui.Button;
 import dev.ftb.mods.ftblibrary.ui.ContextMenuItem;
 import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
 import dev.ftb.mods.ftbquests.net.EditObjectMessage;
@@ -23,7 +24,7 @@ public class QuestScreenMixin {
 
     @Inject(method = "addObjectMenuItems", at = @At("TAIL"), remap = false)
     @SuppressWarnings("unchecked")
-    private void addCustomMenuItems(List<ContextMenuItem> contextMenu, Runnable gui,
+    private void addCustomMenuItems(List<ContextMenuItem> contextMenu, Button button, Runnable gui,
                                     QuestObjectBase object, Movable deletionFocus, CallbackInfo ci) {
         if (object instanceof Quest quest) {
             IQuestExtension ext = (IQuestExtension) (Object) quest;
@@ -33,7 +34,7 @@ public class QuestScreenMixin {
                     Component.translatable("morequesttypes.quest.always_invisible.toggle",
                             Component.translatable(currentlyInvisible ? "gui.yes" : "gui.no")),
                     Icons.COLOR_BLANK,
-                    (button) -> {
+                    (btn) -> {
                         ext.setAlwaysInvisible(!currentlyInvisible);
                         EditObjectMessage.sendToServer(quest);
                         if (gui != null) {
@@ -46,7 +47,7 @@ public class QuestScreenMixin {
                 contextMenu.add(new ContextMenuItem(
                         Component.translatable("morequesttypes.quest.reset_repeat_counter"),
                         Icons.REFRESH,
-                        (button) -> {
+                        (btn) -> {
                             NetworkHelper.sendToServer(new ResetRepeatCounterMessage(quest.id));
                         }
                 ).setYesNoText(Component.translatable("morequesttypes.quest.reset_repeat_counter.confirm")));

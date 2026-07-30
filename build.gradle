@@ -1,6 +1,6 @@
 plugins {
-    id 'dev.architectury.loom' version '1.13-SNAPSHOT' apply false
-    id 'architectury-plugin' version '3.4-SNAPSHOT'
+    id 'dev.architectury.loom' version '1.17-SNAPSHOT' apply false
+    id 'architectury-plugin' version '3.5.168'
     id 'com.gradleup.shadow' version '8.3.6' apply false
 }
 
@@ -25,14 +25,14 @@ subprojects {
 
     repositories {
         maven {
-            url "https://maven.ftb.dev/releases"
+            url = "https://maven.ftb.dev/releases"
             content {
                 includeGroup "dev.ftb.mods"
             }
         }
 
         maven {
-            url "https://maven.ftb.dev/snapshots"
+            url = "https://maven.ftb.dev/snapshots"
             content {
                 includeGroup "dev.ftb.mods"
             }
@@ -42,7 +42,7 @@ subprojects {
             url = "https://maven.ladysnake.org/releases"
         }
         maven {
-            url "https://cursemaven.com"
+            url = "https://cursemaven.com"
         }
         maven {
             name = 'Modrinth'
@@ -102,4 +102,13 @@ subprojects {
             // retrieving dependencies.
         }
     }
+}
+
+// Aggregates every loader's dry run so one command rehearses the whole release. Each
+// loader copies into the same build/unified-dry/ directory, so running this from the
+// root leaves every jar side by side; running it in a subproject dries only that loader.
+tasks.register("publishModsDry") {
+    group = "upload"
+    description = "Dry run publishing for every loader — writes to build/unified-dry/."
+    dependsOn ":fabric:publishModsDry", ":neoforge:publishModsDry"
 }

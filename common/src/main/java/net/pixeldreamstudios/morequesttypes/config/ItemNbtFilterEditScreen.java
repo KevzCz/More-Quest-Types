@@ -229,7 +229,7 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
     @Override
     public boolean mouseScrolled(double scroll) {
         FilterContentPanel main = contentPanel;
-        if (main != null && main.scrollPanel(scroll)) {
+        if (main != null && main.scrollPanel(0, scroll)) {
             return true;
         }
         return super.mouseScrolled(scroll);
@@ -468,7 +468,7 @@ public class ItemNbtFilterEditScreen extends AbstractThreePanelScreen<ItemNbtFil
 
         @Override
         public boolean mouseScrolled(double scroll) {
-            if (scrollPanel(scroll)) {
+            if (scrollPanel(0, scroll)) {
                 return true;
             }
             return super.mouseScrolled(scroll);

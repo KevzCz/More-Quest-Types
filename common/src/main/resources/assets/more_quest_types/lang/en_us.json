@@ -7,7 +7,7 @@
   "morequesttypes.task.player_tag.scope.any_team_member": "Any Team Member",
   "morequesttypes.task.player_tag.tags": "Required Tags",
   "morequesttypes.task.player_tag.tags.tooltip": "Vanilla /tag entity tags to check on the player. In ANY mode, any one matches; in ALL mode, all are required.",
-  "ftbquests.task.more_quest_types.player_tag": "Player Tag",
+  "ftbquests.task.ftbquests.player_tag": "Player Tag",
   "ftbquests.reward.ftbquests.complete_object": "Complete Quest",
   "morequesttypes.reward.complete_object.targets": "Targets",
   "morequesttypes.reward.complete_object.targets.tooltip": "Quest or task IDs to complete. Use # for tags (e.g., #sometag) or hex IDs for specific quests/tasks.",

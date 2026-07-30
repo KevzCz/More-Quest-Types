@@ -91,7 +91,7 @@ public class ItemNbtMatcherEditScreen extends AbstractThreePanelScreen<ItemNbtMa
 
     @Override
     public boolean mouseScrolled(double scroll) {
-        if (contentPanel != null && contentPanel.scrollPanel(scroll)) {
+        if (contentPanel != null && contentPanel.scrollPanel(0, scroll)) {
             return true;
         }
         return super.mouseScrolled(scroll);
@@ -297,7 +297,7 @@ public class ItemNbtMatcherEditScreen extends AbstractThreePanelScreen<ItemNbtMa
 
         @Override
         public boolean mouseScrolled(double scroll) {
-            if (scrollPanel(scroll)) {
+            if (scrollPanel(0, scroll)) {
                 return true;
             }
             return super.mouseScrolled(scroll);
