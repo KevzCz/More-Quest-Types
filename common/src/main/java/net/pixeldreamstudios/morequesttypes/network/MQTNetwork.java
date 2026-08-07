@@ -9,6 +9,13 @@ public class MQTNetwork {
     public static void init() {
         NetworkManager.registerReceiver(
                 NetworkManager.Side.C2S,
+                MQTRefreshTaskCacheRequest.TYPE,
+                MQTRefreshTaskCacheRequest.STREAM_CODEC,
+                MQTRefreshTaskCacheRequest::handle
+        );
+
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.C2S,
                 MQTStructuresRequest.TYPE,
                 MQTStructuresRequest.STREAM_CODEC,
                 MQTStructuresRequest::handle

@@ -13,6 +13,8 @@
     "TeamDataOriginMixin",
     "TeamDataCompletionCountAccessor",
     "ItemTaskSubmitMixin",
+    "TaskCacheInvalidationMixin",
+    "QuestFileExtensions",
     "AbstractBooleanTaskExtensionMixin",
     "TaskExtensionsPlayerLeveling",
     "TeamDataPlayerLevelingMixin",

@@ -33,7 +33,9 @@
     "java": ">=21",
     "architectury": ">=13.0.8",
     "fabric-api": "*",
-    "ftbquests": "*"
+    "ftbquests": ">=2101.1.30",
+    "ftblibrary": ">=2101.1.35",
+    "ftbteams": ">=2101.1.10"
   },
   "suggests": {
     "another-mod": "*"

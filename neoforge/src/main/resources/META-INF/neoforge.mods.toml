@@ -30,7 +30,21 @@ side = "BOTH"
 [[dependencies.more_quest_types]]
 modId = "ftbquests"
 type = "required"
-versionRange = "*"
+versionRange = "[2101.1.30,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.more_quest_types]]
+modId = "ftblibrary"
+type = "required"
+versionRange = "[2101.1.35,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.more_quest_types]]
+modId = "ftbteams"
+type = "required"
+versionRange = "[2101.1.10,)"
 ordering = "NONE"
 side = "BOTH"
 

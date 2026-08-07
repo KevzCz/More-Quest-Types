@@ -7,6 +7,7 @@ import dev.ftb.mods.ftbquests.quest.task.TaskTypes;
 import net.pixeldreamstudios.morequesttypes.compat.BlabberCompat;
 import net.pixeldreamstudios.morequesttypes.compat.EasyNPCCompat;
 import net.pixeldreamstudios.morequesttypes.compat.LevelZCompat;
+import net.pixeldreamstudios.morequesttypes.compat.MobJournalCompat;
 import net.pixeldreamstudios.morequesttypes.compat.OriginsCompat;
 import net.pixeldreamstudios.morequesttypes.compat.ReskillableCompat;
 import net.pixeldreamstudios.morequesttypes.compat.SGEconomyCompat;
@@ -46,6 +47,8 @@ public final class MoreTasksTypes {
     public static TaskType CAST_SPELL;
     public static TaskType SPELL_EQUIPPED;
     public static TaskType PLAYER_TAG;
+    public static TaskType JOURNAL_DISCOVER;
+    public static TaskType JOURNAL_DISCOVER_COUNT;
 
     public static void init() {
         MoreTasksTypes.TIMER = TaskTypes.register(
@@ -202,6 +205,18 @@ public final class MoreTasksTypes {
                 CommandTask::new,
                 () -> Icon.getIcon("minecraft:block/command_block_back")
         );
+        if (MobJournalCompat.isLoaded()) {
+            MoreTasksTypes.JOURNAL_DISCOVER = TaskTypes.register(
+                    FTBQuestsAPI.rl("journal_discover"),
+                    JournalDiscoverTask::new,
+                    () -> Icon.getIcon("journal:item/book-item")
+            );
+            MoreTasksTypes.JOURNAL_DISCOVER_COUNT = TaskTypes.register(
+                    FTBQuestsAPI.rl("journal_discover_count"),
+                    JournalDiscoverCountTask::new,
+                    () -> Icon.getIcon("journal:item/book-item")
+            );
+        }
         if (SGEconomyCompat.isLoaded()) {
             MoreTasksTypes.PAY = TaskTypes.register(
                     FTBQuestsAPI.rl("pay"),

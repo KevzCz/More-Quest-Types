@@ -37,6 +37,8 @@ public class FabricMQTNetwork {
         PayloadTypeRegistry.playC2S().register(MQTLoottablesRequest.TYPE, MQTLoottablesRequest.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(MQTLoottablesResponse.TYPE, MQTLoottablesResponse.STREAM_CODEC);
 
+        PayloadTypeRegistry.playC2S().register(MQTRefreshTaskCacheRequest.TYPE, MQTRefreshTaskCacheRequest.STREAM_CODEC);
+
         PayloadTypeRegistry.playC2S().register(ToggleRewardRequest.TYPE, ToggleRewardRequest.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(ResetRepeatCounterMessage.TYPE, ResetRepeatCounterMessage.STREAM_CODEC);
 
@@ -65,6 +67,9 @@ public class FabricMQTNetwork {
 
         ServerPlayNetworking.registerGlobalReceiver(MQTLoottablesRequest.TYPE,
                 (payload, fabricContext) -> MQTLoottablesRequest.handle(payload, wrapServer(fabricContext)));
+
+        ServerPlayNetworking.registerGlobalReceiver(MQTRefreshTaskCacheRequest.TYPE,
+                (payload, fabricContext) -> MQTRefreshTaskCacheRequest.handle(payload, wrapServer(fabricContext)));
 
         ServerPlayNetworking.registerGlobalReceiver(ToggleRewardRequest.TYPE,
                 (payload, fabricContext) -> ToggleRewardRequest.handle(payload, wrapServer(fabricContext)));
