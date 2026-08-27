@@ -46,6 +46,9 @@ public record MQTWorldsResponse(List<String> data) implements CustomPacketPayloa
             TradingTask.syncKnownDimensionList(data);
             ReceiveDamageTask.syncKnownDimensionList(data);
             CastSpellTask.syncKnownDimensionList(data);
+            PlaceBlockTask.syncKnownDimensionList(data);
+            UseBlockTask.syncKnownDimensionList(data);
+            FishingCatchTask.syncKnownDimensionList(data);
         });
     }
 }

@@ -180,7 +180,8 @@ public final class PlaceBlockTask extends Task {
     public void fillConfigGroup(ConfigGroup config) {
         super.fillConfigGroup(config);
 
-        config.addLong("value", value, v -> value = Math.max(1L, v), 1L, 1L, Long.MAX_VALUE);
+        config.addLong("value", value, v -> value = Math.max(1L, v), 1L, 1L, Long.MAX_VALUE)
+                .setNameKey("morequesttypes.task.place_block.value");
 
         ConfigIconItemStack cis = new ConfigIconItemStack();
         config.add("block", cis, blockFilter, v -> {

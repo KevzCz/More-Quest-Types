@@ -73,10 +73,8 @@ remapJar {
     inputFile.set shadowJar.archiveFile
 }
 
+
 publishMods {
-    // The per-task dryRun is wired from this and finalized in the task constructor, so it
-    // has to be set here. Keyed off the requested task names so publishModsDry rehearses
-    // while a plain publishMods still uploads for real.
     dryRun = gradle.startParameter.taskNames.any { it.contains("publishModsDry") }
 
     file = tasks.remapJar.archiveFile
@@ -104,17 +102,10 @@ publishMods {
         accessToken = providers.gradleProperty("modrinthToken")
             .orElse(providers.environmentVariable("MODRINTH_TOKEN"))
         minecraftVersions.add("1.21.1")
+        environment = CLIENT_AND_SERVER
     }
 }
 
-// Offline rehearsal: validates the config, writes the jar out and logs the display name,
-// version and changelog — without contacting either platform. Replaces the old plugin's
-// publishUnifiedToLocal.
-//
-// The plugin hardcodes its own build/publishMods/<task>/ output and finalizes that path in
-// the task constructor, so it cannot be redirected. The jars are collected into
-// build/unified-dry/ afterwards instead, giving one predictable place to look regardless
-// of how many platforms are configured.
 tasks.register("publishModsDry", Copy) {
     group = "upload"
     description = "Dry run of publishMods — writes to build/unified-dry/ instead of uploading."
@@ -129,9 +120,6 @@ tasks.register("publishModsDry", Copy) {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
-// Gradle's built-in "publishing" group also holds the Maven publication tasks, which do
-// not upload anywhere. Moving all four mod-publishing tasks into their own group keeps
-// the two kinds of "publish" apart in the IDE's task tree.
 tasks.named("publishMods") { group = "upload" }
 tasks.withType(me.modmuss50.mpp.PublishModTask).configureEach {
     group = "upload"
