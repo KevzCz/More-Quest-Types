@@ -4,6 +4,7 @@ import dev.architectury.platform.Platform;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.puffish.skillsmod.SkillsMod;
+import net.puffish.skillsmod.util.CategoryFilter;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,14 +24,14 @@ public final class SkillsCompatImpl {
     public static int getTotalLevel(ServerPlayer player) {
         if (!isLoaded()) return 0;
         var api = SkillsMod.getInstance();
-        return api.getCategories(true).stream()
-                .map(id -> api.getCurrentLevel(player, id).orElse(0))
+        return api.getCategories(CategoryFilter.WITH_EXPERIENCE).stream()
+                .map(id -> api.getExperienceLevel(player, id).orElse(0))
                 .reduce(0, Integer::sum);
     }
 
     public static int getCategoryLevel(ServerPlayer player, ResourceLocation categoryId) {
         if (! isLoaded()) return 0;
-        return SkillsMod.getInstance().getCurrentLevel(player, categoryId).orElse(0);
+        return SkillsMod.getInstance().getExperienceLevel(player, categoryId).orElse(0);
     }
 
     public static int getCategoryExperience(ServerPlayer player, ResourceLocation categoryId) {
@@ -65,7 +66,7 @@ public final class SkillsCompatImpl {
 
     public static Collection<ResourceLocation> getCategories(boolean onlyWithExperience) {
         if (!isLoaded()) return List.of();
-        return SkillsMod.getInstance().getCategories(onlyWithExperience)
+        return SkillsMod.getInstance().getCategories(onlyWithExperience ? CategoryFilter.WITH_EXPERIENCE : CategoryFilter.ALL)
                 .stream()
                 .collect(Collectors.toUnmodifiableList());
     }
@@ -76,7 +77,7 @@ public final class SkillsCompatImpl {
 
         try {
             var skillsMod = SkillsMod.getInstance();
-            var categories = skillsMod.getCategories(false);
+            var categories = skillsMod.getCategories(CategoryFilter.ALL);
 
             for (ResourceLocation catId : categories) {
                 result.put(catId.toString(), "LOOKUP:" + catId);

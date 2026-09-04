@@ -15,7 +15,7 @@ dependencies {
     modCompileOnly("dev.ftb.mods:ftb-quests-fabric:${rootProject.ftb_quests_version}") { transitive = false }
     modCompileOnly("dev.ftb.mods:ftb-library-fabric:${rootProject.ftb_library_version}") { transitive false }
     modCompileOnly("dev.ftb.mods:ftb-teams-fabric:${rootProject.ftb_teams_version}") { transitive false }
-    modCompileOnly("net.puffish:skillsmod:${puffish_skills}:fabric")
+    modCompileOnly "curse.maven:puffish-skills-835091:${puffish_skills_fabric}"
     modCompileOnly "curse.maven:blabber-565396:6445342"
     modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-base:6.1.2"
     modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:6.1.2"
