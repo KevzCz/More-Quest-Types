@@ -8,6 +8,7 @@
     "client.TitleDistanceMixin",
     "client.RewardButtonMixin",
     "client.QuestScreenMixin",
+    "client.QuestScreenSelectionFixMixin",
     "client.QuestButtonMixin",
     "client.QuestPanelCrosshairMixin",
     "client.ViewQuestPanelMixin",

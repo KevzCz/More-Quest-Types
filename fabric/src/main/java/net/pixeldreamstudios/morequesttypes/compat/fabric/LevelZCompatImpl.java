@@ -141,22 +141,32 @@ public final class LevelZCompatImpl {
         return level;
     }
 
+    private static void grantPointsForLevelGain(LevelManager manager, int previousLevel, int newLevel) {
+        int levelsGained = newLevel - previousLevel;
+        if (levelsGained <= 0) return;
+        manager.setSkillPoints(manager.getSkillPoints() + levelsGained * ConfigInit.CONFIG.pointsPerLevel);
+    }
+
+    private static void syncLevelState(ServerPlayer player) {
+        PacketHelper.updateLevels(player);
+        PacketHelper.updatePlayerSkills(player, null);
+    }
+
     public static void setLevel(ServerPlayer player, int level) {
         if (!isLoaded() || player == null) return;
         try {
             if (player instanceof LevelManagerAccess access) {
                 LevelManager manager = access.getLevelManager();
                 if (manager != null) {
-                    // Calculate the total XP needed for this level
                     int totalXp = calculateTotalXpForLevel(level);
+                    int previousLevel = manager.getOverallLevel();
 
-                    // Set both level and XP
                     manager.setOverallLevel(level);
                     manager.setTotalLevelExperience(totalXp);
                     manager.setLevelProgress(0.0F);
+                    grantPointsForLevelGain(manager, previousLevel, level);
 
-                    // Sync to client
-                    PacketHelper.updatePlayerSkills(player, null);
+                    syncLevelState(player);
                 }
             }
         } catch (Throwable ignored) {}
@@ -201,13 +211,15 @@ public final class LevelZCompatImpl {
                     // Calculate progress
                     float progress = xpForNextLevel > 0 ? (float)xpInCurrentLevel / (float)xpForNextLevel : 0.0F;
 
+                    int previousLevel = manager.getOverallLevel();
+
                     // Update all values
                     manager.setOverallLevel(newLevel);
                     manager.setTotalLevelExperience(xpAmount);
                     manager.setLevelProgress(progress);
+                    grantPointsForLevelGain(manager, previousLevel, newLevel);
 
-                    // Sync to client
-                    PacketHelper.updatePlayerSkills(player, null);
+                    syncLevelState(player);
                 }
             }
         } catch (Throwable ignored) {}
@@ -220,7 +232,7 @@ public final class LevelZCompatImpl {
                 LevelManager manager = access.getLevelManager();
                 if (manager != null) {
                     manager.setSkillLevel(skillId, level);
-                    PacketHelper.updatePlayerSkills(player, null);
+                    syncLevelState(player);
                 }
             }
         } catch (Throwable ignored) {}
@@ -233,7 +245,7 @@ public final class LevelZCompatImpl {
                 LevelManager manager = access.getLevelManager();
                 if (manager != null) {
                     manager.setSkillPoints(points);
-                    PacketHelper.updatePlayerSkills(player, null);
+                    syncLevelState(player);
                 }
             }
         } catch (Throwable ignored) {}

@@ -46,7 +46,7 @@ dependencies {
     modImplementation("dev.ftb.mods:ftb-quests-neoforge:${rootProject.ftb_quests_version}") { transitive false }
     modCompileOnly "curse.maven:puffish-skills-835091:${puffish_skills_neoforge}"
     modCompileOnly("maven.modrinth:spell-engine:1.9.2+1.21.1-neoforge")
-    modCompileOnly "curse.maven:reskillable-reimagined-1170464:7764220"
+    modCompileOnly "curse.maven:reskillable-reimagined-1170464:${reskillable_neoforge}"
     modCompileOnly "curse.maven:sg-economy-api-1446971:7604579"
     modCompileOnly("dev.muon.dynamic_difficulty:dynamic_difficulty-neoforge:${dynamic_difficulty_version}")
     modCompileOnly "curse.maven:dungeon-difficulty-645559:7310937"

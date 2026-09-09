@@ -33,7 +33,7 @@
     "java": ">=21",
     "architectury": ">=13.0.8",
     "fabric-api": "*",
-    "ftbquests": ">=2101.1.30",
+    "ftbquests": ">=2101.1.34",
     "ftblibrary": ">=2101.1.35",
     "ftbteams": ">=2101.1.10"
   },
