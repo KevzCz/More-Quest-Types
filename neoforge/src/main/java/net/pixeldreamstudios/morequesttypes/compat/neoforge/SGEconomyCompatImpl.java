@@ -17,8 +17,7 @@ public final class SGEconomyCompatImpl {
     public static double getBalance(ServerPlayer player) {
         if (!SGEconomyCompatImpl.isLoaded()) return 0.0;
         try {
-            var economy = SGEconomyApi.get();
-            return economy.getBalance(player);
+            return SGEconomyApi.getBalance(player);
         } catch (Throwable t) {
             return 0.0;
         }
@@ -27,8 +26,7 @@ public final class SGEconomyCompatImpl {
     public static boolean hasBalance(ServerPlayer player, double amount) {
         if (!SGEconomyCompatImpl.isLoaded()) return false;
         try {
-            var economy = SGEconomyApi.get();
-            return economy.hasBalance(player, amount);
+            return SGEconomyApi.hasBalance(player, amount);
         } catch (Throwable t) {
             return false;
         }
@@ -37,8 +35,7 @@ public final class SGEconomyCompatImpl {
     public static boolean withdrawBalance(ServerPlayer player, double amount) {
         if (!SGEconomyCompatImpl.isLoaded()) return false;
         try {
-            var economy = SGEconomyApi.get();
-            return economy.withdrawBalance(player, amount);
+            return SGEconomyApi.withdrawBalance(player, amount);
         } catch (Throwable t) {
             return false;
         }
@@ -47,8 +44,7 @@ public final class SGEconomyCompatImpl {
     public static boolean depositBalance(ServerPlayer player, double amount) {
         if (!SGEconomyCompatImpl.isLoaded()) return false;
         try {
-            var economy = SGEconomyApi.get();
-            return economy.depositBalance(player, amount);
+            return SGEconomyApi.depositBalance(player, amount);
         } catch (Throwable t) {
             return false;
         }
@@ -57,8 +53,7 @@ public final class SGEconomyCompatImpl {
     public static boolean setBalance(ServerPlayer player, double amount) {
         if (!SGEconomyCompatImpl.isLoaded()) return false;
         try {
-            var economy = SGEconomyApi.get();
-            return economy.setBalance(player, amount);
+            return SGEconomyApi.setBalance(player, amount);
         } catch (Throwable t) {
             return false;
         }
